@@ -8,11 +8,13 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
       useFactory: () => ({
+        path: 'api/graphql',
         driver: ApolloDriver,
-        autoSchemaFile: true,
+        autoSchemaFile: 'schema.gql',
         sortSchema: true,
         playground: false,
         plugins: [ApolloServerPluginLandingPageLocalDefault()],
+        status400ForVariableCoercionErrors: true,
       }),
     }),
   ],

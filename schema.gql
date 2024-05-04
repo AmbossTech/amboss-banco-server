@@ -1,0 +1,25 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Mutation {
+  signUp(input: SignUpInput!): Boolean!
+}
+
+type Query {
+  hello: String!
+}
+
+input RSAKeyPairInput {
+  protected_private_key: String!
+  public_key: String!
+}
+
+input SignUpInput {
+  email: String!
+  master_password_hash: String!
+  password_hint: String!
+  protected_symmetric_key: String!
+  rsa_key_pair: RSAKeyPairInput!
+  symmetric_key_iv: String!
+}
