@@ -1,12 +1,13 @@
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import { SignUpInput } from './account.types';
+import { NewAccount, SignUpInput } from './account.types';
+import { AccountService } from './account.service';
 
 @Resolver()
 export class AccountResolver {
-  @Mutation(() => Boolean)
-  signUp(@Args('input') input: SignUpInput) {
-    console.log(input);
+  constructor(private accountService: AccountService) {}
 
-    return true;
+  @Mutation(() => NewAccount)
+  async signUp(@Args('input') input: SignUpInput) {
+    return this.accountService.signUp(input);
   }
 }

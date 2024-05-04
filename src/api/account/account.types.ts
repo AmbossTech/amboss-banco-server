@@ -1,4 +1,10 @@
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
+
+@ObjectType()
+export class NewAccount {
+  @Field()
+  id: string;
+}
 
 @InputType()
 export class RSAKeyPairInput {
@@ -14,7 +20,7 @@ export class SignUpInput {
   @Field()
   email: string;
 
-  @Field()
+  @Field({ nullable: true })
   password_hint: string;
 
   @Field()

@@ -17,8 +17,8 @@ model account {
   id                      String   @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   created_at              DateTime @default(now()) @db.Timestamp(6)
   updated_at              DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  email                   String   @db.VarChar
-  password_hint           String   @db.VarChar
+  email                   String   @unique @db.VarChar
+  password_hint           String?  @db.VarChar
   master_password_hash    String   @db.VarChar
   symmetric_key_iv        String   @db.VarChar
   protected_symmetric_key String   @db.VarChar
