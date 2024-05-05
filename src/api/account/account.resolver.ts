@@ -55,6 +55,11 @@ export class AccountResolver {
       account.id,
     );
 
+    const hashedRefreshToken =
+      await this.cryptoService.argon2Hash(refreshToken);
+
+    await this.accountRepo.updateRefreshToken(account.id, hashedRefreshToken);
+
     const cookieOptions: CookieOptions = {
       httpOnly: true,
       secure: true,
