@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { Request, Response } from 'express';
 
 @Module({
   imports: [
@@ -15,6 +16,10 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
         playground: false,
         plugins: [ApolloServerPluginLandingPageLocalDefault()],
         status400ForVariableCoercionErrors: true,
+        context: async ({ req, res }: { req: Request; res: Response }) => ({
+          req,
+          res,
+        }),
       }),
     }),
   ],

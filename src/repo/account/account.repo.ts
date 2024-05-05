@@ -6,11 +6,22 @@ import { NewAccountType } from './account.types';
 export class AccountRepo {
   constructor(private prisma: PrismaService) {}
 
+  findOneById(id: string) {
+    return this.prisma.account.findUnique({ where: { id } });
+  }
+
   findOne(email: string) {
     return this.prisma.account.findUnique({ where: { email } });
   }
 
-  create({
+  async updateRefreshToken(id: string, refresh_token_hash: string | null) {
+    return this.prisma.account.update({
+      where: { id },
+      data: { refresh_token_hash },
+    });
+  }
+
+  async create({
     email,
     master_password_hash,
     password_hint,

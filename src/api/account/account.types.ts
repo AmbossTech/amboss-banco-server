@@ -1,9 +1,54 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
+export class User {
+  @Field()
+  id: string;
+}
+
+@ObjectType()
+export class RefreshToken {
+  @Field()
+  id: string;
+
+  @Field()
+  access_token: string;
+
+  @Field()
+  refresh_token: string;
+}
+
+@ObjectType()
 export class NewAccount {
   @Field()
   id: string;
+
+  @Field()
+  access_token: string;
+
+  @Field()
+  refresh_token: string;
+}
+
+@ObjectType()
+export class Login {
+  @Field()
+  id: string;
+
+  @Field()
+  access_token: string;
+
+  @Field()
+  refresh_token: string;
+}
+
+@InputType()
+export class LoginInput {
+  @Field()
+  email: string;
+
+  @Field()
+  master_password_hash: string;
 }
 
 @InputType()

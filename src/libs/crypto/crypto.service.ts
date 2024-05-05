@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { hash } from '@node-rs/argon2';
+import { hash, verify } from '@node-rs/argon2';
 import { ARGON_DEFAULTS } from './crypto.utils';
 
 @Injectable()
@@ -11,5 +11,9 @@ export class CryptoService {
       outputLen: ARGON_DEFAULTS.hash_length,
       parallelism: ARGON_DEFAULTS.parallelism,
     });
+  }
+
+  async argon2Verify(hash: string, password: string): Promise<boolean> {
+    return verify(hash, password);
   }
 }

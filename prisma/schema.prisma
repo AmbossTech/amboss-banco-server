@@ -22,5 +22,6 @@ model account {
   master_password_hash    String   @db.VarChar
   symmetric_key_iv        String   @db.VarChar
   protected_symmetric_key String   @db.VarChar
+  refresh_token_hash      String?  @db.VarChar
   key_pair                Json     @db.JsonB
 }

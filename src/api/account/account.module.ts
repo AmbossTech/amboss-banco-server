@@ -3,9 +3,10 @@ import { AccountResolver } from './account.resolver';
 import { AccountService } from './account.service';
 import { AccountRepoModule } from 'src/repo/account/account.module';
 import { CryptoModule } from 'src/libs/crypto/crypto.module';
+import { AuthModule } from 'src/libs/auth/auth.module';
 
 @Module({
-  imports: [AccountRepoModule, CryptoModule],
+  imports: [AccountRepoModule, CryptoModule, AuthModule],
   providers: [AccountResolver, AccountService],
 })
 export class AccountModule {}

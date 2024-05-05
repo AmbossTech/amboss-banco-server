@@ -6,11 +6,16 @@ import { GraphqlModule } from './libs/graphql/graphql.module';
 import { CustomLoggerModule } from './libs/logging/logger.module';
 import { ConfigModule } from '@nestjs/config';
 import { ApiModule } from './api/api.module';
+import configuration from './libs/config/configuration';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     // API
     ApiModule,
+
+    // Auth
+    AuthModule,
 
     // Database
     PrismaModule,
@@ -19,7 +24,7 @@ import { ApiModule } from './api/api.module';
     GraphqlModule,
 
     // Config
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
 
     // Logger
     CustomLoggerModule.forRoot(),

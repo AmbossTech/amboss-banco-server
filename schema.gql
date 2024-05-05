@@ -2,21 +2,38 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input LoginInput {
+  email: String!
+  master_password_hash: String!
+}
+
 type Mutation {
+  login(input: LoginInput!): NewAccount!
+  logout: Boolean!
+  refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
 }
 
 type NewAccount {
+  access_token: String!
   id: String!
+  refresh_token: String!
 }
 
 type Query {
   hello: String!
+  user: User!
 }
 
 input RSAKeyPairInput {
   protected_private_key: String!
   public_key: String!
+}
+
+type RefreshToken {
+  access_token: String!
+  id: String!
+  refresh_token: String!
 }
 
 input SignUpInput {
@@ -26,4 +43,8 @@ input SignUpInput {
   protected_symmetric_key: String!
   rsa_key_pair: RSAKeyPairInput!
   symmetric_key_iv: String!
+}
+
+type User {
+  id: String!
 }
