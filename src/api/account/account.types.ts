@@ -4,6 +4,9 @@ import { Field, InputType, ObjectType } from '@nestjs/graphql';
 export class User {
   @Field()
   id: string;
+
+  @Field()
+  email: string;
 }
 
 @ObjectType()

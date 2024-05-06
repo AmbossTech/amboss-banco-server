@@ -8,6 +8,7 @@ input LoginInput {
 }
 
 type Mutation {
+  checkPassword(password: String!): Boolean!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
   refreshToken: RefreshToken!
@@ -46,5 +47,6 @@ input SignUpInput {
 }
 
 type User {
+  email: String!
   id: String!
 }

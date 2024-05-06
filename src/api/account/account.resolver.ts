@@ -27,7 +27,13 @@ export class AccountResolver {
 
   @Query(() => User)
   async user(@CurrentUser() { user_id }: any) {
-    return { id: user_id };
+    const account = await this.accountRepo.findOneById(user_id);
+
+    if (!account) {
+      throw new GraphQLError('Error getting account.');
+    }
+
+    return account;
   }
 
   @Public()
@@ -74,6 +80,29 @@ export class AccountResolver {
       access_token: accessToken,
       refresh_token: refreshToken,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async checkPassword(
+    @Args('password') password: string,
+    @CurrentUser() { user_id }: any,
+  ) {
+    const account = await this.accountRepo.findOneById(user_id);
+
+    if (!account) {
+      throw new GraphQLError('Error validating account.');
+    }
+
+    const verified = await this.cryptoService.argon2Verify(
+      account.master_password_hash,
+      password,
+    );
+
+    if (!verified) {
+      throw new GraphQLError('Invalid password.');
+    }
+
+    return true;
   }
 
   @Mutation(() => Boolean)
