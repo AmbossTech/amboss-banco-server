@@ -223,6 +223,7 @@ export class CreateLiquidTransactionInput {
 }
 
 export type AssetParentType = {
+  wallet_id: string;
   asset_id: string;
   balance: number;
   txs: WalletTx[];

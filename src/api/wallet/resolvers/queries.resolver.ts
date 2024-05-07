@@ -80,8 +80,8 @@ export class WalletLiquidAssetResolver {
   constructor(private mempoolLiquid: EsploraLiquidService) {}
 
   @ResolveField()
-  id(@Parent() { asset_id }: AssetParentType) {
-    return v5(asset_id, v5.URL);
+  id(@Parent() { asset_id, wallet_id }: AssetParentType) {
+    return v5(asset_id + wallet_id, v5.URL);
   }
 
   @ResolveField()
@@ -110,7 +110,6 @@ export class WalletLiquidAssetResolver {
 export class SimpleWalletAccountResolver {
   @ResolveField()
   async account_type(@Parent() account: wallet_account) {
-    console.log('AAAAA', account);
     return (account.details as any).type;
   }
 }
@@ -144,6 +143,7 @@ export class WalletAccountResolver {
     const mergedAssets = new Map([...alwaysShownBalances, ...balances]);
 
     const balanceArray = Array.from(mergedAssets, ([asset_id, balance]) => ({
+      wallet_id: account.id,
       asset_id,
       balance,
       txs,
@@ -200,18 +200,12 @@ export class WalletQueriesResolver {
 
   @ResolveField()
   async find_many(@CurrentUser() { user_id }: any) {
-    const wallets = await this.walletRepo.getAccountWallets(user_id);
-
-    console.log(wallets);
-
-    return wallets;
+    return this.walletRepo.getAccountWallets(user_id);
   }
 
   @ResolveField()
   async find_one(@Args('id') id: string, @CurrentUser() { user_id }: any) {
     const wallet = await this.walletRepo.getAccountWallet(user_id, id);
-
-    console.log('WALLETTTT', wallet);
 
     if (!wallet) {
       throw new GraphQLError('No wallet found');
