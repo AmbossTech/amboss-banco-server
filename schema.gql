@@ -49,6 +49,7 @@ type NewAccount {
 type Query {
   hello: String!
   user: User!
+  wallets: WalletQueries!
 }
 
 input RSAKeyPairInput {
@@ -71,18 +72,76 @@ input SignUpInput {
   symmetric_key_iv: String!
 }
 
+type SimpleWallet {
+  accounts: [SimpleWalletAccount!]!
+  id: String!
+  name: String!
+}
+
+type SimpleWalletAccount {
+  account_type: WalletAccountType!
+  id: String!
+  name: String!
+}
+
 type User {
   email: String!
   id: String!
   symmetric_key_iv: String!
 }
 
+type Wallet {
+  accounts: [WalletAccount!]!
+  id: String!
+  name: String!
+}
+
+type WalletAccount {
+  account_type: WalletAccountType!
+  id: String!
+  liquid_assets: [WalletLiquidAsset!]!
+  name: String!
+}
+
 enum WalletAccountType {
   LIQUID
+}
+
+type WalletLiquidAsset {
+  asset_id: String!
+  asset_info: WalletLiquidAssetInfo!
+  balance: String!
+  id: String!
+  transactions: [WalletLiquidTransaction!]!
+}
+
+type WalletLiquidAssetInfo {
+  id: String!
+  is_featured: Boolean!
+  name: String!
+  precision: Float!
+  ticker: String!
+}
+
+type WalletLiquidTransaction {
+  balance: String!
+  blinded_url: String!
+  block_height: String!
+  date: String
+  fee: String!
+  id: String!
+  tx_id: String!
+  unblinded_url: String!
 }
 
 type WalletMutations {
   broadcast_liquid_transaction: BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
   create_liquid_transaction: CreateLiquidTransaction!
+}
+
+type WalletQueries {
+  find_many: [SimpleWallet!]!
+  find_one(id: String!): Wallet!
+  id: String!
 }

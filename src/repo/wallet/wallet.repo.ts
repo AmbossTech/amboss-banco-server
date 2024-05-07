@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { WalletAccountDetailsType } from 'src/api/wallet/wallet.types';
+import {
+  GetAccountWalletsResult,
+  WalletAccountDetailsType,
+} from 'src/api/wallet/wallet.types';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 
 @Injectable()
@@ -10,20 +13,25 @@ export class WalletRepoService {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }
 
-  // async getAccountWallets(account_id: string) {
-  //   return this.prisma.wallet_on_accounts.findMany({
-  //     where: { account_id },
-  //     include: { wallet: true },
-  //     orderBy: { created_at: 'desc' },
-  //   });
-  // }
+  async getAccountWallets(
+    account_id: string,
+  ): Promise<GetAccountWalletsResult[]> {
+    return this.prisma.wallet_on_accounts.findMany({
+      where: { account_id },
+      include: { wallet: { include: { wallet_account: true } } },
+      orderBy: { created_at: 'desc' },
+    });
+  }
 
-  // async getAccountWallet(account_id: string, wallet_id: string) {
-  //   return this.prisma.wallet_on_accounts.findUnique({
-  //     where: { account_id_wallet_id: { wallet_id, account_id } },
-  //     include: { wallet: true },
-  //   });
-  // }
+  async getAccountWallet(
+    account_id: string,
+    wallet_id: string,
+  ): Promise<GetAccountWalletsResult | null> {
+    return this.prisma.wallet_on_accounts.findUnique({
+      where: { account_id_wallet_id: { wallet_id, account_id } },
+      include: { wallet: { include: { wallet_account: true } } },
+    });
+  }
 
   // async getAccountWalletAccount(id: string, account_id: string) {
   //   return this.prisma.wallet.findUnique({

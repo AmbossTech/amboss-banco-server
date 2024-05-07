@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ApiModule } from './api/api.module';
 import configuration from './libs/config/configuration';
 import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './libs/redis/redis.module';
 
 @Module({
   imports: [
@@ -22,6 +23,9 @@ import { AuthModule } from './auth/auth.module';
 
     // GraphQL
     GraphqlModule,
+
+    // Caching
+    RedisModule,
 
     // Config
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),

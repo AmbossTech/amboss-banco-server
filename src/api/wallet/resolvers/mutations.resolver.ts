@@ -4,7 +4,7 @@ import {
   ReducedAccountInfo,
   WalletAccountType,
   WalletMutations,
-} from './wallet.types';
+} from '../wallet.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { fruitNameGenerator } from 'src/utils/names/names';
