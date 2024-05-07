@@ -2,6 +2,30 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type BroadcastLiquidTransaction {
+  tx_id: String!
+}
+
+input CreateAccountInput {
+  liquid_descriptor: String!
+  name: String
+  type: WalletAccountType!
+}
+
+type CreateLiquidTransaction {
+  base_64: String!
+}
+
+type CreateWallet {
+  id: String!
+}
+
+input CreateWalletInput {
+  accounts: [CreateAccountInput!]!
+  name: String
+  vault: String
+}
+
 input LoginInput {
   email: String!
   master_password_hash: String!
@@ -13,6 +37,7 @@ type Mutation {
   logout: Boolean!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
+  wallets: WalletMutations!
 }
 
 type NewAccount {
@@ -49,4 +74,15 @@ input SignUpInput {
 type User {
   email: String!
   id: String!
+  symmetric_key_iv: String!
+}
+
+enum WalletAccountType {
+  LIQUID
+}
+
+type WalletMutations {
+  broadcast_liquid_transaction: BroadcastLiquidTransaction!
+  create(input: CreateWalletInput!): CreateWallet!
+  create_liquid_transaction: CreateLiquidTransaction!
 }
