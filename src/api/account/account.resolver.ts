@@ -192,10 +192,10 @@ export class AccountResolver {
     const { accessToken, refreshToken } =
       await this.authService.getTokens(user_id);
 
-    const hashedRefreshToken =
-      await this.cryptoService.argon2Hash(refreshToken);
+    // const hashedRefreshToken =
+    //   await this.cryptoService.argon2Hash(refreshToken);
 
-    await this.accountRepo.updateRefreshToken(user_id, hashedRefreshToken);
+    // await this.accountRepo.updateRefreshToken(user_id, hashedRefreshToken);
 
     const cookieOptions: CookieOptions = {
       httpOnly: true,
@@ -203,7 +203,7 @@ export class AccountResolver {
       sameSite: true,
     };
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
+    // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
     res.cookie('amboss_banco_access_token', accessToken, cookieOptions);
 
     return {
