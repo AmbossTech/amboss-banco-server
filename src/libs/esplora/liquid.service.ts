@@ -74,18 +74,18 @@ export class EsploraLiquidService {
   //   return response.text();
   // }
 
-  // async postTransactionHex(tx_hex: string) {
-  //   const response = await fetch(`${this.url}/api/tx`, {
-  //     body: tx_hex,
-  //     method: 'POST',
-  //   });
+  async postTransactionHex(tx_hex: string) {
+    const response = await fetch(`${this.url}/api/tx`, {
+      body: tx_hex,
+      method: 'POST',
+    });
 
-  //   const status = response.status;
+    const status = response.status;
 
-  //   console.log(status);
+    console.log(status);
 
-  //   return response.text();
-  // }
+    return response.text();
+  }
 
   async getAssetInfo(asset_id: string) {
     const response = await fetch(`${this.url}/api/asset/${asset_id}`);

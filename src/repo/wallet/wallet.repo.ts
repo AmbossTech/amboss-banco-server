@@ -33,11 +33,28 @@ export class WalletRepoService {
     });
   }
 
-  // async getAccountWalletAccount(id: string, account_id: string) {
-  //   return this.prisma.wallet.findUnique({
-  //     where: { id, wallet_account: {} },
-  //   });
-  // }
+  async getAccountWalletAccount(account_id: string, wallet_account_id: string) {
+    const walletAccount = await this.prisma.wallet_account.findUnique({
+      where: { id: wallet_account_id },
+      include: { wallet: true },
+    });
+
+    if (!walletAccount) return null;
+
+    // Check that this wallet account is owned by this user
+    const walletOnAccount = await this.prisma.wallet_on_accounts.findUnique({
+      where: {
+        account_id_wallet_id: {
+          account_id,
+          wallet_id: walletAccount.wallet_id,
+        },
+      },
+    });
+
+    if (!walletOnAccount) return null;
+
+    return walletAccount;
+  }
 
   async createNewWallet({
     account_id,

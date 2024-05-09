@@ -6,6 +6,11 @@ type BroadcastLiquidTransaction {
   tx_id: String!
 }
 
+input BroadcastLiquidTransactionInput {
+  signed_pset: String!
+  wallet_account_id: String!
+}
+
 input CreateAccountInput {
   liquid_descriptor: String!
   name: String
@@ -16,6 +21,12 @@ type CreateLiquidTransaction {
   base_64: String!
 }
 
+input CreateLiquidTransactionInput {
+  fee_rate: Float!
+  recipients: [LiquidRecipient!]!
+  wallet_account_id: String!
+}
+
 type CreateWallet {
   id: String!
 }
@@ -24,6 +35,12 @@ input CreateWalletInput {
   accounts: [CreateAccountInput!]!
   name: String
   vault: String
+}
+
+input LiquidRecipient {
+  address: String!
+  amount: String!
+  asset_id: String
 }
 
 input LoginInput {
@@ -94,10 +111,12 @@ type Wallet {
   accounts: [WalletAccount!]!
   id: String!
   name: String!
+  vault: String!
 }
 
 type WalletAccount {
   account_type: WalletAccountType!
+  descriptor: String!
   id: String!
   liquid_assets: [WalletLiquidAsset!]!
   name: String!
@@ -126,7 +145,7 @@ type WalletLiquidAssetInfo {
 type WalletLiquidTransaction {
   balance: String!
   blinded_url: String!
-  block_height: String!
+  block_height: String
   date: String
   fee: String!
   id: String!
@@ -135,9 +154,9 @@ type WalletLiquidTransaction {
 }
 
 type WalletMutations {
-  broadcast_liquid_transaction: BroadcastLiquidTransaction!
+  broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
-  create_liquid_transaction: CreateLiquidTransaction!
+  create_liquid_transaction(input: CreateLiquidTransactionInput!): CreateLiquidTransaction!
 }
 
 type WalletQueries {

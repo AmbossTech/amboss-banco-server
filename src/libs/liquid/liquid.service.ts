@@ -5,10 +5,8 @@ import {
   Address,
   AssetId,
   EsploraClient,
-  Mnemonic,
   Network,
   Pset,
-  Signer,
   TxBuilder,
   Update,
   Wollet,
@@ -30,22 +28,22 @@ export class LiquidService {
   ) {}
 
   // FOR TESTING. This will be on the client in the future
-  async signPset(descriptor: string, base64: string): Promise<Pset> {
-    const mnemonic = this.config.getOrThrow('mnemonic');
+  // async signPset(descriptor: string, base64: string): Promise<Pset> {
+  //   const mnemonic = this.config.getOrThrow('mnemonic');
 
-    const network = Network.mainnet();
+  //   const network = Network.mainnet();
 
-    const signer = new Signer(new Mnemonic(mnemonic), network);
+  //   const signer = new Signer(new Mnemonic(mnemonic), network);
 
-    const psetFromBase64 = new Pset(base64);
-    const signedPset = signer.sign(psetFromBase64);
+  //   const psetFromBase64 = new Pset(base64);
+  //   const signedPset = signer.sign(psetFromBase64);
 
-    const wollet = await this.getUpdatedWallet(descriptor);
+  //   const wollet = await this.getUpdatedWallet(descriptor);
 
-    const finalizedPset = wollet.finalize(signedPset);
+  //   const finalizedPset = wollet.finalize(signedPset);
 
-    return finalizedPset;
-  }
+  //   return finalizedPset;
+  // }
 
   async createPset(
     descriptor: string,

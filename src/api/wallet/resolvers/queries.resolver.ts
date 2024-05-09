@@ -124,6 +124,11 @@ export class WalletAccountResolver {
   }
 
   @ResolveField()
+  async descriptor(@Parent() account: wallet_account) {
+    return (account.details as any).descriptor;
+  }
+
+  @ResolveField()
   async liquid_assets(
     @Parent() account: wallet_account,
   ): Promise<AssetParentType[]> {
@@ -163,6 +168,11 @@ export class WalletResolver {
   @ResolveField()
   name(@Parent() parent: GetAccountWalletsResult) {
     return parent.wallet.name;
+  }
+
+  @ResolveField()
+  vault(@Parent() parent: GetAccountWalletsResult) {
+    return parent.vault;
   }
 
   @ResolveField()

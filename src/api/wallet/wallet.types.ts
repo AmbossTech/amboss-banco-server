@@ -50,7 +50,7 @@ export class WalletLiquidTransaction {
   @Field()
   fee: string;
 
-  @Field()
+  @Field({ nullable: true })
   block_height: string;
 
   @Field({ nullable: true })
@@ -119,6 +119,9 @@ export class WalletAccount {
   @Field()
   name: string;
 
+  @Field()
+  descriptor: string;
+
   @Field(() => WalletAccountType)
   account_type: WalletAccountType;
 
@@ -133,6 +136,9 @@ export class Wallet {
 
   @Field()
   name: string;
+
+  @Field()
+  vault: string;
 
   @Field(() => [WalletAccount])
   accounts: WalletAccount[];
@@ -208,6 +214,15 @@ export class LiquidRecipient {
 
   @Field({ nullable: true })
   asset_id: string;
+}
+
+@InputType()
+export class BroadcastLiquidTransactionInput {
+  @Field()
+  wallet_account_id: string;
+
+  @Field()
+  signed_pset: string;
 }
 
 @InputType()
