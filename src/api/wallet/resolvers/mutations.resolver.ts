@@ -2,20 +2,20 @@ import { Args, Mutation, ResolveField, Resolver } from '@nestjs/graphql';
 import {
   BroadcastLiquidTransactionInput,
   CreateLiquidTransactionInput,
+  CreateOnchainAddressInput,
   CreateWalletInput,
   ReducedAccountInfo,
+  RefreshWalletInput,
   WalletAccountType,
   WalletMutations,
 } from '../wallet.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { fruitNameGenerator } from 'src/utils/names/names';
-import { eachSeries } from 'async';
+import { each, eachSeries } from 'async';
 import { GraphQLError } from 'graphql';
 import { LiquidService, getUpdateKey } from 'src/libs/liquid/liquid.service';
-import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
 import { RedisService } from 'src/libs/redis/redis.service';
-import { Pset } from 'lwk_wasm';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -23,8 +23,56 @@ export class WalletMutationsResolver {
     private redis: RedisService,
     private walletRepo: WalletRepoService,
     private liquidService: LiquidService,
-    private esploraLiquid: EsploraLiquidService,
   ) {}
+
+  @ResolveField()
+  async refresh_wallet(
+    @Args('input') input: RefreshWalletInput,
+    @CurrentUser() { user_id }: any,
+  ) {
+    const wallet = await this.walletRepo.getAccountWallet(
+      user_id,
+      input.wallet_id,
+    );
+
+    if (!wallet) {
+      throw new GraphQLError('Wallet account not found');
+    }
+
+    if (!wallet.wallet.wallet_account.length) {
+      return;
+    }
+
+    await each(wallet.wallet.wallet_account, async (w) => {
+      await this.liquidService.getUpdatedWallet(
+        (w.details as any).descriptor,
+        true,
+      );
+    });
+
+    return true;
+  }
+
+  @ResolveField()
+  async create_onchain_address(
+    @Args('input') input: CreateOnchainAddressInput,
+    @CurrentUser() { user_id }: any,
+  ) {
+    const walletAccount = await this.walletRepo.getAccountWalletAccount(
+      user_id,
+      input.wallet_account_id,
+    );
+
+    if (!walletAccount) {
+      throw new GraphQLError('Wallet account not found');
+    }
+
+    const address = await this.liquidService.getOnchainAddress(
+      (walletAccount.details as any).descriptor,
+    );
+
+    return { address: address.address().toString() };
+  }
 
   @ResolveField()
   async create(
@@ -116,13 +164,7 @@ export class WalletMutationsResolver {
       throw new GraphQLError('Wallet account not found');
     }
 
-    const pset = new Pset(input.signed_pset);
-
-    const tx_hex = pset.extractTx().toString();
-
-    console.log({ tx_hex });
-
-    const tx_id = await this.esploraLiquid.postTransactionHex(tx_hex);
+    const tx_id = await this.liquidService.broadcastPset(input.signed_pset);
 
     await this.redis.delete(
       getUpdateKey((walletAccount.details as any).descriptor),

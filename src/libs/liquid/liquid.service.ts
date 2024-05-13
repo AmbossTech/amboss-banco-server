@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { orderBy } from 'lodash';
 import {
   Address,
+  AddressResult,
   AssetId,
   EsploraClient,
   Network,
@@ -16,15 +17,20 @@ import { CreateLiquidTransactionInput } from '../../api/wallet/wallet.types';
 import { getWalletFromDescriptor } from './lwk.utils';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import { RedisService } from '../redis/redis.service';
+import { EsploraLiquidService } from '../esplora/liquid.service';
 
 export const getUpdateKey = (descriptor: string) =>
   `banco-walletdelta-${getSHA256Hash(descriptor)}-v4`;
+
+const getBlockedAddressKey = (address: string) =>
+  `banco-blocked-address-${address}`;
 
 @Injectable()
 export class LiquidService {
   constructor(
     private redis: RedisService,
     private config: ConfigService,
+    private esploraLiquid: EsploraLiquidService,
   ) {}
 
   // FOR TESTING. This will be on the client in the future
@@ -75,12 +81,16 @@ export class LiquidService {
     return txBuilder.finish(wollet);
   }
 
-  async getUpdate(wollet: Wollet, descriptor: string): Promise<Update | null> {
+  async getUpdate(
+    wollet: Wollet,
+    descriptor: string,
+    forceUpdate?: boolean,
+  ): Promise<Update | null> {
     const key = getUpdateKey(descriptor);
 
     const cachedUpdate = await this.redis.get<string>(key);
 
-    if (!!cachedUpdate) {
+    if (!!cachedUpdate && !forceUpdate) {
       const uint8array = Buffer.from(cachedUpdate, 'hex');
       return new Update(uint8array);
     }
@@ -89,7 +99,17 @@ export class LiquidService {
 
     const client = new EsploraClient(liquidEsploraUrl + '/api');
 
+    const start = new Date();
+    console.log({ start: start.toISOString() });
+
     const update = await client.fullScan(wollet);
+
+    const end = new Date();
+
+    console.log({
+      end: end.toISOString(),
+      duration: end.getTime() - start.getTime(),
+    });
 
     if (update) {
       const uint8array = update.serialize();
@@ -103,10 +123,23 @@ export class LiquidService {
     return null;
   }
 
-  async getUpdatedWallet(descriptor: string): Promise<Wollet> {
+  async broadcastPset(base64_pset: string): Promise<string> {
+    const pset = new Pset(base64_pset);
+
+    const tx_hex = pset.extractTx().toString();
+
+    const tx_id = await this.esploraLiquid.postTransactionHex(tx_hex);
+
+    return tx_id;
+  }
+
+  async getUpdatedWallet(
+    descriptor: string,
+    forceUpdate?: boolean,
+  ): Promise<Wollet> {
     const wollet = getWalletFromDescriptor(descriptor);
 
-    const update = await this.getUpdate(wollet, descriptor);
+    const update = await this.getUpdate(wollet, descriptor, forceUpdate);
 
     if (update) {
       wollet.applyUpdate(update);
@@ -146,5 +179,28 @@ export class LiquidService {
     const wollet = await this.getUpdatedWallet(descriptor);
     const txs = wollet.transactions();
     return orderBy(txs, (t) => t.timestamp(), 'desc');
+  }
+
+  async getOnchainAddress(descriptor: string): Promise<AddressResult> {
+    const wollet = await this.getUpdatedWallet(descriptor);
+
+    let lastUsedIndex = wollet.address().index();
+    let foundLastUnused = false;
+
+    while (!foundLastUnused) {
+      const address = wollet.address(lastUsedIndex).address().toString();
+
+      const addressBlocked = await this.redis.get(
+        getBlockedAddressKey(address),
+      );
+
+      if (!addressBlocked) {
+        foundLastUnused = true;
+      } else {
+        lastUsedIndex++;
+      }
+    }
+
+    return wollet.address(lastUsedIndex);
   }
 }

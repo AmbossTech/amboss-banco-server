@@ -25,6 +25,12 @@ export class CreateWallet {
 }
 
 @ObjectType()
+export class CreateOnchainAddress {
+  @Field()
+  address: string;
+}
+
+@ObjectType()
 export class CreateLiquidTransaction {
   @Field()
   base_64: string;
@@ -173,11 +179,17 @@ export class WalletMutations {
   @Field(() => CreateWallet)
   create: CreateWallet;
 
+  @Field(() => CreateOnchainAddress)
+  create_onchain_address: CreateOnchainAddress;
+
   @Field(() => CreateLiquidTransaction)
   create_liquid_transaction: CreateLiquidTransaction;
 
   @Field(() => BroadcastLiquidTransaction)
   broadcast_liquid_transaction: BroadcastLiquidTransaction;
+
+  @Field(() => Boolean)
+  refresh_wallet: boolean;
 }
 
 @InputType()
@@ -202,6 +214,18 @@ export class CreateWalletInput {
 
   @Field(() => [CreateAccountInput])
   accounts: CreateAccountInput[];
+}
+
+@InputType()
+export class CreateOnchainAddressInput {
+  @Field(() => String)
+  wallet_account_id: string;
+}
+
+@InputType()
+export class RefreshWalletInput {
+  @Field(() => String)
+  wallet_id: string;
 }
 
 @InputType()

@@ -27,6 +27,14 @@ input CreateLiquidTransactionInput {
   wallet_account_id: String!
 }
 
+type CreateOnchainAddress {
+  address: String!
+}
+
+input CreateOnchainAddressInput {
+  wallet_account_id: String!
+}
+
 type CreateWallet {
   id: String!
 }
@@ -78,6 +86,10 @@ type RefreshToken {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+input RefreshWalletInput {
+  wallet_id: String!
 }
 
 input SignUpInput {
@@ -157,6 +169,8 @@ type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
   create_liquid_transaction(input: CreateLiquidTransactionInput!): CreateLiquidTransaction!
+  create_onchain_address(input: CreateOnchainAddressInput!): CreateOnchainAddress!
+  refresh_wallet(input: RefreshWalletInput!): Boolean!
 }
 
 type WalletQueries {
