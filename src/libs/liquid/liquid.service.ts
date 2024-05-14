@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { orderBy } from 'lodash';
 import {
   Address,
   AddressResult,
@@ -148,38 +147,38 @@ export class LiquidService {
     return wollet;
   }
 
-  async getBalances(descriptor: string): Promise<Map<string, number>> {
-    const wollet = await this.getUpdatedWallet(descriptor);
+  // async getBalances(descriptor: string): Promise<Map<string, number>> {
+  //   const wollet = await this.getUpdatedWallet(descriptor);
 
-    return wollet.balance();
-  }
+  //   return wollet.balance();
+  // }
 
-  async getNewAddress(descriptor: string) {
-    await this.getBalances(descriptor);
+  // async getNewAddress(descriptor: string) {
+  //   await this.getBalances(descriptor);
 
-    const wollet = await this.getUpdatedWallet(descriptor);
+  //   const wollet = await this.getUpdatedWallet(descriptor);
 
-    const nextAddress = wollet
-      .address()
-      .address()
-      .toUnconfidential()
-      .toString();
+  //   const nextAddress = wollet
+  //     .address()
+  //     .address()
+  //     .toUnconfidential()
+  //     .toString();
 
-    console.log(nextAddress);
+  //   console.log(nextAddress);
 
-    const addressesToCheck = Array.from(Array(10).keys()).map((i) => {
-      return wollet.address(i).address().toUnconfidential().toString();
-    });
-    console.log(addressesToCheck);
+  //   const addressesToCheck = Array.from(Array(10).keys()).map((i) => {
+  //     return wollet.address(i).address().toUnconfidential().toString();
+  //   });
+  //   console.log(addressesToCheck);
 
-    await this.getTransactions(descriptor);
-  }
+  //   await this.getTransactions(descriptor);
+  // }
 
-  async getTransactions(descriptor: string) {
-    const wollet = await this.getUpdatedWallet(descriptor);
-    const txs = wollet.transactions();
-    return orderBy(txs, (t) => t.timestamp(), 'desc');
-  }
+  // async getTransactions(descriptor: string) {
+  //   const wollet = await this.getUpdatedWallet(descriptor);
+  //   const txs = wollet.transactions();
+  //   return orderBy(txs, (t) => t.timestamp(), 'desc');
+  // }
 
   async getOnchainAddress(descriptor: string): Promise<AddressResult> {
     const wollet = await this.getUpdatedWallet(descriptor);

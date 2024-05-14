@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import {
-  GetAccountWalletsResult,
-  WalletAccountDetailsType,
-} from 'src/api/wallet/wallet.types';
+import { GetAccountWalletsResult } from 'src/api/wallet/wallet.types';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
+import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
 
 @Injectable()
 export class WalletRepoService {
@@ -60,12 +58,12 @@ export class WalletRepoService {
     account_id,
     is_owner,
     name,
-    vault,
+    details,
   }: {
     account_id: string;
     is_owner: boolean;
     name: string;
-    vault: string | undefined;
+    details: WalletDetailsType;
   }) {
     return this.prisma.wallet.create({
       data: {
@@ -73,7 +71,7 @@ export class WalletRepoService {
         accounts: {
           create: {
             is_owner,
-            vault,
+            details,
             account: { connect: { id: account_id } },
           },
         },

@@ -6,7 +6,6 @@ import {
   CreateWalletInput,
   ReducedAccountInfo,
   RefreshWalletInput,
-  WalletAccountType,
   WalletMutations,
 } from '../wallet.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
@@ -16,6 +15,7 @@ import { each, eachSeries } from 'async';
 import { GraphQLError } from 'graphql';
 import { LiquidService, getUpdateKey } from 'src/libs/liquid/liquid.service';
 import { RedisService } from 'src/libs/redis/redis.service';
+import { WalletAccountType, WalletType } from 'src/repo/wallet/wallet.types';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -44,10 +44,7 @@ export class WalletMutationsResolver {
     }
 
     await each(wallet.wallet.wallet_account, async (w) => {
-      await this.liquidService.getUpdatedWallet(
-        (w.details as any).descriptor,
-        true,
-      );
+      await this.liquidService.getUpdatedWallet(w.details.descriptor, true);
     });
 
     return true;
@@ -68,7 +65,7 @@ export class WalletMutationsResolver {
     }
 
     const address = await this.liquidService.getOnchainAddress(
-      (walletAccount.details as any).descriptor,
+      walletAccount.details.descriptor,
     );
 
     return { address: address.address().toString() };
@@ -105,11 +102,26 @@ export class WalletMutationsResolver {
       walletName = `Wallet ${countWallets + 1}`;
     }
 
+    const details = input.details;
+
+    if (details.type !== WalletType.CLIENT_GENERATED) {
+      throw new GraphQLError('Error creating this wallet type');
+    }
+
+    if (!details.protected_mnemonic) {
+      throw new GraphQLError(
+        'Client wallet requires you to push an encrypted mnemonic',
+      );
+    }
+
     const newWallet = await this.walletRepo.createNewWallet({
       account_id: user_id,
       is_owner: true,
       name: walletName,
-      vault: input.vault || undefined,
+      details: {
+        type: details.type,
+        protected_mnemonic: details.protected_mnemonic,
+      },
     });
 
     await eachSeries(mapped, async (info) => {
@@ -136,12 +148,12 @@ export class WalletMutationsResolver {
       throw new GraphQLError('Wallet account not found');
     }
 
-    if ((walletAccount.details as any).type !== WalletAccountType.LIQUID) {
+    if (walletAccount.details.type !== WalletAccountType.LIQUID) {
       throw new GraphQLError('Invalid wallet account id');
     }
 
     const pset = await this.liquidService.createPset(
-      (walletAccount.details as any).descriptor,
+      walletAccount.details.descriptor,
       input,
     );
 
@@ -166,9 +178,7 @@ export class WalletMutationsResolver {
 
     const tx_id = await this.liquidService.broadcastPset(input.signed_pset);
 
-    await this.redis.delete(
-      getUpdateKey((walletAccount.details as any).descriptor),
-    );
+    await this.redis.delete(getUpdateKey(walletAccount.details.descriptor));
 
     return { tx_id };
   }

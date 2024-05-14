@@ -5,10 +5,12 @@ import {
   WalletMutationsResolver,
 } from './resolvers/mutations.resolver';
 import {
+  LiquidAccountResolver,
   MainWalletQueriesResolver,
   SimpleWalletAccountResolver,
   SimpleWalletResolver,
   WalletAccountResolver,
+  WalletDetailsResolver,
   WalletLiquidAssetInfoResolver,
   WalletLiquidAssetResolver,
   WalletLiquidTransactionResolver,
@@ -32,6 +34,8 @@ import { LiquidModule } from 'src/libs/liquid/liquid.module';
     SimpleWalletResolver,
     WalletQueriesResolver,
     MainWalletQueriesResolver,
+    LiquidAccountResolver,
+    WalletDetailsResolver,
   ],
 })
 export class WalletModule {}

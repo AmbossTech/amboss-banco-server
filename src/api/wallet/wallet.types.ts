@@ -5,17 +5,14 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { wallet, wallet_account, wallet_on_accounts } from '@prisma/client';
-import { WalletTx } from 'lwk_wasm';
+import { WalletTx, Wollet } from 'lwk_wasm';
+import {
+  WalletAccountDetailsType,
+  WalletAccountType,
+  WalletType,
+} from 'src/repo/wallet/wallet.types';
 
-export enum WalletAccountType {
-  LIQUID = 'LIQUID',
-}
-
-export type WalletAccountDetailsType = {
-  type: WalletAccountType.LIQUID;
-  descriptor: string;
-};
-
+registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
 
 @ObjectType()
@@ -43,7 +40,40 @@ export class BroadcastLiquidTransaction {
 }
 
 @ObjectType()
-export class WalletLiquidTransaction {
+export class LiquidAssetInfo {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  ticker: string;
+
+  @Field()
+  precision: number;
+
+  @Field()
+  is_featured: boolean;
+}
+
+@ObjectType()
+export class LiquidAsset {
+  @Field()
+  id: string;
+
+  @Field()
+  asset_id: string;
+
+  @Field(() => LiquidAssetInfo)
+  asset_info: LiquidAssetInfo;
+
+  @Field()
+  balance: string;
+}
+
+@ObjectType()
+export class LiquidTransaction {
   @Field()
   id: string;
 
@@ -67,42 +97,24 @@ export class WalletLiquidTransaction {
 
   @Field()
   unblinded_url: string;
-}
-
-@ObjectType()
-export class WalletLiquidAssetInfo {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  ticker: string;
-
-  @Field()
-  precision: number;
-
-  @Field()
-  is_featured: boolean;
-}
-
-@ObjectType()
-export class WalletLiquidAsset {
-  @Field()
-  id: string;
 
   @Field()
   asset_id: string;
 
-  @Field(() => WalletLiquidAssetInfo)
-  asset_info: WalletLiquidAssetInfo;
+  @Field(() => LiquidAssetInfo)
+  asset_info: LiquidAssetInfo;
+}
 
+@ObjectType()
+export class LiquidAccount {
   @Field()
-  balance: string;
+  id: string;
 
-  @Field(() => [WalletLiquidTransaction])
-  transactions: WalletLiquidTransaction[];
+  @Field(() => [LiquidAsset])
+  assets: LiquidAsset[];
+
+  @Field(() => [LiquidTransaction])
+  transactions: LiquidTransaction[];
 }
 
 @ObjectType()
@@ -131,8 +143,20 @@ export class WalletAccount {
   @Field(() => WalletAccountType)
   account_type: WalletAccountType;
 
-  @Field(() => [WalletLiquidAsset])
-  liquid_assets: WalletLiquidAsset[];
+  @Field(() => LiquidAccount, { nullable: true })
+  liquid: LiquidAccount | null;
+}
+
+@ObjectType()
+export class WalletDetails {
+  @Field()
+  id: string;
+
+  @Field(() => WalletType)
+  type: WalletType;
+
+  @Field({ nullable: true })
+  protected_mnemonic: string;
 }
 
 @ObjectType()
@@ -143,8 +167,8 @@ export class Wallet {
   @Field()
   name: string;
 
-  @Field()
-  vault: string;
+  @Field(() => WalletDetails)
+  details: WalletDetails;
 
   @Field(() => [WalletAccount])
   accounts: WalletAccount[];
@@ -205,12 +229,21 @@ export class CreateAccountInput {
 }
 
 @InputType()
+export class CreateWalletDetailsInput {
+  @Field(() => WalletType)
+  type: WalletType;
+
+  @Field(() => String, { nullable: true })
+  protected_mnemonic: string | null;
+}
+
+@InputType()
 export class CreateWalletInput {
   @Field(() => String, { nullable: true })
   name: string | null;
 
-  @Field(() => String, { nullable: true })
-  vault: string | null;
+  @Field(() => CreateWalletDetailsInput)
+  details: CreateWalletDetailsInput;
 
   @Field(() => [CreateAccountInput])
   accounts: CreateAccountInput[];
@@ -265,7 +298,13 @@ export type AssetParentType = {
   wallet_id: string;
   asset_id: string;
   balance: number;
-  txs: WalletTx[];
+  // txs: WalletTx[];
+};
+
+export type LiquidAccountParentType = {
+  descriptor: string;
+  walletAccount: wallet_account;
+  wollet: Wollet;
 };
 
 export type WalletTxWithAssetId = {

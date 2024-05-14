@@ -39,16 +39,55 @@ type CreateWallet {
   id: String!
 }
 
+input CreateWalletDetailsInput {
+  protected_mnemonic: String
+  type: WalletType!
+}
+
 input CreateWalletInput {
   accounts: [CreateAccountInput!]!
+  details: CreateWalletDetailsInput!
   name: String
-  vault: String
+}
+
+type LiquidAccount {
+  assets: [LiquidAsset!]!
+  id: String!
+  transactions: [LiquidTransaction!]!
+}
+
+type LiquidAsset {
+  asset_id: String!
+  asset_info: LiquidAssetInfo!
+  balance: String!
+  id: String!
+}
+
+type LiquidAssetInfo {
+  id: String!
+  is_featured: Boolean!
+  name: String!
+  precision: Float!
+  ticker: String!
 }
 
 input LiquidRecipient {
   address: String!
   amount: String!
   asset_id: String
+}
+
+type LiquidTransaction {
+  asset_id: String!
+  asset_info: LiquidAssetInfo!
+  balance: String!
+  blinded_url: String!
+  block_height: String
+  date: String
+  fee: String!
+  id: String!
+  tx_id: String!
+  unblinded_url: String!
 }
 
 input LoginInput {
@@ -121,16 +160,16 @@ type User {
 
 type Wallet {
   accounts: [WalletAccount!]!
+  details: WalletDetails!
   id: String!
   name: String!
-  vault: String!
 }
 
 type WalletAccount {
   account_type: WalletAccountType!
   descriptor: String!
   id: String!
-  liquid_assets: [WalletLiquidAsset!]!
+  liquid: LiquidAccount
   name: String!
 }
 
@@ -138,31 +177,10 @@ enum WalletAccountType {
   LIQUID
 }
 
-type WalletLiquidAsset {
-  asset_id: String!
-  asset_info: WalletLiquidAssetInfo!
-  balance: String!
+type WalletDetails {
   id: String!
-  transactions: [WalletLiquidTransaction!]!
-}
-
-type WalletLiquidAssetInfo {
-  id: String!
-  is_featured: Boolean!
-  name: String!
-  precision: Float!
-  ticker: String!
-}
-
-type WalletLiquidTransaction {
-  balance: String!
-  blinded_url: String!
-  block_height: String
-  date: String
-  fee: String!
-  id: String!
-  tx_id: String!
-  unblinded_url: String!
+  protected_mnemonic: String
+  type: WalletType!
 }
 
 type WalletMutations {
@@ -177,4 +195,8 @@ type WalletQueries {
   find_many: [SimpleWallet!]!
   find_one(id: String!): Wallet!
   id: String!
+}
+
+enum WalletType {
+  CLIENT_GENERATED
 }

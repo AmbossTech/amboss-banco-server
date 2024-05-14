@@ -1,9 +1,25 @@
 -- CreateTable
+CREATE TABLE "account" (
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "email" VARCHAR NOT NULL,
+    "password_hint" VARCHAR,
+    "master_password_hash" VARCHAR NOT NULL,
+    "symmetric_key_iv" VARCHAR NOT NULL,
+    "protected_symmetric_key" VARCHAR NOT NULL,
+    "refresh_token_hash" VARCHAR,
+    "key_pair" JSONB NOT NULL,
+
+    CONSTRAINT "account_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "wallet_on_accounts" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_owner" BOOLEAN NOT NULL,
-    "vault" VARCHAR,
+    "details" JSONB NOT NULL,
     "account_id" UUID NOT NULL,
     "wallet_id" UUID NOT NULL,
 
@@ -31,6 +47,9 @@ CREATE TABLE "wallet_account" (
 
     CONSTRAINT "wallet_account_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 
 -- AddForeignKey
 ALTER TABLE "wallet_on_accounts" ADD CONSTRAINT "wallet_on_accounts_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

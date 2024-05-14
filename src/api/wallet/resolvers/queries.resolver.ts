@@ -11,12 +11,14 @@ import {
   SimpleWalletAccount,
   Wallet,
   WalletAccount,
-  WalletAccountType,
-  WalletLiquidAsset,
-  WalletLiquidAssetInfo,
-  WalletLiquidTransaction,
+  LiquidAsset,
+  LiquidAssetInfo,
+  LiquidTransaction,
   WalletQueries,
   WalletTxWithAssetId,
+  LiquidAccountParentType,
+  LiquidAccount,
+  WalletDetails,
 } from '../wallet.types';
 import {
   alwaysPresentAssets,
@@ -26,9 +28,15 @@ import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
+import {
+  WalletAccountDetailsType,
+  WalletAccountType,
+} from 'src/repo/wallet/wallet.types';
 
-@Resolver(WalletLiquidTransaction)
+@Resolver(LiquidTransaction)
 export class WalletLiquidTransactionResolver {
+  constructor(private mempoolLiquid: EsploraLiquidService) {}
+
   @ResolveField()
   id(@Parent() { tx, asset_id }: WalletTxWithAssetId) {
     return v5(tx.txid().toString() + asset_id, v5.URL);
@@ -70,12 +78,22 @@ export class WalletLiquidTransactionResolver {
   unblinded_url(@Parent() { tx }: WalletTxWithAssetId) {
     return tx.unblindedUrl('https://blockstream.info/liquid/');
   }
+
+  @ResolveField()
+  async asset_info(@Parent() { asset_id }: WalletTxWithAssetId) {
+    const featured = featuredLiquidAssets.mainnet[asset_id];
+
+    if (featured) return { ...featured, is_featured: true, id: asset_id };
+
+    const apiInfo = await this.mempoolLiquid.getAssetInfo(asset_id);
+    return { ...apiInfo, is_featured: false, id: asset_id };
+  }
 }
 
-@Resolver(WalletLiquidAssetInfo)
+@Resolver(LiquidAssetInfo)
 export class WalletLiquidAssetInfoResolver {}
 
-@Resolver(WalletLiquidAsset)
+@Resolver(LiquidAsset)
 export class WalletLiquidAssetResolver {
   constructor(private mempoolLiquid: EsploraLiquidService) {}
 
@@ -94,15 +112,63 @@ export class WalletLiquidAssetResolver {
     return { ...apiInfo, is_featured: false, id: asset_id };
   }
 
-  @ResolveField()
-  transactions(
-    @Parent() { asset_id, txs }: AssetParentType,
-  ): WalletTxWithAssetId[] {
-    const assetTxs = txs
-      .filter((t) => t.balance().get(asset_id))
-      .map((tx) => ({ tx, asset_id }));
+  // @ResolveField()
+  // transactions(
+  //   @Parent() { asset_id, txs }: AssetParentType,
+  // ): WalletTxWithAssetId[] {
+  //   const assetTxs = txs
+  //     .filter((t) => t.balance().get(asset_id))
+  //     .map((tx) => ({ tx, asset_id }));
 
-    return assetTxs;
+  //   return assetTxs;
+  // }
+}
+
+@Resolver(LiquidAccount)
+export class LiquidAccountResolver {
+  @ResolveField()
+  id(@Parent() { descriptor }: LiquidAccountParentType) {
+    return v5(descriptor, v5.URL);
+  }
+
+  @ResolveField()
+  assets(
+    @Parent() { walletAccount, wollet }: LiquidAccountParentType,
+  ): AssetParentType[] {
+    const balances = wollet.balance();
+
+    const alwaysShownBalances = new Map<string, number>();
+
+    alwaysPresentAssets.mainnet.forEach((a) => alwaysShownBalances.set(a, 0));
+
+    const mergedAssets = new Map<string, number>([
+      ...alwaysShownBalances,
+      ...balances,
+    ]);
+
+    const balanceArray = Array.from(mergedAssets, ([asset_id, balance]) => ({
+      wallet_id: walletAccount.id,
+      asset_id,
+      balance,
+    }));
+
+    return orderBy(balanceArray, 'asset_id', 'desc');
+  }
+
+  @ResolveField()
+  transactions(@Parent() { wollet }: LiquidAccountParentType) {
+    const txs = wollet.transactions();
+
+    const transactions: WalletTxWithAssetId[] = [];
+
+    txs.forEach((tx) => {
+      const balances: Map<string, number> = tx.balance();
+      balances.forEach((_, key) => transactions.push({ tx, asset_id: key }));
+    });
+
+    const ordered = orderBy(transactions, (t) => t.tx.timestamp(), 'desc');
+
+    return ordered;
   }
 }
 
@@ -110,7 +176,7 @@ export class WalletLiquidAssetResolver {
 export class SimpleWalletAccountResolver {
   @ResolveField()
   async account_type(@Parent() account: wallet_account) {
-    return (account.details as any).type;
+    return account.details.type;
   }
 }
 
@@ -120,41 +186,53 @@ export class WalletAccountResolver {
 
   @ResolveField()
   async account_type(@Parent() account: wallet_account) {
-    return (account.details as any).type;
+    return account.details.type;
   }
 
   @ResolveField()
   async descriptor(@Parent() account: wallet_account) {
-    return (account.details as any).descriptor;
+    return account.details.descriptor;
   }
 
   @ResolveField()
-  async liquid_assets(
+  async liquid(
     @Parent() account: wallet_account,
-  ): Promise<AssetParentType[]> {
-    if ((account.details as any).type !== WalletAccountType.LIQUID) {
-      return [];
+  ): Promise<LiquidAccountParentType | null> {
+    if (account.details.type !== WalletAccountType.LIQUID) {
+      return null;
     }
 
-    const { descriptor } = account.details as any;
+    const { descriptor } = account.details;
 
-    const balances = await this.liquidService.getBalances(descriptor);
-    const txs = await this.liquidService.getTransactions(descriptor);
+    const wollet = await this.liquidService.getUpdatedWallet(descriptor);
 
-    const alwaysShownBalances = new Map<string, number>();
+    return { descriptor, walletAccount: account, wollet };
 
-    alwaysPresentAssets.mainnet.forEach((a) => alwaysShownBalances.set(a, 0));
+    // const balances = await this.liquidService.getBalances(descriptor);
+    // const txs = await this.liquidService.getTransactions(descriptor);
 
-    const mergedAssets = new Map([...alwaysShownBalances, ...balances]);
+    // const alwaysShownBalances = new Map<string, number>();
 
-    const balanceArray = Array.from(mergedAssets, ([asset_id, balance]) => ({
-      wallet_id: account.id,
-      asset_id,
-      balance,
-      txs,
-    }));
+    // alwaysPresentAssets.mainnet.forEach((a) => alwaysShownBalances.set(a, 0));
 
-    return orderBy(balanceArray, 'asset_id', 'desc');
+    // const mergedAssets = new Map([...alwaysShownBalances, ...balances]);
+
+    // const balanceArray = Array.from(mergedAssets, ([asset_id, balance]) => ({
+    //   wallet_id: account.id,
+    //   asset_id,
+    //   balance,
+    //   txs,
+    // }));
+
+    // return orderBy(balanceArray, 'asset_id', 'desc');
+  }
+}
+
+@Resolver(WalletDetails)
+export class WalletDetailsResolver {
+  @ResolveField()
+  id(@Parent() parent: WalletAccountDetailsType) {
+    return v5(JSON.stringify(parent), v5.URL);
   }
 }
 
@@ -171,8 +249,8 @@ export class WalletResolver {
   }
 
   @ResolveField()
-  vault(@Parent() parent: GetAccountWalletsResult) {
-    return parent.vault;
+  details(@Parent() parent: GetAccountWalletsResult) {
+    return parent.details;
   }
 
   @ResolveField()
