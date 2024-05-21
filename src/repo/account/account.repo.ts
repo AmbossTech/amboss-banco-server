@@ -10,6 +10,13 @@ export class AccountRepo {
     return this.prisma.account.findUnique({ where: { id } });
   }
 
+  findOneByIdWithWalletIds(id: string) {
+    return this.prisma.account.findUnique({
+      where: { id },
+      select: { wallets: { select: { wallet_id: true } } },
+    });
+  }
+
   findOne(email: string) {
     return this.prisma.account.findUnique({ where: { email } });
   }

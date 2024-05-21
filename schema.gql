@@ -153,6 +153,7 @@ type SimpleWalletAccount {
 }
 
 type User {
+  default_wallet_id: String
   email: String!
   id: String!
   symmetric_key_iv: String!

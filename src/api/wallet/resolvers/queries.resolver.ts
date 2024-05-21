@@ -292,7 +292,10 @@ export class WalletQueriesResolver {
   }
 
   @ResolveField()
-  async find_one(@Args('id') id: string, @CurrentUser() { user_id }: any) {
+  async find_one(
+    @Args('id') id: string,
+    @CurrentUser() { user_id }: any,
+  ): Promise<GetAccountWalletsResult> {
     const wallet = await this.walletRepo.getAccountWallet(user_id, id);
 
     if (!wallet) {

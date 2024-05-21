@@ -10,6 +10,9 @@ export class User {
 
   @Field()
   symmetric_key_iv: string;
+
+  @Field(() => String, { nullable: true })
+  default_wallet_id: string | null;
 }
 
 @ObjectType()

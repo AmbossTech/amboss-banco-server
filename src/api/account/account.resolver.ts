@@ -1,4 +1,11 @@
-import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Context,
+  Mutation,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import {
   LoginInput,
   NewAccount,
@@ -15,6 +22,22 @@ import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { UseGuards } from '@nestjs/common';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
 import { GraphQLError } from 'graphql';
+
+@Resolver(User)
+export class UserResolver {
+  constructor(private accountRepo: AccountRepo) {}
+
+  @ResolveField()
+  async default_wallet_id(
+    @CurrentUser() { user_id }: any,
+  ): Promise<string | null> {
+    const account = await this.accountRepo.findOneByIdWithWalletIds(user_id);
+
+    if (!account?.wallets.length) return null;
+
+    return account.wallets[0].wallet_id;
+  }
+}
 
 @Resolver()
 export class AccountResolver {
