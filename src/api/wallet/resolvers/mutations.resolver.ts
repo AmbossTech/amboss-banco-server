@@ -122,6 +122,7 @@ export class WalletMutationsResolver {
         type: details.type,
         protected_mnemonic: details.protected_mnemonic,
       },
+      secp256k1_key_pair: input.secp256k1_key_pair,
     });
 
     await eachSeries(mapped, async (info) => {

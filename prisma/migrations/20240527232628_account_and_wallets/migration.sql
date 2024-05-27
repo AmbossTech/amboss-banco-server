@@ -19,6 +19,8 @@ CREATE TABLE "wallet_on_accounts" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_owner" BOOLEAN NOT NULL,
+    "lightning_address" VARCHAR,
+    "secp256k1_key_pair" JSONB NOT NULL,
     "details" JSONB NOT NULL,
     "account_id" UUID NOT NULL,
     "wallet_id" UUID NOT NULL,
@@ -50,6 +52,9 @@ CREATE TABLE "wallet_account" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "wallet_on_accounts_lightning_address_key" ON "wallet_on_accounts"("lightning_address");
 
 -- AddForeignKey
 ALTER TABLE "wallet_on_accounts" ADD CONSTRAINT "wallet_on_accounts_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

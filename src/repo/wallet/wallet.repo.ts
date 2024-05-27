@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { GetAccountWalletsResult } from 'src/api/wallet/wallet.types';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
+import { Secp256k1KeyPairType } from '../account/account.types';
+import { lnAddressGenerator } from 'src/utils/names/names';
 
 @Injectable()
 export class WalletRepoService {
@@ -59,11 +61,13 @@ export class WalletRepoService {
     is_owner,
     name,
     details,
+    secp256k1_key_pair,
   }: {
     account_id: string;
     is_owner: boolean;
     name: string;
     details: WalletDetailsType;
+    secp256k1_key_pair: Secp256k1KeyPairType;
   }) {
     return this.prisma.wallet.create({
       data: {
@@ -71,8 +75,10 @@ export class WalletRepoService {
         accounts: {
           create: {
             is_owner,
+            secp256k1_key_pair,
             details,
             account: { connect: { id: account_id } },
+            lightning_address: lnAddressGenerator(),
           },
         },
       },

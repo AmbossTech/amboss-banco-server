@@ -11,6 +11,7 @@ import {
   WalletAccountType,
   WalletType,
 } from 'src/repo/wallet/wallet.types';
+import { Secp256k1KeyPairInput } from '../account/account.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
@@ -247,6 +248,9 @@ export class CreateWalletInput {
 
   @Field(() => [CreateAccountInput])
   accounts: CreateAccountInput[];
+
+  @Field(() => Secp256k1KeyPairInput)
+  secp256k1_key_pair: Secp256k1KeyPairInput;
 }
 
 @InputType()

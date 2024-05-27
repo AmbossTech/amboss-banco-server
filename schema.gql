@@ -48,6 +48,7 @@ input CreateWalletInput {
   accounts: [CreateAccountInput!]!
   details: CreateWalletDetailsInput!
   name: String
+  secp256k1_key_pair: Secp256k1KeyPairInput!
 }
 
 type LiquidAccount {
