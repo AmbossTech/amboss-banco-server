@@ -9,5 +9,5 @@ export type NewAccountType = {
   password_hint: string;
   symmetric_key_iv: string;
   protected_symmetric_key: string;
-  key_pair: AccountKeyPairType;
+  secp256k1_key_pair: AccountKeyPairType;
 };

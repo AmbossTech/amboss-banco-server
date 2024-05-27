@@ -34,7 +34,7 @@ export class AccountRepo {
     password_hint,
     symmetric_key_iv,
     protected_symmetric_key,
-    key_pair,
+    secp256k1_key_pair,
   }: NewAccountType) {
     return this.prisma.account.create({
       data: {
@@ -43,7 +43,7 @@ export class AccountRepo {
         password_hint,
         symmetric_key_iv,
         protected_symmetric_key,
-        key_pair,
+        secp256k1_key_pair,
       },
     });
   }

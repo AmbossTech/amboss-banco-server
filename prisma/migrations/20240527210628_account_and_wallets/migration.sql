@@ -9,7 +9,7 @@ CREATE TABLE "account" (
     "symmetric_key_iv" VARCHAR NOT NULL,
     "protected_symmetric_key" VARCHAR NOT NULL,
     "refresh_token_hash" VARCHAR,
-    "key_pair" JSONB NOT NULL,
+    "secp256k1_key_pair" JSONB NOT NULL,
 
     CONSTRAINT "account_pkey" PRIMARY KEY ("id")
 );

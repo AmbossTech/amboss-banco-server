@@ -61,7 +61,7 @@ export class LoginInput {
 }
 
 @InputType()
-export class RSAKeyPairInput {
+export class Secp256k1KeyPairInput {
   @Field()
   public_key: string;
 
@@ -86,6 +86,6 @@ export class SignUpInput {
   @Field()
   protected_symmetric_key: string;
 
-  @Field(() => RSAKeyPairInput)
-  rsa_key_pair: RSAKeyPairInput;
+  @Field(() => Secp256k1KeyPairInput)
+  secp256k1_key_pair: Secp256k1KeyPairInput;
 }

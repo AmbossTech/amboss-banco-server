@@ -31,9 +31,9 @@ export class AccountService {
       password_hint: input.password_hint,
       symmetric_key_iv: input.symmetric_key_iv,
       protected_symmetric_key: input.protected_symmetric_key,
-      key_pair: {
-        public_key: input.rsa_key_pair.public_key,
-        protected_private_key: input.rsa_key_pair.public_key,
+      secp256k1_key_pair: {
+        public_key: input.secp256k1_key_pair.public_key,
+        protected_private_key: input.secp256k1_key_pair.protected_private_key,
       },
     };
 

@@ -116,11 +116,6 @@ type Query {
   wallets: WalletQueries!
 }
 
-input RSAKeyPairInput {
-  protected_private_key: String!
-  public_key: String!
-}
-
 type RefreshToken {
   access_token: String!
   id: String!
@@ -131,12 +126,17 @@ input RefreshWalletInput {
   wallet_id: String!
 }
 
+input Secp256k1KeyPairInput {
+  protected_private_key: String!
+  public_key: String!
+}
+
 input SignUpInput {
   email: String!
   master_password_hash: String!
   password_hint: String
   protected_symmetric_key: String!
-  rsa_key_pair: RSAKeyPairInput!
+  secp256k1_key_pair: Secp256k1KeyPairInput!
   symmetric_key_iv: String!
 }
 

@@ -28,7 +28,7 @@ model account {
   protected_symmetric_key String               @db.VarChar
   refresh_token_hash      String?              @db.VarChar
   /// [AccountKeyPair]
-  key_pair                Json                 @db.JsonB
+  secp256k1_key_pair      Json                 @db.JsonB
   wallets                 wallet_on_accounts[]
 }
 
