@@ -6,7 +6,7 @@ import {
 } from 'unique-names-generator';
 import { fruits } from './fruitList';
 
-const numberDictionary = NumberDictionary.generate({ min: 100, max: 999 });
+const numberDictionary = NumberDictionary.generate({ min: 10, max: 99 });
 
 export const fruitNameGenerator = () => {
   return uniqueNamesGenerator({

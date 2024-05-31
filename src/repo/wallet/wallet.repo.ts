@@ -13,13 +13,20 @@ export class WalletRepoService {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }
 
+  async getWalletByLnAddress(lightning_address: string) {
+    return this.prisma.wallet_on_accounts.findUnique({
+      where: { lightning_address },
+      include: { wallet: { include: { wallet_account: true } } },
+    });
+  }
+
   async getAccountWallets(
     account_id: string,
   ): Promise<GetAccountWalletsResult[]> {
     return this.prisma.wallet_on_accounts.findMany({
       where: { account_id },
       include: { wallet: { include: { wallet_account: true } } },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: 'asc' },
     });
   }
 

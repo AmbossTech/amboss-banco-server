@@ -168,6 +168,9 @@ export class Wallet {
   @Field()
   name: string;
 
+  @Field({ nullable: true })
+  lightning_address: string;
+
   @Field(() => WalletDetails)
   details: WalletDetails;
 

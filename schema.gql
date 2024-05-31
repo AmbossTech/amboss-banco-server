@@ -11,10 +11,23 @@ input BroadcastLiquidTransactionInput {
   wallet_account_id: String!
 }
 
+type ContactMutations {
+  create(input: CreateContactInput!): CreateContact!
+}
+
 input CreateAccountInput {
   liquid_descriptor: String!
   name: String
   type: WalletAccountType!
+}
+
+type CreateContact {
+  id: String!
+}
+
+input CreateContactInput {
+  lightning_address: String!
+  wallet_id: String!
 }
 
 type CreateLiquidTransaction {
@@ -98,6 +111,7 @@ input LoginInput {
 
 type Mutation {
   checkPassword(password: String!): Boolean!
+  contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
   refreshToken: RefreshToken!
@@ -164,6 +178,7 @@ type Wallet {
   accounts: [WalletAccount!]!
   details: WalletDetails!
   id: String!
+  lightning_address: String
   name: String!
 }
 

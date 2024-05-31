@@ -33,20 +33,44 @@ model account {
 }
 
 model wallet_on_accounts {
-  created_at         DateTime @default(now()) @db.Timestamp(6)
-  updated_at         DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  id                 String    @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at         DateTime  @default(now()) @db.Timestamp(6)
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamp(6)
   is_owner           Boolean
-  lightning_address  String?  @unique @db.VarChar
+  lightning_address  String?   @unique @db.VarChar
   /// [Secp256k1KeyPair]
-  secp256k1_key_pair Json     @db.JsonB
+  secp256k1_key_pair Json      @db.JsonB
   /// [WalletDetails]
-  details            Json     @db.JsonB
-  account            account  @relation(fields: [account_id], references: [id])
-  account_id         String   @db.Uuid
-  wallet             wallet   @relation(fields: [wallet_id], references: [id])
-  wallet_id          String   @db.Uuid
+  details            Json      @db.JsonB
+  account            account   @relation(fields: [account_id], references: [id])
+  account_id         String    @db.Uuid
+  wallet             wallet    @relation(fields: [wallet_id], references: [id])
+  wallet_id          String    @db.Uuid
+  contacts           contact[]
 
   @@id([account_id, wallet_id])
+}
+
+model contact {
+  id                    String             @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at            DateTime           @default(now()) @db.Timestamp(6)
+  updated_at            DateTime           @default(now()) @updatedAt @db.Timestamp(6)
+  lightning_address     String             @db.VarChar
+  wallet_on_accounts    wallet_on_accounts @relation(fields: [wallet_on_accounts_id], references: [id])
+  wallet_on_accounts_id String             @db.Uuid
+  contact_message       contact_message[]
+
+  @@id([wallet_on_accounts_id, lightning_address])
+}
+
+model contact_message {
+  id                String   @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  contact_is_sender Boolean
+  protected_message String   @db.VarChar
+  contact           contact? @relation(fields: [contact_id], references: [id])
+  contact_id        String?  @db.Uuid
 }
 
 model wallet {

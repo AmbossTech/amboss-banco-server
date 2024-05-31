@@ -16,6 +16,7 @@ CREATE TABLE "account" (
 
 -- CreateTable
 CREATE TABLE "wallet_on_accounts" (
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_owner" BOOLEAN NOT NULL,
@@ -26,6 +27,29 @@ CREATE TABLE "wallet_on_accounts" (
     "wallet_id" UUID NOT NULL,
 
     CONSTRAINT "wallet_on_accounts_pkey" PRIMARY KEY ("account_id","wallet_id")
+);
+
+-- CreateTable
+CREATE TABLE "contact" (
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lightning_address" VARCHAR NOT NULL,
+    "wallet_on_accounts_id" UUID NOT NULL,
+
+    CONSTRAINT "contact_pkey" PRIMARY KEY ("wallet_on_accounts_id","lightning_address")
+);
+
+-- CreateTable
+CREATE TABLE "contact_message" (
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "contact_is_sender" BOOLEAN NOT NULL,
+    "protected_message" VARCHAR NOT NULL,
+    "contact_id" UUID,
+
+    CONSTRAINT "contact_message_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -54,13 +78,25 @@ CREATE TABLE "wallet_account" (
 CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "wallet_on_accounts_id_key" ON "wallet_on_accounts"("id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "wallet_on_accounts_lightning_address_key" ON "wallet_on_accounts"("lightning_address");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "contact_id_key" ON "contact"("id");
 
 -- AddForeignKey
 ALTER TABLE "wallet_on_accounts" ADD CONSTRAINT "wallet_on_accounts_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "wallet_on_accounts" ADD CONSTRAINT "wallet_on_accounts_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "contact" ADD CONSTRAINT "contact_wallet_on_accounts_id_fkey" FOREIGN KEY ("wallet_on_accounts_id") REFERENCES "wallet_on_accounts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "contact_message" ADD CONSTRAINT "contact_message_contact_id_fkey" FOREIGN KEY ("contact_id") REFERENCES "contact"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "wallet_account" ADD CONSTRAINT "wallet_account_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

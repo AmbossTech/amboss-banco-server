@@ -32,6 +32,7 @@ import {
   WalletAccountDetailsType,
   WalletAccountType,
 } from 'src/repo/wallet/wallet.types';
+import { ConfigService } from '@nestjs/config';
 
 @Resolver(LiquidTransaction)
 export class WalletLiquidTransactionResolver {
@@ -49,7 +50,7 @@ export class WalletLiquidTransactionResolver {
 
   @ResolveField()
   balance(@Parent() { tx, asset_id }: WalletTxWithAssetId) {
-    return tx.balance().get(asset_id);
+    return tx.balance().get(asset_id).toString();
   }
 
   @ResolveField()
@@ -100,6 +101,11 @@ export class WalletLiquidAssetResolver {
   @ResolveField()
   id(@Parent() { asset_id, wallet_id }: AssetParentType) {
     return v5(asset_id + wallet_id, v5.URL);
+  }
+
+  @ResolveField()
+  balance(@Parent() { balance }: AssetParentType) {
+    return balance.toString();
   }
 
   @ResolveField()
@@ -238,6 +244,8 @@ export class WalletDetailsResolver {
 
 @Resolver(Wallet)
 export class WalletResolver {
+  constructor(private config: ConfigService) {}
+
   @ResolveField()
   id(@Parent() parent: GetAccountWalletsResult) {
     return parent.wallet.id;
@@ -246,6 +254,11 @@ export class WalletResolver {
   @ResolveField()
   name(@Parent() parent: GetAccountWalletsResult) {
     return parent.wallet.name;
+  }
+
+  @ResolveField()
+  lightning_address(@Parent() parent: GetAccountWalletsResult) {
+    return `${parent.lightning_address}@${this.config.getOrThrow('server.domain')}`;
   }
 
   @ResolveField()
