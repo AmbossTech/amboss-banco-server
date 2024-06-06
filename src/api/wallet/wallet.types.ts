@@ -12,6 +12,7 @@ import {
   WalletType,
 } from 'src/repo/wallet/wallet.types';
 import { Secp256k1KeyPairInput } from '../account/account.types';
+import { WalletContacts } from '../contact/contact.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
@@ -161,6 +162,18 @@ export class WalletDetails {
 }
 
 @ObjectType()
+export class Secp256k1KeyPair {
+  @Field()
+  id: string;
+
+  @Field()
+  encryption_pubkey: string;
+
+  @Field()
+  protected_encryption_private_key: string;
+}
+
+@ObjectType()
 export class Wallet {
   @Field()
   id: string;
@@ -173,6 +186,12 @@ export class Wallet {
 
   @Field(() => WalletDetails)
   details: WalletDetails;
+
+  @Field(() => Secp256k1KeyPair)
+  secp256k1_key_pair: Secp256k1KeyPair;
+
+  @Field(() => WalletContacts)
+  contacts: WalletContacts;
 
   @Field(() => [WalletAccount])
   accounts: WalletAccount[];

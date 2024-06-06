@@ -33,20 +33,20 @@ model account {
 }
 
 model wallet_on_accounts {
-  id                 String    @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at         DateTime  @default(now()) @db.Timestamp(6)
-  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamp(6)
-  is_owner           Boolean
-  lightning_address  String?   @unique @db.VarChar
+  id                     String    @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at             DateTime  @default(now()) @db.Timestamp(6)
+  updated_at             DateTime  @default(now()) @updatedAt @db.Timestamp(6)
+  is_owner               Boolean
+  lightning_address_user String?   @unique @db.VarChar
   /// [Secp256k1KeyPair]
-  secp256k1_key_pair Json      @db.JsonB
+  secp256k1_key_pair     Json      @db.JsonB
   /// [WalletDetails]
-  details            Json      @db.JsonB
-  account            account   @relation(fields: [account_id], references: [id])
-  account_id         String    @db.Uuid
-  wallet             wallet    @relation(fields: [wallet_id], references: [id])
-  wallet_id          String    @db.Uuid
-  contacts           contact[]
+  details                Json      @db.JsonB
+  account                account   @relation(fields: [account_id], references: [id])
+  account_id             String    @db.Uuid
+  wallet                 wallet    @relation(fields: [wallet_id], references: [id])
+  wallet_id              String    @db.Uuid
+  contacts               contact[]
 
   @@id([account_id, wallet_id])
 }

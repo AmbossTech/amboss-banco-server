@@ -11,8 +11,15 @@ input BroadcastLiquidTransactionInput {
   wallet_account_id: String!
 }
 
+type ContactMessage {
+  contact_is_sender: Boolean!
+  id: String!
+  protected_message: String!
+}
+
 type ContactMutations {
   create(input: CreateContactInput!): CreateContact!
+  send_message(input: SendMessageInput!): SendMessage!
 }
 
 input CreateAccountInput {
@@ -141,9 +148,26 @@ input RefreshWalletInput {
   wallet_id: String!
 }
 
+type Secp256k1KeyPair {
+  encryption_pubkey: String!
+  id: String!
+  protected_encryption_private_key: String!
+}
+
 input Secp256k1KeyPairInput {
   protected_private_key: String!
   public_key: String!
+}
+
+type SendMessage {
+  id: String!
+}
+
+input SendMessageInput {
+  contact_id: String!
+  receiver_lightning_address: String!
+  receiver_protected_message: String!
+  sender_protected_message: String!
 }
 
 input SignUpInput {
@@ -167,6 +191,11 @@ type SimpleWalletAccount {
   name: String!
 }
 
+type SimpleWalletContact {
+  id: String!
+  lightning_address: String!
+}
+
 type User {
   default_wallet_id: String
   email: String!
@@ -176,10 +205,12 @@ type User {
 
 type Wallet {
   accounts: [WalletAccount!]!
+  contacts: WalletContacts!
   details: WalletDetails!
   id: String!
   lightning_address: String
   name: String!
+  secp256k1_key_pair: Secp256k1KeyPair!
 }
 
 type WalletAccount {
@@ -192,6 +223,19 @@ type WalletAccount {
 
 enum WalletAccountType {
   LIQUID
+}
+
+type WalletContact {
+  encryption_pubkey: String
+  id: String!
+  lightning_address: String!
+  messages: [ContactMessage!]!
+}
+
+type WalletContacts {
+  find_many: [SimpleWalletContact!]!
+  find_one(id: String!): WalletContact!
+  id: String!
 }
 
 type WalletDetails {

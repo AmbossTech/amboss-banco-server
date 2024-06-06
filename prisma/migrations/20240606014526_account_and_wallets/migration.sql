@@ -20,7 +20,7 @@ CREATE TABLE "wallet_on_accounts" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_owner" BOOLEAN NOT NULL,
-    "lightning_address" VARCHAR,
+    "lightning_address_user" VARCHAR,
     "secp256k1_key_pair" JSONB NOT NULL,
     "details" JSONB NOT NULL,
     "account_id" UUID NOT NULL,
@@ -81,7 +81,7 @@ CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 CREATE UNIQUE INDEX "wallet_on_accounts_id_key" ON "wallet_on_accounts"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "wallet_on_accounts_lightning_address_key" ON "wallet_on_accounts"("lightning_address");
+CREATE UNIQUE INDEX "wallet_on_accounts_lightning_address_user_key" ON "wallet_on_accounts"("lightning_address_user");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "contact_id_key" ON "contact"("id");

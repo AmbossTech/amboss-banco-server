@@ -13,9 +13,9 @@ export class WalletRepoService {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }
 
-  async getWalletByLnAddress(lightning_address: string) {
+  async getWalletByLnAddress(lightning_address_user: string) {
     return this.prisma.wallet_on_accounts.findUnique({
-      where: { lightning_address },
+      where: { lightning_address_user },
       include: { wallet: { include: { wallet_account: true } } },
     });
   }
@@ -85,7 +85,7 @@ export class WalletRepoService {
             secp256k1_key_pair,
             details,
             account: { connect: { id: account_id } },
-            lightning_address: lnAddressGenerator(),
+            lightning_address_user: lnAddressGenerator(),
           },
         },
       },

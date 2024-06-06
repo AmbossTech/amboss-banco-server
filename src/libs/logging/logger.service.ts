@@ -15,7 +15,7 @@ export class CustomLogger implements LoggerService {
         ? combine(timestamp(), json())
         : combine(timestamp(), prettyPrint()),
       transports: [new transports.Console()],
-      level: config.get('server.logLevel'),
+      level: config.get('logLevel'),
     });
   }
 

@@ -19,6 +19,7 @@ import {
   LiquidAccountParentType,
   LiquidAccount,
   WalletDetails,
+  Secp256k1KeyPair,
 } from '../wallet.types';
 import {
   alwaysPresentAssets,
@@ -33,6 +34,7 @@ import {
   WalletAccountType,
 } from 'src/repo/wallet/wallet.types';
 import { ConfigService } from '@nestjs/config';
+import { WalletContactsParent } from 'src/api/contact/contact.types';
 
 @Resolver(LiquidTransaction)
 export class WalletLiquidTransactionResolver {
@@ -257,8 +259,25 @@ export class WalletResolver {
   }
 
   @ResolveField()
+  contacts(@Parent() parent: GetAccountWalletsResult): WalletContactsParent {
+    return { wallet_id: parent.id };
+  }
+
+  @ResolveField()
+  secp256k1_key_pair(
+    @Parent() parent: GetAccountWalletsResult,
+  ): Secp256k1KeyPair {
+    return {
+      id: parent.id,
+      encryption_pubkey: parent.secp256k1_key_pair.public_key,
+      protected_encryption_private_key:
+        parent.secp256k1_key_pair.protected_private_key,
+    };
+  }
+
+  @ResolveField()
   lightning_address(@Parent() parent: GetAccountWalletsResult) {
-    return `${parent.lightning_address}@${this.config.getOrThrow('server.domain')}`;
+    return `${parent.lightning_address_user}@${this.config.getOrThrow('server.domain')}`;
   }
 
   @ResolveField()

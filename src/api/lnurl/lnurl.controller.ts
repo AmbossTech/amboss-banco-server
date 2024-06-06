@@ -14,8 +14,52 @@ import { Public } from 'src/auth/auth.decorators';
 import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
-import { GetLnurlAutoType } from './lnurl.types';
+import { GetLnurlAutoType, MessageBodySchema } from './lnurl.types';
 import { ConfigService } from '@nestjs/config';
+import { LnurlService } from 'src/libs/lnurl/lnurl.service';
+import { ContactRepoService } from 'src/repo/contact/contact.repo';
+
+@Controller('message')
+export class MessageController {
+  constructor(
+    private config: ConfigService,
+    private boltzApi: BoltzRestApi,
+    private walletRepo: WalletRepoService,
+    private lnurlService: LnurlService,
+    private contactRepo: ContactRepoService,
+  ) {}
+
+  @Public()
+  @Post(':account')
+  @Header('Content-Type', 'application/json')
+  async lnurlPost(
+    @Body() body: any,
+    @Param() params: { account: string },
+  ): Promise<{ account: string }> {
+    console.log(body);
+
+    const parsed = MessageBodySchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw new HttpException('Invalid request body', HttpStatus.BAD_REQUEST);
+    }
+
+    const wallet = await this.walletRepo.getWalletByLnAddress(params.account);
+
+    if (!wallet) {
+      throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.contactRepo.saveContactMessage({
+      lightning_address_user: params.account,
+      contact_lightning_address: parsed.data.payerData.identifier,
+      protected_message: parsed.data.protected_message,
+      contact_is_sender: true,
+    });
+
+    return { account: params.account };
+  }
+}
 
 @Controller('lnurlp')
 export class LnUrlController {
