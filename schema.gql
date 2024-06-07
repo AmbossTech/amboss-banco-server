@@ -121,6 +121,7 @@ type Mutation {
   contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
+  payInvoice(invoice: String!): Boolean!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
   wallets: WalletMutations!

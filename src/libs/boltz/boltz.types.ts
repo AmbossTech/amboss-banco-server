@@ -1,3 +1,4 @@
+import { wallet_account_swap } from '@prisma/client';
 import { z } from 'zod';
 
 export const swapReverseInfoSchema = z.object({
@@ -12,3 +13,66 @@ export const swapReverseInfoSchema = z.object({
 });
 
 export type SwapReverseInfoType = z.infer<typeof swapReverseInfoSchema>;
+
+export const boltzError = z.object({ error: z.string() });
+
+export const boltzSubmarineSwapResponse = z.object({
+  id: z.string(),
+  bip21: z.string(),
+  address: z.string(),
+  swapTree: z.object({
+    claimLeaf: z.object({
+      version: z.number(),
+      output: z.string(),
+    }),
+    refundLeaf: z.object({
+      version: z.number(),
+      output: z.string(),
+    }),
+  }),
+  claimPublicKey: z.string(),
+  timeoutBlockHeight: z.number(),
+  acceptZeroConf: z.boolean(),
+  expectedAmount: z.number(),
+  blindingKey: z.string(),
+});
+
+export type BoltzSubmarineSwapResponseType = z.infer<
+  typeof boltzSubmarineSwapResponse
+>;
+
+export const boltzReverseSwapResponse = z.object({
+  id: z.string(),
+  invoice: z.string(),
+  swapTree: z.object({
+    claimLeaf: z.object({
+      version: z.number(),
+      output: z.string(),
+    }),
+    refundLeaf: z.object({
+      version: z.number(),
+      output: z.string(),
+    }),
+  }),
+  lockupAddress: z.string(),
+  refundPublicKey: z.string(),
+  timeoutBlockHeight: z.number(),
+  onchainAmount: z.number(),
+  blindingKey: z.string(),
+});
+
+export type BoltzReverseSwapResponseType = z.infer<
+  typeof boltzReverseSwapResponse
+>;
+
+export type BoltzSubscriptionAutoType = {
+  getPendingSwaps: wallet_account_swap[];
+  websocket: void;
+};
+
+export const boltzSubmarineSwapClaimResponse = z.object({
+  preimage: z.string(),
+  pubNonce: z.string(),
+  publicKey: z.string(),
+  transactionHash: z.string(),
+});

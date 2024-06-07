@@ -83,12 +83,26 @@ model wallet {
 }
 
 model wallet_account {
-  id         String   @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  name       String   @db.VarChar
+  id                  String                @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @default(now()) @updatedAt @db.Timestamp(6)
+  name                String                @db.VarChar
   /// [WalletAccountDetails]
-  details    Json     @db.JsonB
-  wallet     wallet   @relation(fields: [wallet_id], references: [id])
-  wallet_id  String   @db.Uuid
+  details             Json                  @db.JsonB
+  wallet              wallet                @relation(fields: [wallet_id], references: [id])
+  wallet_id           String                @db.Uuid
+  wallet_account_swap wallet_account_swap[]
+}
+
+model wallet_account_swap {
+  id                String         @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at        DateTime       @default(now()) @db.Timestamp(6)
+  updated_at        DateTime       @default(now()) @updatedAt @db.Timestamp(6)
+  swap_completed    Boolean        @default(false)
+  /// [AccountSwapRequest]
+  request           Json           @db.JsonB
+  /// [AccountSwapResponse]
+  response          Json           @db.JsonB
+  wallet_account    wallet_account @relation(fields: [wallet_account_id], references: [id])
+  wallet_account_id String         @db.Uuid
 }
