@@ -9,6 +9,8 @@ import {
   ContactMutations,
   CreateContactInput,
   LightningAddressResponseSchema,
+  LnUrlInfo,
+  LnUrlInfoParent,
   SendMessageInput,
   WalletContact,
   WalletContactParent,
@@ -25,12 +27,55 @@ import { fetch } from 'undici';
 import { lightningAddressToUrl } from 'src/utils/lnurl';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import { ContactService } from 'src/libs/contact/contact.service';
+import { toWithError } from 'src/utils/async';
+import { v5 } from 'uuid';
+import { CustomLogger, Logger } from 'src/libs/logging';
+import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
+
+@Resolver(LnUrlInfo)
+export class LnUrlInfoResolver {
+  @ResolveField()
+  id(@Parent() parent: LnUrlInfoParent) {
+    return v5(JSON.stringify(parent), v5.URL);
+  }
+
+  @ResolveField()
+  async min_sendable(@Parent() parent: LnUrlInfoParent) {
+    const minSats = Math.floor(parent.lnUrlInfo.minSendable / 1000);
+
+    if (!parent.boltzInfo) return minSats;
+
+    return Math.max(parent.boltzInfo['L-BTC'].BTC.limits.minimal, minSats);
+  }
+
+  @ResolveField()
+  async max_sendable(@Parent() parent: LnUrlInfoParent) {
+    const maxSats = Math.ceil(parent.lnUrlInfo.maxSendable / 1000);
+
+    if (!parent.boltzInfo) return maxSats;
+
+    return Math.min(parent.boltzInfo['L-BTC'].BTC.limits.maximal, maxSats);
+  }
+
+  @ResolveField()
+  async variable_fee_percentage(@Parent() parent: LnUrlInfoParent) {
+    return parent.boltzInfo?.['L-BTC'].BTC.fees.percentage || '0';
+  }
+
+  @ResolveField()
+  async fixed_fee(@Parent() parent: LnUrlInfoParent) {
+    const boltzFee = parent.boltzInfo?.['L-BTC'].BTC.fees.minerFees || 0;
+    return boltzFee + 300;
+  }
+}
 
 @Resolver(WalletContact)
 export class WalletContactResolver {
   constructor(
+    private boltzRest: BoltzRestApi,
     private lnurlService: LnurlService,
     private contactsRepo: ContactRepoService,
+    @Logger('WalletContactResolver') private logger: CustomLogger,
   ) {}
 
   @ResolveField()
@@ -42,6 +87,26 @@ export class WalletContactResolver {
   @ResolveField()
   async messages(@Parent() parent: WalletContactParent) {
     return this.contactsRepo.getContactMessages(parent.id);
+  }
+
+  @ResolveField()
+  async lnurl_info(
+    @Parent() { lightning_address }: WalletContactParent,
+  ): Promise<LnUrlInfoParent | null> {
+    if (!lightning_address) return null;
+    const [lnUrlInfo, error] = await toWithError(
+      this.lnurlService.getAddressInfo(lightning_address),
+    );
+
+    if (error) return null;
+
+    const [boltzInfo] = await toWithError(
+      this.boltzRest.getSubmarineSwapInfo(),
+    );
+
+    this.logger.debug('LNURL Info', { lnUrlInfo, boltzInfo });
+
+    return { lnUrlInfo, boltzInfo };
   }
 }
 

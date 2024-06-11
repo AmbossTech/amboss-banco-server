@@ -44,6 +44,8 @@ export class TransactionClaimPendingService {
       return;
     }
 
+    this.logger.debug('Claim Tx Details', { claimTxDetails });
+
     // Verify that Boltz actually paid the invoice by comparing the preimage hash
     // of the invoice to the SHA256 hash of the preimage from the response
     const invoicePreimageHash = Buffer.from(

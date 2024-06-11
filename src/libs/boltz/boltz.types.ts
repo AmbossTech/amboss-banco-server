@@ -8,11 +8,35 @@ export const swapReverseInfoSchema = z.object({
         maximal: z.number(),
         minimal: z.number(),
       }),
+      fees: z.object({
+        percentage: z.number(),
+        minerFees: z.object({
+          claim: z.number(),
+          lockup: z.number(),
+        }),
+      }),
     }),
   }),
 });
 
 export type SwapReverseInfoType = z.infer<typeof swapReverseInfoSchema>;
+
+export const swapSubmarineInfoSchema = z.object({
+  'L-BTC': z.object({
+    BTC: z.object({
+      limits: z.object({
+        maximal: z.number(),
+        minimal: z.number(),
+      }),
+      fees: z.object({
+        percentage: z.number(),
+        minerFees: z.number(),
+      }),
+    }),
+  }),
+});
+
+export type SwapSubmarineInfoType = z.infer<typeof swapSubmarineInfoSchema>;
 
 export const boltzError = z.object({ error: z.string() });
 
@@ -76,3 +100,10 @@ export const boltzSubmarineSwapClaimResponse = z.object({
   publicKey: z.string(),
   transactionHash: z.string(),
 });
+
+export const boltzMagicRouteHint = z.object({
+  bip21: z.string(),
+  signature: z.string(),
+});
+
+export type BoltzMagicRouteHintType = z.infer<typeof boltzMagicRouteHint>;

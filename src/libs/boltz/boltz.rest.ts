@@ -3,10 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { fetch } from 'undici';
 import {
   boltzError,
+  boltzMagicRouteHint,
   boltzReverseSwapResponse,
   boltzSubmarineSwapClaimResponse,
   boltzSubmarineSwapResponse,
   swapReverseInfoSchema,
+  swapSubmarineInfoSchema,
 } from './boltz.types';
 import {
   BoltzReverseRequestType,
@@ -20,6 +22,22 @@ export class BoltzRestApi {
 
   constructor(private configService: ConfigService) {
     this.apiUrl = configService.getOrThrow('urls.boltz');
+  }
+
+  async getMagicRouteHintInfo(invoice: string) {
+    const result = await fetch(`${this.apiUrl}swap/reverse/${invoice}/bip21`);
+
+    const body = await result.json();
+
+    return boltzMagicRouteHint.parse(body);
+  }
+
+  async getSubmarineSwapInfo() {
+    const result = await fetch(`${this.apiUrl}swap/submarine`);
+
+    const body = await result.json();
+
+    return swapSubmarineInfoSchema.parse(body);
   }
 
   async getReverseSwapInfo() {

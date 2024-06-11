@@ -39,6 +39,7 @@ input CreateContactInput {
 
 type CreateLiquidTransaction {
   base_64: String!
+  wallet_account: WalletAccount!
 }
 
 input CreateLiquidTransactionInput {
@@ -111,6 +112,14 @@ type LiquidTransaction {
   unblinded_url: String!
 }
 
+type LnUrlInfo {
+  fixed_fee: String!
+  id: String!
+  max_sendable: String!
+  min_sendable: String!
+  variable_fee_percentage: String!
+}
+
 input LoginInput {
   email: String!
   master_password_hash: String!
@@ -121,6 +130,7 @@ type Mutation {
   contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
+  pay(input: PayInput!): PayMutations!
   payInvoice(invoice: String!): Boolean!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
@@ -131,6 +141,24 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+input PayInput {
+  wallet_id: String!
+}
+
+input PayLnAddressInput {
+  address: String!
+  amount: Float!
+}
+
+input PayLnInvoiceInput {
+  invoice: String!
+}
+
+type PayMutations {
+  lightning_address(input: PayLnAddressInput!): CreateLiquidTransaction!
+  lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
 }
 
 type Query {
@@ -230,6 +258,7 @@ type WalletContact {
   encryption_pubkey: String
   id: String!
   lightning_address: String!
+  lnurl_info: LnUrlInfo
   messages: [ContactMessage!]!
 }
 

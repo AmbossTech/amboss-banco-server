@@ -10,6 +10,18 @@ import {
 export class SwapsRepoService {
   constructor(private prisma: PrismaService) {}
 
+  async getReverseSwapByInvoice(invoice: string) {
+    return this.prisma.wallet_account_swap.findFirst({
+      where: {
+        swap_completed: false,
+        request: {
+          path: ['payload', 'invoice'],
+          equals: invoice,
+        },
+      },
+    });
+  }
+
   async markCompleted(id: string) {
     return this.prisma.wallet_account_swap.update({
       where: { id },

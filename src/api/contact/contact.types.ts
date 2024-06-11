@@ -1,4 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { SwapSubmarineInfoType } from 'src/libs/boltz/boltz.types';
+import { LnUrlInfoSchemaType } from 'src/libs/lnurl/lnurl.types';
 import { z } from 'zod';
 
 @ObjectType()
@@ -35,12 +37,33 @@ export class ContactMessage {
 }
 
 @ObjectType()
+export class LnUrlInfo {
+  @Field()
+  id: string;
+
+  @Field()
+  min_sendable: string;
+
+  @Field()
+  max_sendable: string;
+
+  @Field()
+  variable_fee_percentage: string;
+
+  @Field()
+  fixed_fee: string;
+}
+
+@ObjectType()
 export class WalletContact {
   @Field()
   id: string;
 
   @Field()
   lightning_address: string;
+
+  @Field(() => LnUrlInfo, { nullable: true })
+  lnurl_info: LnUrlInfo;
 
   @Field({ nullable: true })
   encryption_pubkey: string;
@@ -114,4 +137,9 @@ export const LightningAddressResponseSchema = z.object({
 export type WalletContactParent = {
   id: string;
   lightning_address: string | null;
+};
+
+export type LnUrlInfoParent = {
+  lnUrlInfo: LnUrlInfoSchemaType;
+  boltzInfo?: SwapSubmarineInfoType;
 };

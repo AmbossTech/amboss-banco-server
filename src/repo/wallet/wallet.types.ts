@@ -2,6 +2,14 @@ export enum WalletAccountType {
   LIQUID = 'LIQUID',
 }
 
+const LiquidBitcoinAsset = { code: 'BTC', name: 'Bitcoin', symbol: '₿' };
+const LiquidTetherAsset = { code: 'USDT', name: 'Tether', symbol: '$' };
+
+export const LiquidWalletAssets = {
+  BTC: LiquidBitcoinAsset,
+  USDT: LiquidTetherAsset,
+};
+
 export type WalletAccountDetailsType = {
   type: WalletAccountType.LIQUID;
   descriptor: string;

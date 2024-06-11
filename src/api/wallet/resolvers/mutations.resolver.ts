@@ -160,7 +160,7 @@ export class WalletMutationsResolver {
 
     const base_64 = pset.toString();
 
-    return { base_64 };
+    return { base_64, wallet_account: walletAccount };
   }
 
   @ResolveField()

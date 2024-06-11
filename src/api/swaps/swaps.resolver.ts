@@ -1,5 +1,5 @@
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
-import { BoltzService } from './boltz/boltz.service';
+import { BoltzService } from '../../libs/boltz/boltz.service';
 import { Public } from 'src/auth/auth.decorators';
 
 @Resolver()

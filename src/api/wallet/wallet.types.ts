@@ -30,12 +30,6 @@ export class CreateOnchainAddress {
 }
 
 @ObjectType()
-export class CreateLiquidTransaction {
-  @Field()
-  base_64: string;
-}
-
-@ObjectType()
 export class BroadcastLiquidTransaction {
   @Field()
   tx_id: string;
@@ -195,6 +189,15 @@ export class Wallet {
 
   @Field(() => [WalletAccount])
   accounts: WalletAccount[];
+}
+
+@ObjectType()
+export class CreateLiquidTransaction {
+  @Field(() => WalletAccount)
+  wallet_account: WalletAccount;
+
+  @Field()
+  base_64: string;
 }
 
 @ObjectType()

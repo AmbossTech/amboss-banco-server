@@ -5,6 +5,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { LnUrlModule } from './lnurl/lnurl.module';
 import { ContactModule } from './contact/contact.module';
 import { SwapsModule } from './swaps/swaps.module';
+import { PayModule } from './pay/pay.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { SwapsModule } from './swaps/swaps.module';
     LnUrlModule,
     ContactModule,
     SwapsModule,
+    PayModule,
   ],
 })
 export class ApiModule {}

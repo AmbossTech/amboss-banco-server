@@ -1,22 +1,59 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lightningAddressType } from 'src/api/contact/contact.types';
-import { ContactRepoService } from 'src/repo/contact/contact.repo';
 import { RedisService } from '../redis/redis.service';
-import { lightningAddressToPubkeyUrl } from 'src/utils/lnurl';
+import {
+  lightningAddressToPubkeyUrl,
+  lightningAddressToUrl,
+} from 'src/utils/lnurl';
 import { LightningAddressPubkeyResponseSchema } from 'src/api/lnurl/lnurl.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { CustomLogger, Logger } from '../logging';
+import { fetch } from 'undici';
+import {
+  LnUrlInfoSchema,
+  LnUrlInfoSchemaType,
+  LnUrlResultSchema,
+} from './lnurl.types';
 
 @Injectable()
 export class LnurlService {
   constructor(
     private config: ConfigService,
     private redis: RedisService,
-    private contactRepo: ContactRepoService,
     private walletRepo: WalletRepoService,
     @Logger('LnurlService') private logger: CustomLogger,
   ) {}
+
+  async getAddressInfo(lightning_address: string) {
+    this.logger.debug('Getting address info', { lightning_address });
+
+    const key = `getAddressInfo-address-${lightning_address}`;
+
+    const cached = await this.redis.get<LnUrlInfoSchemaType>(key);
+    if (!!cached) return cached;
+
+    const url = lightningAddressToUrl(lightning_address);
+
+    const info = await fetch(url);
+
+    const data = await info.json();
+
+    const parsed = LnUrlInfoSchema.parse(data);
+
+    await this.redis.set(key, parsed, { ttl: 5 * 60 });
+
+    return parsed;
+  }
+
+  async getAddressInvoice(url: string) {
+    this.logger.debug('Getting address invoice', { url });
+
+    const info = await fetch(url);
+    const data = await info.json();
+
+    return LnUrlResultSchema.parse(data);
+  }
 
   async getAddressPublicKey(lightning_address: string): Promise<string | null> {
     this.logger.debug('Getting pubkey for lightning address', {

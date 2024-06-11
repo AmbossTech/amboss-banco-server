@@ -13,7 +13,10 @@ import { auto } from 'async';
 import { Public } from 'src/auth/auth.decorators';
 import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { WalletAccountType } from 'src/repo/wallet/wallet.types';
+import {
+  LiquidWalletAssets,
+  WalletAccountType,
+} from 'src/repo/wallet/wallet.types';
 import { GetLnurlAutoType, MessageBodySchema } from './lnurl.types';
 import { ConfigService } from '@nestjs/config';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
@@ -181,10 +184,10 @@ export class WellKnownController {
 
           const currencies = [];
           currencies.push({
-            code: 'BTC',
-            name: 'Bitcoin',
-            network: 'LIQUID',
-            symbol: '₿',
+            code: LiquidWalletAssets.BTC.code,
+            name: LiquidWalletAssets.BTC.name,
+            network: WalletAccountType.LIQUID,
+            symbol: LiquidWalletAssets.BTC.symbol,
             is_native: true,
             // multiplier: 1000,
             // decimals: 8,
@@ -195,10 +198,10 @@ export class WellKnownController {
           });
 
           currencies.push({
-            code: 'USDT',
-            name: 'Tether',
-            network: 'LIQUID',
-            symbol: '$',
+            code: LiquidWalletAssets.USDT.code,
+            name: LiquidWalletAssets.USDT.name,
+            network: WalletAccountType.LIQUID,
+            symbol: LiquidWalletAssets.USDT.symbol,
             is_native: true,
             // multiplier: 1000,
             // decimals: 8,
