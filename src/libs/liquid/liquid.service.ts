@@ -12,11 +12,11 @@ import {
   Wollet,
 } from 'lwk_wasm';
 
-import { CreateLiquidTransactionInput } from '../../api/wallet/wallet.types';
 import { getWalletFromDescriptor } from './lwk.utils';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import { RedisService } from '../redis/redis.service';
 import { EsploraLiquidService } from '../esplora/liquid.service';
+import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 
 export const getUpdateKey = (descriptor: string) =>
   `banco-walletdelta-${getSHA256Hash(descriptor)}-v4`;
@@ -32,47 +32,35 @@ export class LiquidService {
     private esploraLiquid: EsploraLiquidService,
   ) {}
 
-  // FOR TESTING. This will be on the client in the future
-  // async signPset(descriptor: string, base64: string): Promise<Pset> {
-  //   const mnemonic = this.config.getOrThrow('mnemonic');
-
-  //   const network = Network.mainnet();
-
-  //   const signer = new Signer(new Mnemonic(mnemonic), network);
-
-  //   const psetFromBase64 = new Pset(base64);
-  //   const signedPset = signer.sign(psetFromBase64);
-
-  //   const wollet = await this.getUpdatedWallet(descriptor);
-
-  //   const finalizedPset = wollet.finalize(signedPset);
-
-  //   return finalizedPset;
-  // }
-
   async createPset(
     descriptor: string,
-    input: CreateLiquidTransactionInput,
+    input: PayLiquidAddressInput,
   ): Promise<Pset> {
     const network = Network.mainnet();
     let txBuilder = new TxBuilder(network);
 
-    input.recipients.forEach((recipient) => {
-      const { address, amount, asset_id } = recipient;
+    if (!!input.send_all_lbtc) {
+      txBuilder = txBuilder
+        .drainLbtcWallet()
+        .drainLbtcTo(new Address(input.recipients[0].address));
+    } else {
+      input.recipients.forEach((recipient) => {
+        const { address, amount, asset_id } = recipient;
 
-      if (!!asset_id) {
-        txBuilder = txBuilder.addRecipient(
-          new Address(address),
-          BigInt(amount),
-          new AssetId(asset_id),
-        );
-      } else {
-        txBuilder = txBuilder.addLbtcRecipient(
-          new Address(address),
-          BigInt(amount),
-        );
-      }
-    });
+        if (!!asset_id) {
+          txBuilder = txBuilder.addRecipient(
+            new Address(address),
+            BigInt(amount),
+            new AssetId(asset_id),
+          );
+        } else {
+          txBuilder = txBuilder.addLbtcRecipient(
+            new Address(address),
+            BigInt(amount),
+          );
+        }
+      });
+    }
 
     txBuilder = txBuilder.feeRate(input.fee_rate);
 

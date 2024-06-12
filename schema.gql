@@ -42,12 +42,6 @@ type CreateLiquidTransaction {
   wallet_account: WalletAccount!
 }
 
-input CreateLiquidTransactionInput {
-  fee_rate: Float!
-  recipients: [LiquidRecipient!]!
-  wallet_account_id: String!
-}
-
 type CreateOnchainAddress {
   address: String!
 }
@@ -93,7 +87,7 @@ type LiquidAssetInfo {
   ticker: String!
 }
 
-input LiquidRecipient {
+input LiquidRecipientInput {
   address: String!
   amount: String!
   asset_id: String
@@ -144,7 +138,14 @@ type NewAccount {
 }
 
 input PayInput {
-  wallet_id: String!
+  account_id: String
+  wallet_id: String
+}
+
+input PayLiquidAddressInput {
+  fee_rate: Float!
+  recipients: [LiquidRecipientInput!]!
+  send_all_lbtc: Boolean
 }
 
 input PayLnAddressInput {
@@ -159,6 +160,7 @@ input PayLnInvoiceInput {
 type PayMutations {
   lightning_address(input: PayLnAddressInput!): CreateLiquidTransaction!
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
+  liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
 }
 
 type Query {
@@ -277,7 +279,6 @@ type WalletDetails {
 type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
-  create_liquid_transaction(input: CreateLiquidTransactionInput!): CreateLiquidTransaction!
   create_onchain_address(input: CreateOnchainAddressInput!): CreateOnchainAddress!
   refresh_wallet(input: RefreshWalletInput!): Boolean!
 }

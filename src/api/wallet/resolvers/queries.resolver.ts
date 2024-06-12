@@ -41,8 +41,8 @@ export class WalletLiquidTransactionResolver {
   constructor(private mempoolLiquid: EsploraLiquidService) {}
 
   @ResolveField()
-  id(@Parent() { tx, asset_id }: WalletTxWithAssetId) {
-    return v5(tx.txid().toString() + asset_id, v5.URL);
+  id(@Parent() { tx, asset_id, wallet_account_id }: WalletTxWithAssetId) {
+    return v5(tx.txid().toString() + asset_id + wallet_account_id, v5.URL);
   }
 
   @ResolveField()
@@ -164,14 +164,20 @@ export class LiquidAccountResolver {
   }
 
   @ResolveField()
-  transactions(@Parent() { wollet }: LiquidAccountParentType) {
+  transactions(@Parent() { wollet, walletAccount }: LiquidAccountParentType) {
     const txs = wollet.transactions();
 
     const transactions: WalletTxWithAssetId[] = [];
 
     txs.forEach((tx) => {
       const balances: Map<string, number> = tx.balance();
-      balances.forEach((_, key) => transactions.push({ tx, asset_id: key }));
+      balances.forEach((_, key) =>
+        transactions.push({
+          tx,
+          asset_id: key,
+          wallet_account_id: walletAccount.id,
+        }),
+      );
     });
 
     const ordered = orderBy(transactions, (t) => t.tx.timestamp(), 'desc');

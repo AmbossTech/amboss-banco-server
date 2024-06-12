@@ -192,15 +192,6 @@ export class Wallet {
 }
 
 @ObjectType()
-export class CreateLiquidTransaction {
-  @Field(() => WalletAccount)
-  wallet_account: WalletAccount;
-
-  @Field()
-  base_64: string;
-}
-
-@ObjectType()
 export class SimpleWallet {
   @Field()
   id: string;
@@ -231,9 +222,6 @@ export class WalletMutations {
 
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
-
-  @Field(() => CreateLiquidTransaction)
-  create_liquid_transaction: CreateLiquidTransaction;
 
   @Field(() => BroadcastLiquidTransaction)
   broadcast_liquid_transaction: BroadcastLiquidTransaction;
@@ -291,36 +279,12 @@ export class RefreshWalletInput {
 }
 
 @InputType()
-export class LiquidRecipient {
-  @Field()
-  address: string;
-
-  @Field()
-  amount: string;
-
-  @Field({ nullable: true })
-  asset_id: string;
-}
-
-@InputType()
 export class BroadcastLiquidTransactionInput {
   @Field()
   wallet_account_id: string;
 
   @Field()
   signed_pset: string;
-}
-
-@InputType()
-export class CreateLiquidTransactionInput {
-  @Field()
-  wallet_account_id: string;
-
-  @Field()
-  fee_rate: number;
-
-  @Field(() => [LiquidRecipient])
-  recipients: LiquidRecipient[];
 }
 
 export type AssetParentType = {
@@ -337,6 +301,7 @@ export type LiquidAccountParentType = {
 };
 
 export type WalletTxWithAssetId = {
+  wallet_account_id: string;
   tx: WalletTx;
   asset_id: string;
 };

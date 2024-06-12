@@ -7,6 +7,7 @@ import {
 } from '@nestjs/graphql';
 import {
   PayInput,
+  PayLiquidAddressInput,
   PayLnAddressInput,
   PayLnInvoiceInput,
   PayMutations,
@@ -58,6 +59,29 @@ export class PayMutationsResolver {
 
     return { base_64, wallet_account: parent.wallet_account };
   }
+
+  @ResolveField()
+  async liquid_address(
+    @Args('input') input: PayLiquidAddressInput,
+    @Parent() parent: PayParentType,
+  ) {
+    if (parent.wallet_account.details.type !== WalletAccountType.LIQUID) {
+      throw new GraphQLError('Invalid wallet account id');
+    }
+
+    if (!!input.send_all_lbtc && input.recipients.length > 1) {
+      throw new GraphQLError(
+        'You can only specify a single recipient when sending all',
+      );
+    }
+
+    const { base_64 } = await this.payService.payLiquidAddress(
+      parent.wallet_account,
+      input,
+    );
+
+    return { base_64, wallet_account: parent.wallet_account };
+  }
 }
 
 @Resolver()
@@ -72,13 +96,44 @@ export class MainPayResolver {
     @CurrentUser() { user_id }: any,
     @Args('input') input: PayInput,
   ): Promise<PayParentType> {
-    if (!isUUID(input.wallet_id)) {
-      throw new GraphQLError('Invalid account id');
+    const { wallet_id, account_id } = input;
+
+    if (!wallet_id && !account_id) {
+      throw new GraphQLError('No wallet or account ID provided');
+    }
+
+    if (!!wallet_id && !isUUID(wallet_id)) {
+      throw new GraphQLError('Invalid wallet id');
+    }
+
+    if (!!account_id && !isUUID(account_id)) {
+      throw new GraphQLError('Invalid wallet id');
+    }
+
+    if (account_id) {
+      const walletAccount = await this.walletRepo.getAccountWalletAccount(
+        user_id,
+        account_id,
+      );
+
+      if (!walletAccount) {
+        throw new GraphQLError('Account not found');
+      }
+
+      if (walletAccount.details.type !== WalletAccountType.LIQUID) {
+        throw new GraphQLError('Account not found');
+      }
+
+      this.logger.debug('Paying from account', {
+        wallet_account: walletAccount,
+      });
+
+      return { wallet_account: walletAccount };
     }
 
     const walletAccounts = await this.walletRepo.getAccountWallet(
       user_id,
-      input.wallet_id,
+      wallet_id,
     );
 
     if (!walletAccounts) {

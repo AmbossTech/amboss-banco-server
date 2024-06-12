@@ -4,7 +4,11 @@ import { GraphQLError } from 'graphql';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { toWithError } from 'src/utils/async';
-import { PayLightningAddressAuto, ProcessInvoiceAuto } from './pay.types';
+import {
+  PayLightningAddressAuto,
+  PayLiquidAddressInput,
+  ProcessInvoiceAuto,
+} from './pay.types';
 import Big from 'big.js';
 import { wallet_account } from '@prisma/client';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
@@ -28,6 +32,20 @@ export class PayService {
     private liquidService: LiquidService,
     @Logger('PayService') private logger: CustomLogger,
   ) {}
+
+  async payLiquidAddress(
+    wallet_account: wallet_account,
+    input: PayLiquidAddressInput,
+  ) {
+    const pset = await this.liquidService.createPset(
+      wallet_account.details.descriptor,
+      input,
+    );
+
+    const base_64 = pset.toString();
+
+    return { base_64 };
+  }
 
   async payLightningInvoice(
     invoice: string,
@@ -111,7 +129,6 @@ export class PayService {
           const pset = await this.liquidService.createPset(
             wallet_account.details.descriptor,
             {
-              wallet_account_id: wallet_account.id,
               fee_rate: 100,
               recipients: [
                 {

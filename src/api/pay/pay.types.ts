@@ -2,7 +2,16 @@ import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
 import { LnUrlInfoSchemaType } from 'src/libs/lnurl/lnurl.types';
-import { CreateLiquidTransaction } from '../wallet/wallet.types';
+import { WalletAccount } from '../wallet/wallet.types';
+
+@ObjectType()
+export class CreateLiquidTransaction {
+  @Field(() => WalletAccount)
+  wallet_account: WalletAccount;
+
+  @Field()
+  base_64: string;
+}
 
 @ObjectType()
 export class PayMutations {
@@ -11,6 +20,9 @@ export class PayMutations {
 
   @Field()
   lightning_invoice: CreateLiquidTransaction;
+
+  @Field()
+  liquid_address: CreateLiquidTransaction;
 }
 
 @InputType()
@@ -30,8 +42,35 @@ export class PayLnInvoiceInput {
 
 @InputType()
 export class PayInput {
-  @Field()
+  @Field({ nullable: true })
   wallet_id: string;
+
+  @Field({ nullable: true })
+  account_id: string;
+}
+
+@InputType()
+export class LiquidRecipientInput {
+  @Field()
+  address: string;
+
+  @Field()
+  amount: string;
+
+  @Field({ nullable: true })
+  asset_id: string;
+}
+
+@InputType()
+export class PayLiquidAddressInput {
+  @Field({ nullable: true })
+  send_all_lbtc?: boolean;
+
+  @Field()
+  fee_rate: number;
+
+  @Field(() => [LiquidRecipientInput])
+  recipients: LiquidRecipientInput[];
 }
 
 export type PayLightningAddressAuto = {

@@ -1,7 +1,6 @@
 import { Args, Mutation, ResolveField, Resolver } from '@nestjs/graphql';
 import {
   BroadcastLiquidTransactionInput,
-  CreateLiquidTransactionInput,
   CreateOnchainAddressInput,
   CreateWalletInput,
   ReducedAccountInfo,
@@ -96,7 +95,9 @@ export class WalletMutationsResolver {
       }
       return p;
     }, []);
+
     let walletName = input.name;
+
     if (!walletName) {
       const countWallets = await this.walletRepo.countAccountWallets(user_id);
       walletName = `Wallet ${countWallets + 1}`;
@@ -133,34 +134,6 @@ export class WalletMutationsResolver {
       );
     });
     return { id: newWallet.id };
-  }
-
-  @ResolveField()
-  async create_liquid_transaction(
-    @Args('input') input: CreateLiquidTransactionInput,
-    @CurrentUser() { user_id }: any,
-  ) {
-    const walletAccount = await this.walletRepo.getAccountWalletAccount(
-      user_id,
-      input.wallet_account_id,
-    );
-
-    if (!walletAccount) {
-      throw new GraphQLError('Wallet account not found');
-    }
-
-    if (walletAccount.details.type !== WalletAccountType.LIQUID) {
-      throw new GraphQLError('Invalid wallet account id');
-    }
-
-    const pset = await this.liquidService.createPset(
-      walletAccount.details.descriptor,
-      input,
-    );
-
-    const base_64 = pset.toString();
-
-    return { base_64, wallet_account: walletAccount };
   }
 
   @ResolveField()
