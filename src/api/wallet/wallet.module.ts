@@ -5,6 +5,7 @@ import {
   WalletMutationsResolver,
 } from './resolvers/mutations.resolver';
 import {
+  FiatInfoResolver,
   LiquidAccountResolver,
   MainWalletQueriesResolver,
   SimpleWalletAccountResolver,
@@ -19,9 +20,10 @@ import {
 } from './resolvers/queries.resolver';
 import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
+import { FiatModule } from 'src/libs/fiat/fiat.module';
 
 @Module({
-  imports: [WalletRepoModule, EsploraServiceModule, LiquidModule],
+  imports: [WalletRepoModule, EsploraServiceModule, LiquidModule, FiatModule],
   providers: [
     MainWalletMutationsResolver,
     WalletMutationsResolver,
@@ -36,6 +38,7 @@ import { LiquidModule } from 'src/libs/liquid/liquid.module';
     MainWalletQueriesResolver,
     LiquidAccountResolver,
     WalletDetailsResolver,
+    FiatInfoResolver,
   ],
 })
 export class WalletModule {}

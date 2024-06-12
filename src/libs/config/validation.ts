@@ -17,4 +17,14 @@ export const ConfigSchema = z.object({
       liquid: z.string(),
     }),
   }),
+  fiat: z
+    .object({
+      coingecko: z
+        .object({
+          url: z.string(),
+          apikey: z.string(),
+        })
+        .optional(),
+    })
+    .optional(),
 });

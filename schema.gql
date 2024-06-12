@@ -66,6 +66,11 @@ input CreateWalletInput {
   secp256k1_key_pair: Secp256k1KeyPairInput!
 }
 
+type FiatInfo {
+  fiat_to_btc: String
+  id: String!
+}
+
 type LiquidAccount {
   assets: [LiquidAsset!]!
   id: String!
@@ -76,6 +81,7 @@ type LiquidAsset {
   asset_id: String!
   asset_info: LiquidAssetInfo!
   balance: String!
+  fiat_info: FiatInfo!
   id: String!
 }
 
@@ -101,6 +107,7 @@ type LiquidTransaction {
   block_height: String
   date: String
   fee: String!
+  fiat_info: FiatInfo!
   id: String!
   tx_id: String!
   unblinded_url: String!

@@ -20,6 +20,8 @@ import {
   LiquidAccount,
   WalletDetails,
   Secp256k1KeyPair,
+  AssetInfoParent,
+  FiatInfo,
 } from '../wallet.types';
 import {
   alwaysPresentAssets,
@@ -35,6 +37,22 @@ import {
 } from 'src/repo/wallet/wallet.types';
 import { ConfigService } from '@nestjs/config';
 import { WalletContactsParent } from 'src/api/contact/contact.types';
+import { FiatService } from 'src/libs/fiat/fiat.service';
+
+@Resolver(FiatInfo)
+export class FiatInfoResolver {
+  constructor(private fiatService: FiatService) {}
+
+  @ResolveField()
+  id() {
+    return v5('FiatInfo', v5.URL);
+  }
+
+  @ResolveField()
+  async fiat_to_btc() {
+    return this.fiatService.getLatestBtcPrice();
+  }
+}
 
 @Resolver(LiquidTransaction)
 export class WalletLiquidTransactionResolver {
@@ -78,12 +96,19 @@ export class WalletLiquidTransactionResolver {
   }
 
   @ResolveField()
+  fiat_info() {
+    return {};
+  }
+
+  @ResolveField()
   unblinded_url(@Parent() { tx }: WalletTxWithAssetId) {
     return tx.unblindedUrl('https://blockstream.info/liquid/');
   }
 
   @ResolveField()
-  async asset_info(@Parent() { asset_id }: WalletTxWithAssetId) {
+  async asset_info(
+    @Parent() { asset_id }: WalletTxWithAssetId,
+  ): Promise<AssetInfoParent> {
     const featured = featuredLiquidAssets.mainnet[asset_id];
 
     if (featured) return { ...featured, is_featured: true, id: asset_id };
@@ -111,7 +136,14 @@ export class WalletLiquidAssetResolver {
   }
 
   @ResolveField()
-  async asset_info(@Parent() { asset_id }: AssetParentType) {
+  fiat_info() {
+    return {};
+  }
+
+  @ResolveField()
+  async asset_info(
+    @Parent() { asset_id }: AssetParentType,
+  ): Promise<AssetInfoParent> {
     const featured = featuredLiquidAssets.mainnet[asset_id];
 
     if (featured) return { ...featured, is_featured: true, id: asset_id };
@@ -119,17 +151,6 @@ export class WalletLiquidAssetResolver {
     const apiInfo = await this.mempoolLiquid.getAssetInfo(asset_id);
     return { ...apiInfo, is_featured: false, id: asset_id };
   }
-
-  // @ResolveField()
-  // transactions(
-  //   @Parent() { asset_id, txs }: AssetParentType,
-  // ): WalletTxWithAssetId[] {
-  //   const assetTxs = txs
-  //     .filter((t) => t.balance().get(asset_id))
-  //     .map((tx) => ({ tx, asset_id }));
-
-  //   return assetTxs;
-  // }
 }
 
 @Resolver(LiquidAccount)

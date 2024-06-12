@@ -88,20 +88,16 @@ export class EsploraLiquidService {
   }
 
   async getAssetInfo(asset_id: string) {
-    const response = await fetch(`${this.url}/api/asset/${asset_id}`);
-
-    const status = response.status;
-
-    console.log(status);
-
-    const text = await response.text();
-
     try {
+      const response = await fetch(`${this.url}/api/asset/${asset_id}`);
+
+      const text = await response.text();
+
       const parsed = JSON.parse(text);
 
       return AssetSchema.parse(parsed);
     } catch (error) {
-      console.log(text);
+      return { name: '', ticker: '', precision: 0 };
     }
   }
 }

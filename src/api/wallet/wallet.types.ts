@@ -18,6 +18,15 @@ registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
 
 @ObjectType()
+export class FiatInfo {
+  @Field()
+  id: string;
+
+  @Field({ nullable: true })
+  fiat_to_btc: string;
+}
+
+@ObjectType()
 export class CreateWallet {
   @Field()
   id: string;
@@ -64,6 +73,9 @@ export class LiquidAsset {
   @Field(() => LiquidAssetInfo)
   asset_info: LiquidAssetInfo;
 
+  @Field(() => FiatInfo)
+  fiat_info: FiatInfo;
+
   @Field()
   balance: string;
 }
@@ -99,6 +111,9 @@ export class LiquidTransaction {
 
   @Field(() => LiquidAssetInfo)
   asset_info: LiquidAssetInfo;
+
+  @Field(() => FiatInfo)
+  fiat_info: FiatInfo;
 }
 
 @ObjectType()
@@ -313,4 +328,12 @@ export type ReducedAccountInfo = {
 
 export type GetAccountWalletsResult = wallet_on_accounts & {
   wallet: wallet & { wallet_account: wallet_account[] };
+};
+
+export type AssetInfoParent = {
+  name: string;
+  ticker: string;
+  precision: number;
+  is_featured: boolean;
+  id: string;
 };
