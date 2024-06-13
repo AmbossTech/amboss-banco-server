@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { lightningAddressType } from 'src/api/contact/contact.types';
+import { moneyAddressType } from 'src/api/contact/contact.types';
 import { RedisService } from '../redis/redis.service';
 import {
   lightningAddressToPubkeyUrl,
@@ -25,15 +25,15 @@ export class LnurlService {
     @Logger('LnurlService') private logger: CustomLogger,
   ) {}
 
-  async getAddressInfo(lightning_address: string) {
-    this.logger.debug('Getting address info', { lightning_address });
+  async getAddressInfo(money_address: string) {
+    this.logger.debug('Getting address info', { money_address });
 
-    const key = `getAddressInfo-address-${lightning_address}`;
+    const key = `getAddressInfo-address-${money_address}`;
 
     const cached = await this.redis.get<LnUrlInfoSchemaType>(key);
     if (!!cached) return cached;
 
-    const url = lightningAddressToUrl(lightning_address);
+    const url = lightningAddressToUrl(money_address);
 
     const info = await fetch(url);
 
@@ -55,12 +55,12 @@ export class LnurlService {
     return LnUrlResultSchema.parse(data);
   }
 
-  async getAddressPublicKey(lightning_address: string): Promise<string | null> {
+  async getAddressPublicKey(money_address: string): Promise<string | null> {
     this.logger.debug('Getting pubkey for lightning address', {
-      lightning_address,
+      money_address,
     });
 
-    const key = `getAddressPubkey-pubkey-${lightning_address}`;
+    const key = `getAddressPubkey-pubkey-${money_address}`;
 
     const cached = await this.redis.get<string>(key);
     if (!!cached) return cached;
@@ -68,7 +68,7 @@ export class LnurlService {
     const isProd = this.config.getOrThrow('isProduction');
 
     if (isProd) {
-      const result = lightningAddressType.safeParse(lightning_address);
+      const result = moneyAddressType.safeParse(money_address);
 
       if (!result.success) {
         this.logger.error('Invalid lightning address for parsing', { result });
@@ -78,7 +78,7 @@ export class LnurlService {
 
     const serverDomain = this.config.getOrThrow('server.domain');
 
-    const [user, domain] = lightning_address.split('@');
+    const [user, domain] = money_address.split('@');
 
     if (serverDomain === domain) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
@@ -92,9 +92,7 @@ export class LnurlService {
       return public_key;
     } else {
       try {
-        const rawInfo = await fetch(
-          lightningAddressToPubkeyUrl(lightning_address),
-        );
+        const rawInfo = await fetch(lightningAddressToPubkeyUrl(money_address));
 
         const info = await rawInfo.json();
 

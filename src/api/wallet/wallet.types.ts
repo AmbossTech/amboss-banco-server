@@ -191,7 +191,7 @@ export class Wallet {
   name: string;
 
   @Field({ nullable: true })
-  lightning_address: string;
+  money_address: string;
 
   @Field(() => WalletDetails)
   details: WalletDetails;

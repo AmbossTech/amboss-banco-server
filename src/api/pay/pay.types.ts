@@ -16,7 +16,7 @@ export class CreateLiquidTransaction {
 @ObjectType()
 export class PayMutations {
   @Field()
-  lightning_address: CreateLiquidTransaction;
+  money_address: CreateLiquidTransaction;
 
   @Field()
   lightning_invoice: CreateLiquidTransaction;

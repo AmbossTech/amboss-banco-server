@@ -6,7 +6,6 @@ CREATE TABLE "account" (
     "email" VARCHAR NOT NULL,
     "password_hint" VARCHAR,
     "master_password_hash" VARCHAR NOT NULL,
-    "symmetric_key_iv" VARCHAR NOT NULL,
     "protected_symmetric_key" VARCHAR NOT NULL,
     "refresh_token_hash" VARCHAR,
     "secp256k1_key_pair" JSONB NOT NULL,
@@ -20,7 +19,8 @@ CREATE TABLE "wallet_on_accounts" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "is_owner" BOOLEAN NOT NULL,
-    "lightning_address_user" VARCHAR,
+    "user_backup_confirmed" BOOLEAN NOT NULL DEFAULT false,
+    "money_address_user" VARCHAR,
     "secp256k1_key_pair" JSONB NOT NULL,
     "details" JSONB NOT NULL,
     "account_id" UUID NOT NULL,
@@ -34,10 +34,10 @@ CREATE TABLE "contact" (
     "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "lightning_address" VARCHAR NOT NULL,
+    "money_address" VARCHAR NOT NULL,
     "wallet_on_accounts_id" UUID NOT NULL,
 
-    CONSTRAINT "contact_pkey" PRIMARY KEY ("wallet_on_accounts_id","lightning_address")
+    CONSTRAINT "contact_pkey" PRIMARY KEY ("wallet_on_accounts_id","money_address")
 );
 
 -- CreateTable
@@ -74,6 +74,19 @@ CREATE TABLE "wallet_account" (
     CONSTRAINT "wallet_account_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "wallet_account_swap" (
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "swap_completed" BOOLEAN NOT NULL DEFAULT false,
+    "request" JSONB NOT NULL,
+    "response" JSONB NOT NULL,
+    "wallet_account_id" UUID NOT NULL,
+
+    CONSTRAINT "wallet_account_swap_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 
@@ -81,7 +94,7 @@ CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 CREATE UNIQUE INDEX "wallet_on_accounts_id_key" ON "wallet_on_accounts"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "wallet_on_accounts_lightning_address_user_key" ON "wallet_on_accounts"("lightning_address_user");
+CREATE UNIQUE INDEX "wallet_on_accounts_money_address_user_key" ON "wallet_on_accounts"("money_address_user");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "contact_id_key" ON "contact"("id");
@@ -100,3 +113,6 @@ ALTER TABLE "contact_message" ADD CONSTRAINT "contact_message_contact_id_fkey" F
 
 -- AddForeignKey
 ALTER TABLE "wallet_account" ADD CONSTRAINT "wallet_account_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "wallet_account_swap" ADD CONSTRAINT "wallet_account_swap_wallet_account_id_fkey" FOREIGN KEY ("wallet_account_id") REFERENCES "wallet_account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

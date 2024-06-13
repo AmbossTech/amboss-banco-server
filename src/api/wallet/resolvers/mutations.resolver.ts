@@ -9,7 +9,7 @@ import {
 } from '../wallet.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { fruitNameGenerator } from 'src/utils/names/names';
+import { generateFruitName } from 'src/utils/names/names';
 import { each, eachSeries } from 'async';
 import { GraphQLError } from 'graphql';
 import { LiquidService, getUpdateKey } from 'src/libs/liquid/liquid.service';
@@ -80,7 +80,7 @@ export class WalletMutationsResolver {
       if (c.type === WalletAccountType.LIQUID) {
         let accountName = c.name;
         if (!accountName) {
-          accountName = fruitNameGenerator();
+          accountName = generateFruitName();
         }
         return [
           ...p,

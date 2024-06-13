@@ -303,8 +303,8 @@ export class WalletResolver {
   }
 
   @ResolveField()
-  lightning_address(@Parent() parent: GetAccountWalletsResult) {
-    return `${parent.lightning_address_user}@${this.config.getOrThrow('server.domain')}`;
+  money_address(@Parent() parent: GetAccountWalletsResult) {
+    return `${parent.money_address_user}@${this.config.getOrThrow('server.domain')}`;
   }
 
   @ResolveField()

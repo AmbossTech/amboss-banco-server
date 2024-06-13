@@ -26,7 +26,7 @@ export class PayMutationsResolver {
   constructor(private payService: PayService) {}
 
   @ResolveField()
-  async lightning_address(
+  async money_address(
     @Args('input') input: PayLnAddressInput,
     @Parent() parent: PayParentType,
   ) {

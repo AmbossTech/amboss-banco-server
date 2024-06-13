@@ -60,7 +60,7 @@ export class WalletContact {
   id: string;
 
   @Field()
-  lightning_address: string;
+  money_address: string;
 
   @Field(() => LnUrlInfo, { nullable: true })
   lnurl_info: LnUrlInfo;
@@ -78,7 +78,7 @@ export class SimpleWalletContact {
   id: string;
 
   @Field()
-  lightning_address: string;
+  money_address: string;
 }
 
 @ObjectType()
@@ -99,7 +99,7 @@ export class CreateContactInput {
   wallet_id: string;
 
   @Field()
-  lightning_address: string;
+  money_address: string;
 }
 
 @InputType()
@@ -108,7 +108,7 @@ export class SendMessageInput {
   contact_id: string;
 
   @Field()
-  receiver_lightning_address: string;
+  receiver_money_address: string;
 
   @Field()
   receiver_protected_message: string;
@@ -121,10 +121,10 @@ export type WalletContactsParent = {
   wallet_id: string;
 };
 
-export const lightningAddressType = z
+export const moneyAddressType = z
   .string()
-  .min(1, { message: 'No Lightning Address Provided' })
-  .email('Invalid Lightning Address');
+  .min(1, { message: 'No Money Address Provided' })
+  .email('Invalid Money Address');
 
 export const LightningAddressResponseSchema = z.object({
   callback: z.string(),
@@ -136,7 +136,7 @@ export const LightningAddressResponseSchema = z.object({
 
 export type WalletContactParent = {
   id: string;
-  lightning_address: string | null;
+  money_address: string | null;
 };
 
 export type LnUrlInfoParent = {

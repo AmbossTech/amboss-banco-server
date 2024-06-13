@@ -8,9 +8,6 @@ export class User {
   @Field()
   email: string;
 
-  @Field()
-  symmetric_key_iv: string;
-
   @Field(() => String, { nullable: true })
   default_wallet_id: string | null;
 }
@@ -79,9 +76,6 @@ export class SignUpInput {
 
   @Field()
   master_password_hash: string;
-
-  @Field()
-  symmetric_key_iv: string;
 
   @Field()
   protected_symmetric_key: string;

@@ -3,7 +3,7 @@ import { GetAccountWalletsResult } from 'src/api/wallet/wallet.types';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
 import { Secp256k1KeyPairType } from '../account/account.types';
-import { lnAddressGenerator } from 'src/utils/names/names';
+import { generateMoneyAddress } from 'src/utils/names/names';
 
 @Injectable()
 export class WalletRepoService {
@@ -13,9 +13,9 @@ export class WalletRepoService {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }
 
-  async getWalletByLnAddress(lightning_address_user: string) {
+  async getWalletByLnAddress(money_address_user: string) {
     return this.prisma.wallet_on_accounts.findUnique({
-      where: { lightning_address_user },
+      where: { money_address_user },
       include: { wallet: { include: { wallet_account: true } } },
     });
   }
@@ -85,7 +85,7 @@ export class WalletRepoService {
             secp256k1_key_pair,
             details,
             account: { connect: { id: account_id } },
-            lightning_address_user: lnAddressGenerator(),
+            money_address_user: generateMoneyAddress(),
           },
         },
       },

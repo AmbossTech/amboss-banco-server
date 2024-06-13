@@ -16,7 +16,7 @@ import {
   WalletContactParent,
   WalletContacts,
   WalletContactsParent,
-  lightningAddressType,
+  moneyAddressType,
 } from './contact.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { ContactRepoService } from 'src/repo/contact/contact.repo';
@@ -80,8 +80,8 @@ export class WalletContactResolver {
 
   @ResolveField()
   async encryption_pubkey(@Parent() parent: WalletContactParent) {
-    if (!parent.lightning_address) return null;
-    return this.lnurlService.getAddressPublicKey(parent.lightning_address);
+    if (!parent.money_address) return null;
+    return this.lnurlService.getAddressPublicKey(parent.money_address);
   }
 
   @ResolveField()
@@ -91,11 +91,11 @@ export class WalletContactResolver {
 
   @ResolveField()
   async lnurl_info(
-    @Parent() { lightning_address }: WalletContactParent,
+    @Parent() { money_address }: WalletContactParent,
   ): Promise<LnUrlInfoParent | null> {
-    if (!lightning_address) return null;
+    if (!money_address) return null;
     const [lnUrlInfo, error] = await toWithError(
-      this.lnurlService.getAddressInfo(lightning_address),
+      this.lnurlService.getAddressInfo(money_address),
     );
 
     if (error) return null;
@@ -170,7 +170,7 @@ export class ContactMutationsResolver {
     const isProd = this.config.getOrThrow('isProduction');
 
     if (isProd) {
-      const result = lightningAddressType.safeParse(input.lightning_address);
+      const result = moneyAddressType.safeParse(input.money_address);
 
       if (!result.success) {
         throw new GraphQLError(result.error.issues[0].message);
@@ -179,7 +179,7 @@ export class ContactMutationsResolver {
 
     const serverDomain = this.config.getOrThrow('server.domain');
 
-    const [user, domain] = input.lightning_address.split('@');
+    const [user, domain] = input.money_address.split('@');
 
     if (serverDomain === domain) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
@@ -189,9 +189,7 @@ export class ContactMutationsResolver {
       }
     } else {
       try {
-        const rawInfo = await fetch(
-          lightningAddressToUrl(input.lightning_address),
-        );
+        const rawInfo = await fetch(lightningAddressToUrl(input.money_address));
 
         const info = await rawInfo.json();
 
@@ -208,7 +206,7 @@ export class ContactMutationsResolver {
     return this.contactsRepo.upsertContactForAccount(
       user_id,
       input.wallet_id,
-      input.lightning_address,
+      input.money_address,
     );
   }
 }

@@ -54,8 +54,8 @@ export class MessageController {
     }
 
     await this.contactRepo.saveContactMessage({
-      lightning_address_user: params.account,
-      contact_lightning_address: parsed.data.payerData.identifier,
+      money_address_user: params.account,
+      contact_money_address: parsed.data.payerData.identifier,
       protected_message: parsed.data.protected_message,
       contact_is_sender: true,
     });

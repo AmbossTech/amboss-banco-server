@@ -8,7 +8,7 @@ import { fruits } from './fruitList';
 
 const numberDictionary = NumberDictionary.generate({ min: 10, max: 99 });
 
-export const fruitNameGenerator = () => {
+export const generateFruitName = () => {
   return uniqueNamesGenerator({
     dictionaries: [fruits],
     style: 'capital',
@@ -16,7 +16,7 @@ export const fruitNameGenerator = () => {
   });
 };
 
-export const lnAddressGenerator = () => {
+export const generateMoneyAddress = () => {
   return uniqueNamesGenerator({
     dictionaries: [colors, animals, numberDictionary],
     separator: '',

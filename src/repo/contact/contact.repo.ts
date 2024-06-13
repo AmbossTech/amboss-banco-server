@@ -7,14 +7,14 @@ export class ContactRepoService {
   constructor(private prisma: PrismaService) {}
 
   async upsertContact({
-    lightning_address_user,
-    contact_lightning_address,
+    money_address_user,
+    contact_money_address,
   }: {
-    lightning_address_user: string;
-    contact_lightning_address: string;
+    money_address_user: string;
+    contact_money_address: string;
   }) {
     const walletOnAccount = await this.prisma.wallet_on_accounts.findUnique({
-      where: { lightning_address_user },
+      where: { money_address_user },
       select: { id: true },
     });
 
@@ -24,15 +24,15 @@ export class ContactRepoService {
 
     return this.prisma.contact.upsert({
       where: {
-        wallet_on_accounts_id_lightning_address: {
+        wallet_on_accounts_id_money_address: {
           wallet_on_accounts_id: walletOnAccount.id,
-          lightning_address: contact_lightning_address,
+          money_address: contact_money_address,
         },
       },
       update: {},
       create: {
         wallet_on_accounts_id: walletOnAccount.id,
-        lightning_address: contact_lightning_address,
+        money_address: contact_money_address,
       },
     });
   }
@@ -40,7 +40,7 @@ export class ContactRepoService {
   async upsertContactForAccount(
     account_id: string,
     wallet_id: string,
-    lightning_address: string,
+    money_address: string,
   ) {
     const walletOnAccount = await this.prisma.wallet_on_accounts.findUnique({
       where: { account_id_wallet_id: { account_id, wallet_id } },
@@ -53,15 +53,15 @@ export class ContactRepoService {
 
     return this.prisma.contact.upsert({
       where: {
-        wallet_on_accounts_id_lightning_address: {
+        wallet_on_accounts_id_money_address: {
           wallet_on_accounts_id: walletOnAccount.id,
-          lightning_address,
+          money_address,
         },
       },
       update: {},
       create: {
         wallet_on_accounts_id: walletOnAccount.id,
-        lightning_address,
+        money_address,
       },
     });
   }
@@ -88,19 +88,19 @@ export class ContactRepoService {
   }
 
   async saveContactMessage({
-    lightning_address_user,
-    contact_lightning_address,
+    money_address_user,
+    contact_money_address,
     protected_message,
     contact_is_sender,
   }: {
-    lightning_address_user: string;
-    contact_lightning_address: string;
+    money_address_user: string;
+    contact_money_address: string;
     protected_message: string;
     contact_is_sender: boolean;
   }) {
     const contact = await this.upsertContact({
-      lightning_address_user,
-      contact_lightning_address,
+      money_address_user,
+      contact_money_address,
     });
 
     if (!contact) {

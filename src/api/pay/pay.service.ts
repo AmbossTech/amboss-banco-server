@@ -149,7 +149,7 @@ export class PayService {
   }
 
   async payLightningAddress(
-    lightning_address: string,
+    money_address: string,
     amount: number,
     wallet_account: wallet_account,
   ): Promise<{ base_64: string }> {
@@ -158,13 +158,13 @@ export class PayService {
         PayLightningAddressAuto['getLnAddressInfo']
       > => {
         const [info, error] = await toWithError(
-          this.lnurlService.getAddressInfo(lightning_address),
+          this.lnurlService.getAddressInfo(money_address),
         );
 
         if (error) {
           this.logger.error('Error getting address info', {
             error,
-            lightning_address,
+            money_address,
           });
 
           throw new GraphQLError('Error getting address info');

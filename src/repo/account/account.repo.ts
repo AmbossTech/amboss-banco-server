@@ -32,7 +32,6 @@ export class AccountRepo {
     email,
     master_password_hash,
     password_hint,
-    symmetric_key_iv,
     protected_symmetric_key,
     secp256k1_key_pair,
   }: NewAccountType) {
@@ -41,7 +40,6 @@ export class AccountRepo {
         email,
         master_password_hash,
         password_hint,
-        symmetric_key_iv,
         protected_symmetric_key,
         secp256k1_key_pair,
       },
