@@ -86,7 +86,8 @@ export class WalletContactResolver {
 
   @ResolveField()
   async messages(@Parent() parent: WalletContactParent) {
-    return this.contactsRepo.getContactMessages(parent.id);
+    const messages = await this.contactsRepo.getContactMessages(parent.id);
+    return messages.map((m) => ({ ...m, payload: JSON.stringify(m.payload) }));
   }
 
   @ResolveField()

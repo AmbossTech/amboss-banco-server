@@ -20,8 +20,8 @@ export class ContactService {
     account_id,
     contact_id,
     receiver_money_address,
-    receiver_protected_message,
-    sender_protected_message,
+    receiver_payload,
+    sender_payload,
   }: SendMessageInput & { account_id: string }) {
     const contact = await this.contactRepo.getContactForAccount(
       contact_id,
@@ -45,7 +45,7 @@ export class ContactService {
         money_address_user: user,
         contact_money_address: senderAddress,
         contact_is_sender: true,
-        protected_message: receiver_protected_message,
+        payload_string: receiver_payload,
       });
     } else {
       try {
@@ -53,7 +53,7 @@ export class ContactService {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             payerData: { identifier: senderAddress },
-            protected_message: receiver_protected_message,
+            protected_message: receiver_payload,
           }),
           method: 'POST',
         });
@@ -66,7 +66,7 @@ export class ContactService {
       money_address_user: contact.wallet_on_accounts.money_address_user,
       contact_money_address: receiver_money_address,
       contact_is_sender: false,
-      protected_message: sender_protected_message,
+      payload_string: sender_payload,
     });
   }
 }

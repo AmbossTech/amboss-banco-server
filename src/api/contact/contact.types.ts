@@ -33,7 +33,7 @@ export class ContactMessage {
   contact_is_sender: boolean;
 
   @Field()
-  protected_message: string;
+  payload: string;
 }
 
 @ObjectType()
@@ -111,10 +111,10 @@ export class SendMessageInput {
   receiver_money_address: string;
 
   @Field()
-  receiver_protected_message: string;
+  receiver_payload: string;
 
   @Field()
-  sender_protected_message: string;
+  sender_payload: string;
 }
 
 export type WalletContactsParent = {

@@ -14,7 +14,7 @@ input BroadcastLiquidTransactionInput {
 type ContactMessage {
   contact_is_sender: Boolean!
   id: String!
-  protected_message: String!
+  payload: String!
 }
 
 type ContactMutations {
@@ -204,8 +204,8 @@ type SendMessage {
 input SendMessageInput {
   contact_id: String!
   receiver_money_address: String!
-  receiver_protected_message: String!
-  sender_protected_message: String!
+  receiver_payload: String!
+  sender_payload: String!
 }
 
 input SignUpInput {

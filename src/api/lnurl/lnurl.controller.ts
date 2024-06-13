@@ -56,7 +56,7 @@ export class MessageController {
     await this.contactRepo.saveContactMessage({
       money_address_user: params.account,
       contact_money_address: parsed.data.payerData.identifier,
-      protected_message: parsed.data.protected_message,
+      payload_string: parsed.data.payload,
       contact_is_sender: true,
     });
 

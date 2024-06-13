@@ -17,5 +17,5 @@ export const MessageBodySchema = z.object({
   payerData: z.object({
     identifier: z.string(),
   }),
-  protected_message: z.string(),
+  payload: z.string(),
 });

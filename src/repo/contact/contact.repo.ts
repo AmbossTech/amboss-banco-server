@@ -90,12 +90,12 @@ export class ContactRepoService {
   async saveContactMessage({
     money_address_user,
     contact_money_address,
-    protected_message,
+    payload_string,
     contact_is_sender,
   }: {
     money_address_user: string;
     contact_money_address: string;
-    protected_message: string;
+    payload_string: string;
     contact_is_sender: boolean;
   }) {
     const contact = await this.upsertContact({
@@ -107,9 +107,11 @@ export class ContactRepoService {
       throw new Error('Contact not found for this lightning address');
     }
 
+    const payload = JSON.parse(payload_string);
+
     return this.prisma.contact_message.create({
       data: {
-        protected_message,
+        payload,
         contact_is_sender,
         contact: { connect: { id: contact.id } },
       },

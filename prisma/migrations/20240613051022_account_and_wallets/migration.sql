@@ -46,7 +46,7 @@ CREATE TABLE "contact_message" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "contact_is_sender" BOOLEAN NOT NULL,
-    "protected_message" VARCHAR NOT NULL,
+    "payload" JSONB NOT NULL,
     "contact_id" UUID,
 
     CONSTRAINT "contact_message_pkey" PRIMARY KEY ("id")

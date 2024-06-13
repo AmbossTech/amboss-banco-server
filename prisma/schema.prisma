@@ -68,7 +68,7 @@ model contact_message {
   created_at        DateTime @default(now()) @db.Timestamp(6)
   updated_at        DateTime @default(now()) @updatedAt @db.Timestamp(6)
   contact_is_sender Boolean
-  protected_message String   @db.VarChar
+  payload           Json     @db.JsonB
   contact           contact? @relation(fields: [contact_id], references: [id])
   contact_id        String?  @db.Uuid
 }
