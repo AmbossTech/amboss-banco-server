@@ -6,7 +6,14 @@ import {
   lightningAddressToPubkeyUrl,
   lightningAddressToUrl,
 } from 'src/utils/lnurl';
-import { LightningAddressPubkeyResponseSchema } from 'src/api/lnurl/lnurl.types';
+import {
+  AccountCurrency,
+  CallbackHandlerParams,
+  CallbackParams,
+  GetLnUrlResponseAutoType,
+  GetLnurlAutoType,
+  LightningAddressPubkeyResponseSchema,
+} from 'src/api/lnurl/lnurl.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { CustomLogger, Logger } from '../logging';
 import { fetch } from 'undici';
@@ -15,15 +22,300 @@ import {
   LnUrlInfoSchemaType,
   LnUrlResultSchema,
 } from './lnurl.types';
+import {
+  LiquidWalletAssets,
+  WalletAccountType,
+} from 'src/repo/wallet/wallet.types';
+import { liquidAssetIds } from 'src/utils/crypto/crypto';
+import { auto } from 'async';
+import { BoltzRestApi } from '../boltz/boltz.rest';
+import { LiquidService } from '../liquid/liquid.service';
 
 @Injectable()
 export class LnurlService {
   constructor(
-    private config: ConfigService,
     private redis: RedisService,
+    private config: ConfigService,
+    private boltzApi: BoltzRestApi,
+    private liquidService: LiquidService,
     private walletRepo: WalletRepoService,
     @Logger('LnurlService') private logger: CustomLogger,
   ) {}
+
+  async getLnUrlInfo(account: string) {
+    return auto<GetLnurlAutoType>({
+      // getBoltzInfo: async () => {
+      //   return this.boltzApi.getReverseSwapInfo();
+      // },
+
+      getAccountCurrencies: async () => {
+        const currencies = await this.getLnUrlCurrencies(account);
+        return currencies.map((c) => {
+          const { code, name, chain, network, symbol, is_native } = c;
+          return {
+            code,
+            name,
+            chain,
+            network,
+            symbol,
+            is_native,
+          };
+        });
+      },
+
+      buildResponse: [
+        'getAccountCurrencies',
+        async ({
+          getAccountCurrencies,
+        }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
+          return {
+            callback: `http://${this.config.getOrThrow('server.domain')}/lnurlp/${account}`,
+            minSendable: 0,
+            maxSendable: 0,
+            // minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
+            // maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
+            metadata: JSON.stringify([
+              ['text/plain', `Payment to ${account}`],
+              [
+                'text/identifier',
+                `${account}@${this.config.getOrThrow('server.domain')}`,
+              ],
+            ]),
+            // payerData: {
+            //   // name: { mandatory: false },
+            //   // pubkey: { mandatory: false },
+            //   identifier: { mandatory: false },
+            // },
+            currencies: getAccountCurrencies,
+            tag: 'payRequest',
+          };
+        },
+      ],
+    }).then((result) => result.buildResponse);
+  }
+
+  async getLnUrlCurrencies(account: string): Promise<AccountCurrency[]> {
+    const wallet = await this.walletRepo.getWalletByLnAddress(account);
+
+    if (!wallet?.wallet.wallet_account.length) {
+      return [];
+    }
+
+    const hasLiquidAccount = wallet.wallet.wallet_account.find(
+      (a) => a.details.type === WalletAccountType.LIQUID,
+    );
+
+    if (!hasLiquidAccount) return [];
+
+    const currencies: AccountCurrency[] = [];
+
+    currencies.push({
+      code: LiquidWalletAssets.BTC.code,
+      name: LiquidWalletAssets.BTC.name,
+      chain: WalletAccountType.LIQUID,
+      network: 'mainnet',
+      symbol: LiquidWalletAssets.BTC.symbol,
+      is_native: true,
+      wallet_account: hasLiquidAccount,
+      asset_id: liquidAssetIds.mainnet.bitcoin,
+      conversion_decimals: 8,
+      // multiplier: 1000,
+      // decimals: 8,
+      // convertible: {
+      //   min: 1,
+      //   max: 100000000,
+      // },
+    });
+
+    currencies.push({
+      code: LiquidWalletAssets.USDT.code,
+      name: LiquidWalletAssets.USDT.name,
+      chain: WalletAccountType.LIQUID,
+      network: 'mainnet',
+      symbol: LiquidWalletAssets.USDT.symbol,
+      is_native: true,
+      wallet_account: hasLiquidAccount,
+      asset_id: liquidAssetIds.mainnet.tether,
+      conversion_decimals: 0,
+      // multiplier: 1000,
+      // decimals: 8,
+      // convertible: {
+      //   min: 1,
+      //   max: 100000000,
+      // },
+    });
+
+    return currencies;
+  }
+
+  async getLnUrlChainResponse(props: CallbackHandlerParams) {
+    const { account, amount } = props;
+
+    return auto<GetLnUrlResponseAutoType>({
+      checkCurrency: async () => {
+        const currencies = await this.getLnUrlCurrencies(account);
+
+        if (!props.chain || !props.network) {
+          throw new Error(
+            JSON.stringify({
+              status: 'ERROR',
+              reason: 'A chain and network needs to be provided',
+            }),
+          );
+        }
+
+        if (!currencies.length) {
+          throw new Error(
+            JSON.stringify({
+              status: 'ERROR',
+              reason: 'No currencies are available',
+            }),
+          );
+        }
+
+        const foundCurrency = currencies.find((c) => {
+          return (
+            c.code === props.currency &&
+            c.chain === props.chain &&
+            c.network === props.network &&
+            c.is_native === true
+          );
+        });
+
+        if (!foundCurrency) {
+          throw new Error(
+            JSON.stringify({
+              status: 'ERROR',
+              reason: `Currency ${props.currency} on chain ${props.chain} and network ${props.network} not available`,
+            }),
+          );
+        }
+
+        return foundCurrency;
+      },
+
+      createPayload: [
+        'checkCurrency',
+        async ({ checkCurrency }) => {
+          const addressObject = await this.liquidService.getOnchainAddress(
+            checkCurrency.wallet_account.details.descriptor,
+            true,
+          );
+
+          const address = addressObject.address().toString();
+
+          const bip21 = [
+            'liquidnetwork:',
+            address,
+            `?amount=${amount / 10 ** checkCurrency.conversion_decimals}`,
+            `&assetid=${checkCurrency.asset_id}`,
+          ].join('');
+
+          return {
+            pr: '',
+            routes: [],
+            onchain: {
+              chain: props.chain,
+              currency: props.currency,
+              network: props.network,
+              address,
+              bip21,
+            },
+          };
+        },
+      ],
+    })
+      .then((result) => {
+        return JSON.stringify(result.createPayload);
+      })
+      .catch((err) => {
+        return err.message;
+      });
+  }
+
+  async getLnUrlInvoiceResponse() {
+    // TODO: Handle creating a Boltz swap to get a lightning invoice
+
+    //   checkAmount: [
+    //     'checkCurrency',
+    //     async ({
+    //       checkCurrency,
+    //     }: Pick<GetLnUrlResponseAutoType, 'checkCurrency'>) => {
+    //       if (!!checkCurrency) return;
+
+    //       const boltzInfo = await this.boltzApi.getReverseSwapInfo();
+
+    //       const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+
+    //       if (maximal < amount) {
+    //         throw new Error(
+    //           JSON.stringify({
+    //             status: 'ERROR',
+    //             reason: `Amount ${amount} greater than maximum of ${maximal}`,
+    //           }),
+    //         );
+    //       }
+
+    //       if (minimal > amount) {
+    //         throw new Error(
+    //           JSON.stringify({
+    //             status: 'ERROR',
+    //             reason: `Amount ${amount} smaller than minimum of ${minimal}`,
+    //           }),
+    //         );
+    //       }
+    //     },
+    //   ],
+
+    return JSON.stringify({
+      status: 'ERROR',
+      reason: 'Lightning Address is currently unavailable',
+    });
+  }
+
+  async getLnUrlResponse(props: CallbackParams): Promise<string> {
+    if (!props.account) {
+      throw new Error(
+        JSON.stringify({
+          status: 'ERROR',
+          reason: 'No account provided',
+        }),
+      );
+    }
+
+    const account = props.account.toLowerCase();
+
+    if (!props.amount) {
+      throw new Error(
+        JSON.stringify({
+          status: 'ERROR',
+          reason: 'No amount provided',
+        }),
+      );
+    }
+
+    const amount = Number(props.amount);
+
+    if (isNaN(amount)) {
+      throw new Error(
+        JSON.stringify({
+          status: 'ERROR',
+          reason: 'No amount provided',
+        }),
+      );
+    }
+
+    if (!!props.currency) {
+      return this.getLnUrlChainResponse({
+        ...props,
+        account,
+        amount,
+        currency: props.currency,
+      });
+    }
+
+    return this.getLnUrlInvoiceResponse();
+  }
 
   async getAddressInfo(money_address: string) {
     this.logger.debug('Getting address info', { money_address });
@@ -33,13 +325,27 @@ export class LnurlService {
     const cached = await this.redis.get<LnUrlInfoSchemaType>(key);
     if (!!cached) return cached;
 
-    const url = lightningAddressToUrl(money_address);
+    const serverDomain = this.config.getOrThrow('server.domain');
 
-    const info = await fetch(url);
+    const [user, domain] = money_address.split('@');
 
-    const data = await info.json();
+    let lnUrlData;
 
-    const parsed = LnUrlInfoSchema.parse(data);
+    if (serverDomain === domain) {
+      const wallet = await this.walletRepo.getWalletByLnAddress(user);
+
+      if (!wallet) return null;
+
+      lnUrlData = await this.getLnUrlInfo(user);
+    } else {
+      const url = lightningAddressToUrl(money_address);
+
+      const fetchInfo = await fetch(url);
+
+      lnUrlData = await fetchInfo.json();
+    }
+
+    const parsed = LnUrlInfoSchema.parse(lnUrlData);
 
     await this.redis.set(key, parsed, { ttl: 5 * 60 });
 

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { fetch } from 'undici';
 import {
+  SwapReverseInfoType,
+  SwapSubmarineInfoType,
   boltzError,
   boltzMagicRouteHint,
   boltzReverseSwapResponse,
@@ -15,12 +17,16 @@ import {
   BoltzSubmarineRequestType,
 } from 'src/repo/swaps/swaps.types';
 import { Musig } from 'boltz-core';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class BoltzRestApi {
   apiUrl;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private redis: RedisService,
+    private configService: ConfigService,
+  ) {
     this.apiUrl = configService.getOrThrow('urls.boltz');
   }
 
@@ -33,19 +39,37 @@ export class BoltzRestApi {
   }
 
   async getSubmarineSwapInfo() {
+    const key = `BoltzRestApi-getSubmarineSwapInfo`;
+
+    const cached = await this.redis.get<SwapSubmarineInfoType>(key);
+    if (!!cached) return cached;
+
     const result = await fetch(`${this.apiUrl}swap/submarine`);
 
     const body = await result.json();
 
-    return swapSubmarineInfoSchema.parse(body);
+    const parsed = swapSubmarineInfoSchema.parse(body);
+
+    await this.redis.set(key, parsed, { ttl: 60 * 60 });
+
+    return parsed;
   }
 
   async getReverseSwapInfo() {
+    const key = `BoltzRestApi-getReverseSwapInfo`;
+
+    const cached = await this.redis.get<SwapReverseInfoType>(key);
+    if (!!cached) return cached;
+
     const result = await fetch(`${this.apiUrl}swap/reverse`);
 
     const body = await result.json();
 
-    return swapReverseInfoSchema.parse(body);
+    const parsed = swapReverseInfoSchema.parse(body);
+
+    await this.redis.set(key, parsed, { ttl: 60 * 60 });
+
+    return parsed;
   }
 
   async createSubmarineSwap(request: BoltzSubmarineRequestType) {

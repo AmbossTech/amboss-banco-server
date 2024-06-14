@@ -168,7 +168,10 @@ export class LiquidService {
   //   return orderBy(txs, (t) => t.timestamp(), 'desc');
   // }
 
-  async getOnchainAddress(descriptor: string): Promise<AddressResult> {
+  async getOnchainAddress(
+    descriptor: string,
+    lock = false,
+  ): Promise<AddressResult> {
     const wollet = await this.getUpdatedWallet(descriptor);
 
     let lastUsedIndex = wollet.address().index();
@@ -188,6 +191,16 @@ export class LiquidService {
       }
     }
 
-    return wollet.address(lastUsedIndex);
+    const address = wollet.address(lastUsedIndex);
+
+    if (lock) {
+      await this.redis.set(
+        getBlockedAddressKey(address.address().toString()),
+        true,
+        { ttl: 5 * 60 },
+      );
+    }
+
+    return address;
   }
 }

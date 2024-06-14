@@ -9,8 +9,8 @@ import {
   ContactMutations,
   CreateContactInput,
   LightningAddressResponseSchema,
-  LnUrlInfo,
-  LnUrlInfoParent,
+  LnUrlCurrency,
+  LnUrlCurrencyType,
   SendMessageInput,
   WalletContact,
   WalletContactParent,
@@ -27,55 +27,70 @@ import { fetch } from 'undici';
 import { lightningAddressToUrl } from 'src/utils/lnurl';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import { ContactService } from 'src/libs/contact/contact.service';
-import { toWithError } from 'src/utils/async';
 import { v5 } from 'uuid';
 import { CustomLogger, Logger } from 'src/libs/logging';
-import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
+import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
 
-@Resolver(LnUrlInfo)
-export class LnUrlInfoResolver {
+@Resolver(LnUrlCurrency)
+export class LnUrlCurrencyResolver {
   @ResolveField()
-  id(@Parent() parent: LnUrlInfoParent) {
+  id(@Parent() parent: LnUrlCurrencySchemaType) {
     return v5(JSON.stringify(parent), v5.URL);
   }
-
-  @ResolveField()
-  async min_sendable(@Parent() parent: LnUrlInfoParent) {
-    const minSats = Math.floor(parent.lnUrlInfo.minSendable / 1000);
-
-    if (!parent.boltzInfo) return minSats;
-
-    return Math.max(parent.boltzInfo['L-BTC'].BTC.limits.minimal, minSats);
-  }
-
-  @ResolveField()
-  async max_sendable(@Parent() parent: LnUrlInfoParent) {
-    const maxSats = Math.ceil(parent.lnUrlInfo.maxSendable / 1000);
-
-    if (!parent.boltzInfo) return maxSats;
-
-    return Math.min(parent.boltzInfo['L-BTC'].BTC.limits.maximal, maxSats);
-  }
-
-  @ResolveField()
-  async variable_fee_percentage(@Parent() parent: LnUrlInfoParent) {
-    return parent.boltzInfo?.['L-BTC'].BTC.fees.percentage || '0';
-  }
-
-  @ResolveField()
-  async fixed_fee(@Parent() parent: LnUrlInfoParent) {
-    const boltzFee = parent.boltzInfo?.['L-BTC'].BTC.fees.minerFees || 0;
-    return boltzFee + 300;
-  }
 }
+
+// @Resolver(LnUrlInfo)
+// export class LnUrlInfoResolver {
+//   @ResolveField()
+//   id(@Parent() parent: LnUrlInfoParent) {
+//     return v5(JSON.stringify(parent), v5.URL);
+//   }
+
+// @ResolveField()
+// async min_sendable(@Parent() parent: LnUrlInfoParent) {
+//   if (!parent.lnUrlInfo.minSendable) return 0;
+
+//   const minSats = Math.floor(parent.lnUrlInfo.minSendable / 1000);
+
+//   if (!parent.boltzInfo) return 0;
+
+//   return Math.max(parent.boltzInfo['L-BTC'].BTC.limits.minimal, minSats);
+// }
+
+// @ResolveField()
+// async max_sendable(@Parent() parent: LnUrlInfoParent) {
+//   if (!parent.lnUrlInfo.maxSendable) return 0;
+
+//   const maxSats = Math.ceil(parent.lnUrlInfo.maxSendable / 1000);
+
+//   if (!parent.boltzInfo) return 0;
+
+//   return Math.min(parent.boltzInfo['L-BTC'].BTC.limits.maximal, maxSats);
+// }
+
+// @ResolveField()
+// async variable_fee_percentage(@Parent() parent: LnUrlInfoParent) {
+//   return parent.boltzInfo?.['L-BTC'].BTC.fees.percentage || '0';
+// }
+
+// @ResolveField()
+// async fixed_fee(@Parent() parent: LnUrlInfoParent) {
+//   const boltzFee = parent.boltzInfo?.['L-BTC'].BTC.fees.minerFees || 0;
+//   return boltzFee + 300;
+// }
+
+// @ResolveField()
+// async currencies(@Parent() parent: LnUrlInfoParent) {
+//   return parent.lnUrlInfo.currencies || [];
+// }
+// }
 
 @Resolver(WalletContact)
 export class WalletContactResolver {
   constructor(
-    private boltzRest: BoltzRestApi,
     private lnurlService: LnurlService,
     private contactsRepo: ContactRepoService,
-    @Logger('WalletContactResolver') private logger: CustomLogger,
+    private contactService: ContactService,
   ) {}
 
   @ResolveField()
@@ -91,23 +106,11 @@ export class WalletContactResolver {
   }
 
   @ResolveField()
-  async lnurl_info(
+  async payment_options(
     @Parent() { money_address }: WalletContactParent,
-  ): Promise<LnUrlInfoParent | null> {
+  ): Promise<LnUrlCurrencyType[] | null> {
     if (!money_address) return null;
-    const [lnUrlInfo, error] = await toWithError(
-      this.lnurlService.getAddressInfo(money_address),
-    );
-
-    if (error) return null;
-
-    const [boltzInfo] = await toWithError(
-      this.boltzRest.getSubmarineSwapInfo(),
-    );
-
-    this.logger.debug('LNURL Info', { lnUrlInfo, boltzInfo });
-
-    return { lnUrlInfo, boltzInfo };
+    return this.contactService.getCurrencies(money_address);
   }
 }
 
@@ -148,6 +151,7 @@ export class ContactMutationsResolver {
     private walletRepo: WalletRepoService,
     private contactService: ContactService,
     private contactsRepo: ContactRepoService,
+    @Logger('ContactMutationsResolver') private logger: CustomLogger,
   ) {}
 
   @ResolveField()
@@ -168,10 +172,16 @@ export class ContactMutationsResolver {
     @Args('input') input: CreateContactInput,
     @CurrentUser() { user_id }: any,
   ) {
+    if (!input.money_address) {
+      throw new GraphQLError('No money address provided');
+    }
+
+    const money_address = input.money_address.toLowerCase();
+
     const isProd = this.config.getOrThrow('isProduction');
 
     if (isProd) {
-      const result = moneyAddressType.safeParse(input.money_address);
+      const result = moneyAddressType.safeParse(money_address);
 
       if (!result.success) {
         throw new GraphQLError(result.error.issues[0].message);
@@ -180,7 +190,7 @@ export class ContactMutationsResolver {
 
     const serverDomain = this.config.getOrThrow('server.domain');
 
-    const [user, domain] = input.money_address.split('@');
+    const [user, domain] = money_address.split('@');
 
     if (serverDomain === domain) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
@@ -190,16 +200,13 @@ export class ContactMutationsResolver {
       }
     } else {
       try {
-        const rawInfo = await fetch(lightningAddressToUrl(input.money_address));
+        const rawInfo = await fetch(lightningAddressToUrl(money_address));
 
         const info = await rawInfo.json();
 
-        const parsed = LightningAddressResponseSchema.safeParse(info);
-
-        if (!parsed.success) {
-          throw new GraphQLError('Contact not found');
-        }
+        LightningAddressResponseSchema.parse(info);
       } catch (error) {
+        this.logger.error('Error getting lnurl info', { error });
         throw new GraphQLError('Error checking if contact exists');
       }
     }
@@ -207,7 +214,7 @@ export class ContactMutationsResolver {
     return this.contactsRepo.upsertContactForAccount(
       user_id,
       input.wallet_id,
-      input.money_address,
+      money_address,
     );
   }
 }

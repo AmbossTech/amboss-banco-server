@@ -1,20 +1,107 @@
 import { Injectable } from '@nestjs/common';
-import { LnurlService } from '../lnurl/lnurl.service';
-import { SendMessageInput } from 'src/api/contact/contact.types';
+import {
+  LnUrlCurrencyType,
+  SendMessageInput,
+} from 'src/api/contact/contact.types';
 import { ContactRepoService } from 'src/repo/contact/contact.repo';
 import { GraphQLError } from 'graphql';
 import { ConfigService } from '@nestjs/config';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { lightningAddressToMessageUrl } from 'src/utils/lnurl';
+import { toWithError } from 'src/utils/async';
+import { LnurlService } from '../lnurl/lnurl.service';
+import { BoltzRestApi } from '../boltz/boltz.rest';
+import { CustomLogger, Logger } from '../logging';
+import { auto } from 'async';
+import { GetCurrenciesAuto } from './contact.types';
 
 @Injectable()
 export class ContactService {
   constructor(
     private config: ConfigService,
+    private boltzRest: BoltzRestApi,
     private lnurlService: LnurlService,
     private contactRepo: ContactRepoService,
-    private walletRepo: WalletRepoService,
+    @Logger('ContactService') private logger: CustomLogger,
   ) {}
+
+  async getCurrencies(money_address: string): Promise<LnUrlCurrencyType[]> {
+    const [lnUrlInfo, error] = await toWithError(
+      this.lnurlService.getAddressInfo(money_address),
+    );
+
+    if (error || !lnUrlInfo) return [];
+
+    return auto<GetCurrenciesAuto>({
+      getLightningCurrency: async (): Promise<
+        GetCurrenciesAuto['getLightningCurrency']
+      > => {
+        const { minSendable, maxSendable } = lnUrlInfo;
+
+        if (!minSendable || !maxSendable) return [];
+
+        const [boltzInfo, boltzError] = await toWithError(
+          this.boltzRest.getSubmarineSwapInfo(),
+        );
+
+        if (boltzError || !boltzInfo['L-BTC'].BTC) {
+          this.logger.error('Error fetching Boltz Submarine Swap Info', {
+            boltzError,
+            boltzInfo,
+          });
+
+          return [];
+        }
+
+        const {
+          fees: { minerFees, percentage },
+          limits: { maximal, minimal },
+        } = boltzInfo['L-BTC'].BTC;
+
+        const minSats = Math.floor(minSendable / 1000);
+        const finalMinSats = Math.max(minimal, minSats);
+
+        const maxSats = Math.ceil(maxSendable / 1000);
+        const finalMaxSats = Math.min(maximal, maxSats);
+
+        return [
+          {
+            name: 'Lightning',
+            code: 'lightning',
+            network: 'mainnet',
+            symbol: '₿',
+            min_sendable: finalMinSats,
+            max_sendable: finalMaxSats,
+            fixed_fee: (minerFees || 0) + 300,
+            variable_fee_percentage: percentage,
+          },
+        ];
+      },
+      getOtherCurrencies: async (): Promise<
+        GetCurrenciesAuto['getOtherCurrencies']
+      > => {
+        const currencies = lnUrlInfo.currencies || [];
+
+        if (!currencies.length) return [];
+
+        const mapped = currencies.map((c) => {
+          return {
+            name: c.name,
+            code: c.code,
+            network: c.network,
+            symbol: c.symbol,
+            min_sendable: null,
+            max_sendable: null,
+            fixed_fee: 300,
+            variable_fee_percentage: 0,
+          };
+        });
+
+        return mapped;
+      },
+    }).then((result) => {
+      return [...result.getLightningCurrency, ...result.getOtherCurrencies];
+    });
+  }
 
   async sendMessage({
     account_id,

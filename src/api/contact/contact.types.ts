@@ -36,15 +36,69 @@ export class ContactMessage {
   payload: string;
 }
 
+// @ObjectType()
+// export class LnUrlCurrency {
+//   @Field()
+//   id: string;
+
+//   @Field()
+//   code: string;
+
+//   @Field()
+//   name: string;
+
+//   @Field()
+//   network: string;
+
+//   @Field()
+//   symbol: string;
+
+//   @Field({ nullable: true })
+//   is_native: boolean;
+// }
+
+// @ObjectType()
+// export class LnUrlInfo {
+//   @Field()
+//   id: string;
+
+//   @Field()
+//   min_sendable: string;
+
+//   @Field()
+//   max_sendable: string;
+
+//   @Field()
+//   variable_fee_percentage: string;
+
+//   @Field()
+//   fixed_fee: string;
+
+//   @Field(() => [LnUrlCurrency])
+//   currencies: LnUrlCurrency[];
+// }
+
 @ObjectType()
-export class LnUrlInfo {
+export class LnUrlCurrency {
   @Field()
   id: string;
 
   @Field()
-  min_sendable: string;
+  code: string;
 
   @Field()
+  name: string;
+
+  @Field()
+  network: string;
+
+  @Field()
+  symbol: string;
+
+  @Field({ nullable: true })
+  min_sendable: string;
+
+  @Field({ nullable: true })
   max_sendable: string;
 
   @Field()
@@ -62,8 +116,8 @@ export class WalletContact {
   @Field()
   money_address: string;
 
-  @Field(() => LnUrlInfo, { nullable: true })
-  lnurl_info: LnUrlInfo;
+  @Field(() => [LnUrlCurrency], { nullable: true })
+  payment_options: LnUrlCurrency[];
 
   @Field({ nullable: true })
   encryption_pubkey: string;
@@ -140,6 +194,17 @@ export type WalletContactParent = {
 };
 
 export type LnUrlInfoParent = {
-  lnUrlInfo: LnUrlInfoSchemaType;
+  lnUrlInfo: LnUrlInfoSchemaType & { lightning_enabled: boolean };
   boltzInfo?: SwapSubmarineInfoType;
+};
+
+export type LnUrlCurrencyType = {
+  code: string;
+  name: string;
+  network: string;
+  symbol: string;
+  min_sendable: number | null;
+  max_sendable: number | null;
+  fixed_fee: number;
+  variable_fee_percentage: number;
 };

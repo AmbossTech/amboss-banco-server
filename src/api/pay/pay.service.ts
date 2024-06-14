@@ -161,7 +161,7 @@ export class PayService {
           this.lnurlService.getAddressInfo(money_address),
         );
 
-        if (error) {
+        if (error || !info) {
           this.logger.error('Error getting address info', {
             error,
             money_address,

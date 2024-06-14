@@ -18,17 +18,15 @@ export enum prefixes {
   Vpub = '02575483',
 }
 
-const assetIds = {
+export const liquidAssetIds = {
   mainnet: {
-    liquidBitcoin:
-      '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d',
-    liquidTether:
-      'ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2',
+    bitcoin: '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d',
+    tether: 'ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2',
   },
 };
 
 export const alwaysPresentAssets = {
-  mainnet: [assetIds.mainnet.liquidBitcoin, assetIds.mainnet.liquidTether],
+  mainnet: [liquidAssetIds.mainnet.bitcoin, liquidAssetIds.mainnet.tether],
 };
 
 export const featuredLiquidAssets: {
@@ -37,12 +35,12 @@ export const featuredLiquidAssets: {
   };
 } = {
   mainnet: {
-    [assetIds.mainnet.liquidBitcoin]: {
+    [liquidAssetIds.mainnet.bitcoin]: {
       precision: 0,
       name: 'Liquid Bitcoin',
       ticker: 'LBTC',
     },
-    [assetIds.mainnet.liquidTether]: {
+    [liquidAssetIds.mainnet.tether]: {
       precision: 8,
       name: 'Tether USD',
       ticker: 'USDt',

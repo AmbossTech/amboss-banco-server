@@ -20,7 +20,7 @@ export const generateMoneyAddress = () => {
   return uniqueNamesGenerator({
     dictionaries: [colors, animals, numberDictionary],
     separator: '',
-    style: 'capital',
+    style: 'lowerCase',
     length: 3,
   });
 };

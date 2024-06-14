@@ -113,11 +113,15 @@ type LiquidTransaction {
   unblinded_url: String!
 }
 
-type LnUrlInfo {
+type LnUrlCurrency {
+  code: String!
   fixed_fee: String!
   id: String!
-  max_sendable: String!
-  min_sendable: String!
+  max_sendable: String
+  min_sendable: String
+  name: String!
+  network: String!
+  symbol: String!
   variable_fee_percentage: String!
 }
 
@@ -264,9 +268,9 @@ enum WalletAccountType {
 type WalletContact {
   encryption_pubkey: String
   id: String!
-  lnurl_info: LnUrlInfo
   messages: [ContactMessage!]!
   money_address: String!
+  payment_options: [LnUrlCurrency!]
 }
 
 type WalletContacts {
