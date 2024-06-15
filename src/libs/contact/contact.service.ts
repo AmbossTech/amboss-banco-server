@@ -13,11 +13,7 @@ import { BoltzRestApi } from '../boltz/boltz.rest';
 import { CustomLogger, Logger } from '../logging';
 import { auto } from 'async';
 import { GetCurrenciesAuto } from './contact.types';
-import {
-  PaymentOptionChain,
-  PaymentOptionCode,
-  PaymentOptionNetwork,
-} from '../lnurl/lnurl.types';
+import { PaymentOptionCode, PaymentOptionNetwork } from '../lnurl/lnurl.types';
 import { getLiquidAssetDecimals } from 'src/utils/crypto/crypto';
 
 @Injectable()
@@ -75,8 +71,7 @@ export class ContactService {
           {
             name: 'Lightning',
             code: PaymentOptionCode.LIGHTNING,
-            chain: PaymentOptionChain.BTC,
-            network: PaymentOptionNetwork.MAINNET,
+            network: PaymentOptionNetwork.BITCOIN,
             symbol: '₿',
             min_sendable: finalMinSats,
             max_sendable: finalMaxSats,
@@ -97,7 +92,6 @@ export class ContactService {
           return {
             name: c.name,
             code: c.code,
-            chain: PaymentOptionChain.LIQUID,
             network: c.network,
             symbol: c.symbol,
             min_sendable: null,

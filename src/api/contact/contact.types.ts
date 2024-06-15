@@ -6,13 +6,11 @@ import {
 } from '@nestjs/graphql';
 import {
   LnUrlInfoSchemaType,
-  PaymentOptionChain,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from 'src/libs/lnurl/lnurl.types';
 import { z } from 'zod';
 
-registerEnumType(PaymentOptionChain, { name: 'PaymentOptionChain' });
 registerEnumType(PaymentOptionCode, { name: 'PaymentOptionCode' });
 registerEnumType(PaymentOptionNetwork, { name: 'PaymentOptionNetwork' });
 
@@ -101,9 +99,6 @@ export class LnUrlCurrency {
 
   @Field(() => PaymentOptionCode)
   code: PaymentOptionCode;
-
-  @Field(() => PaymentOptionChain)
-  chain: PaymentOptionChain;
 
   @Field(() => PaymentOptionNetwork)
   network: PaymentOptionNetwork;
@@ -219,7 +214,6 @@ export type WalletContactParent = {
 
 export type LnUrlCurrencyType = {
   code: PaymentOptionCode;
-  chain: PaymentOptionChain;
   network: PaymentOptionNetwork;
   name: string;
   symbol: string;

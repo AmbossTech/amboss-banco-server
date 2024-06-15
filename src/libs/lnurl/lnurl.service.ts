@@ -22,7 +22,6 @@ import {
   LnUrlInfoSchemaType,
   LnUrlResultSchema,
   LnUrlResultSchemaType,
-  PaymentOptionChain,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from './lnurl.types';
@@ -55,11 +54,10 @@ export class LnurlService {
       getAccountCurrencies: async () => {
         const currencies = await this.getLnUrlCurrencies(account);
         return currencies.map((c) => {
-          const { code, name, chain, network, symbol, is_native } = c;
+          const { code, name, network, symbol, is_native } = c;
           return {
             code,
             name,
-            chain,
             network,
             symbol,
             is_native,
@@ -117,8 +115,7 @@ export class LnurlService {
     currencies.push({
       code: PaymentOptionCode.BTC,
       name: LiquidWalletAssets.BTC.name,
-      chain: PaymentOptionChain.LIQUID,
-      network: PaymentOptionNetwork.MAINNET,
+      network: PaymentOptionNetwork.LIQUID,
       symbol: LiquidWalletAssets.BTC.symbol,
       is_native: true,
       wallet_account: hasLiquidAccount,
@@ -135,8 +132,7 @@ export class LnurlService {
     currencies.push({
       code: PaymentOptionCode.USDT,
       name: LiquidWalletAssets.USDT.name,
-      chain: PaymentOptionChain.LIQUID,
-      network: PaymentOptionNetwork.MAINNET,
+      network: PaymentOptionNetwork.LIQUID,
       symbol: LiquidWalletAssets.USDT.symbol,
       is_native: true,
       wallet_account: hasLiquidAccount,
@@ -162,11 +158,11 @@ export class LnurlService {
       checkCurrency: async () => {
         const currencies = await this.getLnUrlCurrencies(account);
 
-        if (!props.chain || !props.network) {
+        if (!props.network) {
           throw new Error(
             JSON.stringify({
               status: 'ERROR',
-              reason: 'A chain and network needs to be provided',
+              reason: 'A network needs to be provided',
             }),
           );
         }
@@ -183,7 +179,6 @@ export class LnurlService {
         const foundCurrency = currencies.find((c) => {
           return (
             c.code === props.currency &&
-            c.chain === props.chain &&
             c.network === props.network &&
             c.is_native === true
           );
@@ -193,7 +188,7 @@ export class LnurlService {
           throw new Error(
             JSON.stringify({
               status: 'ERROR',
-              reason: `Currency ${props.currency} on chain ${props.chain} and network ${props.network} not available`,
+              reason: `Currency ${props.currency} on network ${props.network} is not available`,
             }),
           );
         }
@@ -222,7 +217,6 @@ export class LnurlService {
             pr: '',
             routes: [],
             onchain: {
-              chain: props.chain,
               currency: props.currency,
               network: props.network,
               address,

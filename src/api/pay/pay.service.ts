@@ -24,7 +24,6 @@ import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { ContactService } from 'src/libs/contact/contact.service';
 import {
-  PaymentOptionChain,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from 'src/libs/lnurl/lnurl.types';
@@ -232,8 +231,7 @@ export class PayService {
             const defaultOption = getLnAddressInfo.paymentOptions.find(
               (p) =>
                 p.code === PaymentOptionCode.LIGHTNING &&
-                p.chain === PaymentOptionChain.BTC &&
-                p.network === PaymentOptionNetwork.MAINNET,
+                p.network === PaymentOptionNetwork.BITCOIN,
             );
 
             if (!defaultOption) {
@@ -246,7 +244,6 @@ export class PayService {
           const findOption = getLnAddressInfo.paymentOptions.find(
             (p) =>
               p.code === payment_option.code &&
-              p.chain === payment_option.chain &&
               p.network === payment_option.network,
           );
 
@@ -297,14 +294,14 @@ export class PayService {
           PayLightningAddressAuto,
           'getLnAddressInfo' | 'getPaymentOption'
         >): Promise<PayLightningAddressAuto['pay']> => {
-          const { code, chain, network } = getPaymentOption;
+          const { code, network } = getPaymentOption;
 
-          const uniqueId = `${code}-${chain}-${network}`;
+          const uniqueId = `${code}-${network}`;
 
           this.logger.debug('Creating transaction', { uniqueId });
 
           switch (uniqueId) {
-            case `${PaymentOptionCode.LIGHTNING}-${PaymentOptionChain.BTC}-${PaymentOptionNetwork.MAINNET}`: {
+            case `${PaymentOptionCode.LIGHTNING}-${PaymentOptionNetwork.BITCOIN}`: {
               const url = new URL(getLnAddressInfo.info.callback);
               url.searchParams.set('amount', amount * 1000 + '');
 
@@ -331,8 +328,8 @@ export class PayService {
               return info;
             }
 
-            case `${PaymentOptionCode.BTC}-${PaymentOptionChain.LIQUID}-${PaymentOptionNetwork.MAINNET}`:
-            case `${PaymentOptionCode.USDT}-${PaymentOptionChain.LIQUID}-${PaymentOptionNetwork.MAINNET}`: {
+            case `${PaymentOptionCode.BTC}-${PaymentOptionNetwork.LIQUID}`:
+            case `${PaymentOptionCode.USDT}-${PaymentOptionNetwork.LIQUID}`: {
               const [user] = money_address.split('@');
 
               const [result, chainError] = await toWithError(
@@ -340,7 +337,6 @@ export class PayService {
                   account: user,
                   amount,
                   currency: code,
-                  chain,
                   network,
                 }),
               );

@@ -34,9 +34,6 @@ export class LnAddressPaymentOption {
   code: string;
 
   @Field()
-  chain: string;
-
-  @Field()
   network: string;
 }
 

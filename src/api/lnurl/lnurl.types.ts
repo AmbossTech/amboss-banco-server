@@ -5,7 +5,6 @@ export type CallbackParams = {
   account: string | undefined;
   amount: string | undefined;
   currency: string | undefined;
-  chain: string | undefined;
   network: string | undefined;
 };
 
@@ -17,7 +16,6 @@ export type CallbackHandlerParams = Omit<
 export type AccountCurrency = {
   code: string;
   name: string;
-  chain: string;
   network: string;
   symbol: string;
   is_native: boolean;

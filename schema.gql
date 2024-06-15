@@ -114,13 +114,11 @@ type LiquidTransaction {
 }
 
 input LnAddressPaymentOption {
-  chain: String!
   code: String!
   network: String!
 }
 
 type LnUrlCurrency {
-  chain: PaymentOptionChain!
   code: PaymentOptionCode!
   decimals: Float!
   fixed_fee: String!
@@ -183,11 +181,6 @@ type PayMutations {
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
 }
 
-enum PaymentOptionChain {
-  BTC
-  LIQUID
-}
-
 enum PaymentOptionCode {
   BTC
   LIGHTNING
@@ -195,7 +188,8 @@ enum PaymentOptionCode {
 }
 
 enum PaymentOptionNetwork {
-  MAINNET
+  BITCOIN
+  LIQUID
 }
 
 type Query {

@@ -6,18 +6,13 @@ export enum PaymentOptionCode {
   USDT = 'USDT',
 }
 
-export enum PaymentOptionChain {
-  LIQUID = 'LIQUID',
-  BTC = 'BTC',
-}
-
 export enum PaymentOptionNetwork {
-  MAINNET = 'MAINNET',
+  LIQUID = 'LIQUID',
+  BITCOIN = 'BITCOIN',
 }
 
 export const LnUrlCurrency = z.object({
   code: z.nativeEnum(PaymentOptionCode),
-  chain: z.nativeEnum(PaymentOptionChain),
   network: z.nativeEnum(PaymentOptionNetwork),
   name: z.string(),
   symbol: z.string(),
@@ -40,7 +35,6 @@ export const LnUrlResultSchema = z.object({
   pr: z.string(),
   onchain: z
     .object({
-      chain: z.string(),
       currency: z.string(),
       network: z.string(),
       address: z.string(),
