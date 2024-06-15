@@ -226,8 +226,8 @@ type SendMessage {
 input SendMessageInput {
   contact_id: String!
   receiver_money_address: String!
-  receiver_payload: String!
-  sender_payload: String!
+  receiver_payload: String
+  sender_payload: String
 }
 
 input SignUpInput {

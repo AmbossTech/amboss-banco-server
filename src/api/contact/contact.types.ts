@@ -136,11 +136,11 @@ export class SendMessageInput {
   @Field()
   receiver_money_address: string;
 
-  @Field()
-  receiver_payload: string;
+  @Field(() => String, { nullable: true })
+  receiver_payload: string | null;
 
-  @Field()
-  sender_payload: string;
+  @Field(() => String, { nullable: true })
+  sender_payload: string | null;
 }
 
 export type WalletContactsParent = {

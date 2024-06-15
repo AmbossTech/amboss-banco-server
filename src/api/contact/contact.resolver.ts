@@ -160,6 +160,10 @@ export class ContactMutationsResolver {
     @Args('input') input: SendMessageInput,
     @CurrentUser() { user_id }: any,
   ) {
+    if (!input.sender_payload && !input.receiver_payload) {
+      throw new GraphQLError('No message provided');
+    }
+
     await this.contactService.sendMessage({
       ...input,
       account_id: user_id,

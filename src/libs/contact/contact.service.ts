@@ -136,35 +136,37 @@ export class ContactService {
 
     const senderAddress = `${contact.wallet_on_accounts.money_address_user}@${serverDomain}`;
 
-    if (serverDomain === domain) {
-      // const wallet = await this.walletRepo.getWalletByLnAddress(user);
-
-      await this.contactRepo.saveContactMessage({
-        money_address_user: user,
-        contact_money_address: senderAddress,
-        contact_is_sender: true,
-        payload_string: receiver_payload,
-      });
-    } else {
-      try {
-        await fetch(lightningAddressToMessageUrl(receiver_money_address), {
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            payerData: { identifier: senderAddress },
-            protected_message: receiver_payload,
-          }),
-          method: 'POST',
+    if (!!receiver_payload) {
+      if (serverDomain === domain) {
+        await this.contactRepo.saveContactMessage({
+          money_address_user: user,
+          contact_money_address: senderAddress,
+          contact_is_sender: true,
+          payload_string: receiver_payload,
         });
-      } catch (error) {
-        console.log(error);
+      } else {
+        try {
+          await fetch(lightningAddressToMessageUrl(receiver_money_address), {
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              payerData: { identifier: senderAddress },
+              protected_message: receiver_payload,
+            }),
+            method: 'POST',
+          });
+        } catch (error) {
+          console.log(error);
+        }
       }
     }
 
-    await this.contactRepo.saveContactMessage({
-      money_address_user: contact.wallet_on_accounts.money_address_user,
-      contact_money_address: receiver_money_address,
-      contact_is_sender: false,
-      payload_string: sender_payload,
-    });
+    if (!!sender_payload) {
+      await this.contactRepo.saveContactMessage({
+        money_address_user: contact.wallet_on_accounts.money_address_user,
+        contact_money_address: receiver_money_address,
+        contact_is_sender: false,
+        payload_string: sender_payload,
+      });
+    }
   }
 }
