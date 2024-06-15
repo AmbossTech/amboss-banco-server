@@ -16,7 +16,6 @@ export const LnUrlCurrency = z.object({
   network: z.nativeEnum(PaymentOptionNetwork),
   name: z.string(),
   symbol: z.string(),
-  is_native: z.boolean().optional(),
 });
 
 export type LnUrlCurrencySchemaType = z.infer<typeof LnUrlCurrency>;

@@ -54,13 +54,12 @@ export class LnurlService {
       getAccountCurrencies: async () => {
         const currencies = await this.getLnUrlCurrencies(account);
         return currencies.map((c) => {
-          const { code, name, network, symbol, is_native } = c;
+          const { code, name, network, symbol } = c;
           return {
             code,
             name,
             network,
             symbol,
-            is_native,
           };
         });
       },
@@ -117,7 +116,6 @@ export class LnurlService {
       name: LiquidWalletAssets.BTC.name,
       network: PaymentOptionNetwork.LIQUID,
       symbol: LiquidWalletAssets.BTC.symbol,
-      is_native: true,
       wallet_account: hasLiquidAccount,
       asset_id: liquidAssetIds.mainnet.bitcoin,
       conversion_decimals: 8,
@@ -134,7 +132,6 @@ export class LnurlService {
       name: LiquidWalletAssets.USDT.name,
       network: PaymentOptionNetwork.LIQUID,
       symbol: LiquidWalletAssets.USDT.symbol,
-      is_native: true,
       wallet_account: hasLiquidAccount,
       asset_id: liquidAssetIds.mainnet.tether,
       conversion_decimals: 0,
@@ -177,11 +174,7 @@ export class LnurlService {
         }
 
         const foundCurrency = currencies.find((c) => {
-          return (
-            c.code === props.currency &&
-            c.network === props.network &&
-            c.is_native === true
-          );
+          return c.code === props.currency && c.network === props.network;
         });
 
         if (!foundCurrency) {

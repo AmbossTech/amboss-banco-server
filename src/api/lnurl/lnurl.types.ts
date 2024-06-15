@@ -18,7 +18,6 @@ export type AccountCurrency = {
   name: string;
   network: string;
   symbol: string;
-  is_native: boolean;
   wallet_account: wallet_account;
   asset_id: string;
   conversion_decimals: number;

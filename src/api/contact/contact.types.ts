@@ -47,48 +47,6 @@ export class ContactMessage {
   payload: string;
 }
 
-// @ObjectType()
-// export class LnUrlCurrency {
-//   @Field()
-//   id: string;
-
-//   @Field()
-//   code: string;
-
-//   @Field()
-//   name: string;
-
-//   @Field()
-//   network: string;
-
-//   @Field()
-//   symbol: string;
-
-//   @Field({ nullable: true })
-//   is_native: boolean;
-// }
-
-// @ObjectType()
-// export class LnUrlInfo {
-//   @Field()
-//   id: string;
-
-//   @Field()
-//   min_sendable: string;
-
-//   @Field()
-//   max_sendable: string;
-
-//   @Field()
-//   variable_fee_percentage: string;
-
-//   @Field()
-//   fixed_fee: string;
-
-//   @Field(() => [LnUrlCurrency])
-//   currencies: LnUrlCurrency[];
-// }
-
 @ObjectType()
 export class LnUrlCurrency {
   @Field()
