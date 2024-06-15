@@ -1,7 +1,20 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { SwapSubmarineInfoType } from 'src/libs/boltz/boltz.types';
-import { LnUrlInfoSchemaType } from 'src/libs/lnurl/lnurl.types';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  LnUrlInfoSchemaType,
+  PaymentOptionChain,
+  PaymentOptionCode,
+  PaymentOptionNetwork,
+} from 'src/libs/lnurl/lnurl.types';
 import { z } from 'zod';
+
+registerEnumType(PaymentOptionChain, { name: 'PaymentOptionChain' });
+registerEnumType(PaymentOptionCode, { name: 'PaymentOptionCode' });
+registerEnumType(PaymentOptionNetwork, { name: 'PaymentOptionNetwork' });
 
 @ObjectType()
 export class CreateContact {
@@ -84,13 +97,16 @@ export class LnUrlCurrency {
   id: string;
 
   @Field()
-  code: string;
-
-  @Field()
   name: string;
 
-  @Field()
-  network: string;
+  @Field(() => PaymentOptionCode)
+  code: PaymentOptionCode;
+
+  @Field(() => PaymentOptionChain)
+  chain: PaymentOptionChain;
+
+  @Field(() => PaymentOptionNetwork)
+  network: PaymentOptionNetwork;
 
   @Field()
   symbol: string;
@@ -100,6 +116,9 @@ export class LnUrlCurrency {
 
   @Field({ nullable: true })
   max_sendable: string;
+
+  @Field()
+  decimals: number;
 
   @Field()
   variable_fee_percentage: string;
@@ -193,18 +212,25 @@ export type WalletContactParent = {
   money_address: string | null;
 };
 
-export type LnUrlInfoParent = {
-  lnUrlInfo: LnUrlInfoSchemaType & { lightning_enabled: boolean };
-  boltzInfo?: SwapSubmarineInfoType;
-};
+// export type LnUrlInfoParent = {
+//   lnUrlInfo: LnUrlInfoSchemaType & { lightning_enabled: boolean };
+//   boltzInfo?: SwapSubmarineInfoType;
+// };
 
 export type LnUrlCurrencyType = {
-  code: string;
+  code: PaymentOptionCode;
+  chain: PaymentOptionChain;
+  network: PaymentOptionNetwork;
   name: string;
-  network: string;
   symbol: string;
   min_sendable: number | null;
   max_sendable: number | null;
+  decimals: number;
   fixed_fee: number;
   variable_fee_percentage: number;
+};
+
+export type LnUrlCurrenciesAndInfo = {
+  info: LnUrlInfoSchemaType;
+  paymentOptions: LnUrlCurrencyType[];
 };

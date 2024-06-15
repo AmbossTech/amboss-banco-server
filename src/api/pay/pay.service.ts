@@ -7,6 +7,7 @@ import { toWithError } from 'src/utils/async';
 import {
   PayLightningAddressAuto,
   PayLiquidAddressInput,
+  PayLnAddressPayload,
   ProcessInvoiceAuto,
 } from './pay.types';
 import Big from 'big.js';
@@ -21,6 +22,13 @@ import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
+import { ContactService } from 'src/libs/contact/contact.service';
+import {
+  PaymentOptionChain,
+  PaymentOptionCode,
+  PaymentOptionNetwork,
+} from 'src/libs/lnurl/lnurl.types';
+import { getLiquidAssetId } from 'src/utils/crypto/crypto';
 
 @Injectable()
 export class PayService {
@@ -30,6 +38,7 @@ export class PayService {
     private boltzService: BoltzService,
     private lnurlService: LnurlService,
     private liquidService: LiquidService,
+    private contactService: ContactService,
     @Logger('PayService') private logger: CustomLogger,
   ) {}
 
@@ -148,17 +157,56 @@ export class PayService {
     }).then((results) => results.constructTransaction);
   }
 
-  async payLightningAddress(
-    money_address: string,
-    amount: number,
-    wallet_account: wallet_account,
-  ): Promise<{ base_64: string }> {
+  async payOnchainLiquidAddress({
+    amount,
+    address,
+    asset_id,
+    wallet_account,
+  }: {
+    amount: number;
+    address: string;
+    asset_id: string;
+    wallet_account: wallet_account;
+  }): Promise<{ base_64: string }> {
+    this.logger.debug('Creating transaction', {
+      amount,
+      address,
+      asset_id,
+      wallet_account,
+    });
+    // const finalAmount = Math.ceil(amount * 10 ** 8);
+
+    const pset = await this.liquidService.createPset(
+      wallet_account.details.descriptor,
+      {
+        fee_rate: 100,
+        recipients: [
+          {
+            address,
+            amount: amount + '',
+            asset_id,
+          },
+        ],
+      },
+    );
+
+    const base_64 = pset.toString();
+
+    return { base_64 };
+  }
+
+  async payLightningAddress({
+    money_address,
+    amount,
+    wallet_account,
+    payment_option,
+  }: PayLnAddressPayload): Promise<{ base_64: string }> {
     return await auto<PayLightningAddressAuto>({
       getLnAddressInfo: async (): Promise<
         PayLightningAddressAuto['getLnAddressInfo']
       > => {
         const [info, error] = await toWithError(
-          this.lnurlService.getAddressInfo(money_address),
+          this.contactService.getCurrencies(money_address),
         );
 
         if (error || !info) {
@@ -173,72 +221,163 @@ export class PayService {
         return info;
       },
 
-      amountCheck: [
+      getPaymentOption: [
         'getLnAddressInfo',
         async ({
           getLnAddressInfo,
         }: Pick<PayLightningAddressAuto, 'getLnAddressInfo'>): Promise<
+          PayLightningAddressAuto['getPaymentOption']
+        > => {
+          if (!payment_option) {
+            const defaultOption = getLnAddressInfo.paymentOptions.find(
+              (p) =>
+                p.code === PaymentOptionCode.LIGHTNING &&
+                p.chain === PaymentOptionChain.BTC &&
+                p.network === PaymentOptionNetwork.MAINNET,
+            );
+
+            if (!defaultOption) {
+              throw new Error('Payment option not found for this address');
+            }
+
+            return defaultOption;
+          }
+
+          const findOption = getLnAddressInfo.paymentOptions.find(
+            (p) =>
+              p.code === payment_option.code &&
+              p.chain === payment_option.chain &&
+              p.network === payment_option.network,
+          );
+
+          if (!findOption) {
+            throw new Error('Payment option not found for this address');
+          }
+
+          return findOption;
+        },
+      ],
+
+      amountCheck: [
+        'getPaymentOption',
+        async ({
+          getPaymentOption,
+        }: Pick<PayLightningAddressAuto, 'getPaymentOption'>): Promise<
           PayLightningAddressAuto['amountCheck']
         > => {
-          const { maxSendable, minSendable } = getLnAddressInfo;
+          const { min_sendable, max_sendable } = getPaymentOption;
+
+          const minNullOrUndefined = min_sendable == null;
+          const maxNullOrUndefined = max_sendable == null;
 
           const requestedAmount = new Big(amount);
 
-          if (requestedAmount.gt(maxSendable)) {
+          if (!maxNullOrUndefined && requestedAmount.gt(max_sendable)) {
             throw new GraphQLError(
-              `Amount ${amount} is bigger than max of ${maxSendable}`,
+              `Amount ${amount} is bigger than max of ${max_sendable}`,
             );
           }
 
-          if (requestedAmount.lt(minSendable)) {
+          if (!minNullOrUndefined && requestedAmount.lt(min_sendable)) {
             throw new GraphQLError(
-              `Amount ${amount} is smaller than min of ${minSendable}`,
+              `Amount ${amount} is smaller than min of ${min_sendable}`,
             );
           }
         },
       ],
 
-      getInvoice: [
+      pay: [
         'getLnAddressInfo',
+        'getPaymentOption',
         'amountCheck',
         async ({
           getLnAddressInfo,
-        }: Pick<PayLightningAddressAuto, 'getLnAddressInfo'>): Promise<
-          PayLightningAddressAuto['getInvoice']
-        > => {
-          const url = new URL(getLnAddressInfo.callback);
-          url.searchParams.set('amount', amount * 1000 + '');
+          getPaymentOption,
+        }: Pick<
+          PayLightningAddressAuto,
+          'getLnAddressInfo' | 'getPaymentOption'
+        >): Promise<PayLightningAddressAuto['pay']> => {
+          const { code, chain, network } = getPaymentOption;
 
-          const addressResult = await this.lnurlService.getAddressInvoice(
-            url.toString(),
-          );
+          const uniqueId = `${code}-${chain}-${network}`;
 
-          return addressResult.pr;
-        },
-      ],
+          this.logger.debug('Creating transaction', { uniqueId });
 
-      processInvoice: [
-        'getInvoice',
-        async ({
-          getInvoice,
-        }: Pick<PayLightningAddressAuto, 'getInvoice'>): Promise<
-          PayLightningAddressAuto['processInvoice']
-        > => {
-          const [info, error] = await toWithError(
-            this.payLightningInvoice(getInvoice, wallet_account),
-          );
+          switch (uniqueId) {
+            case `${PaymentOptionCode.LIGHTNING}-${PaymentOptionChain.BTC}-${PaymentOptionNetwork.MAINNET}`: {
+              const url = new URL(getLnAddressInfo.info.callback);
+              url.searchParams.set('amount', amount * 1000 + '');
 
-          if (error) {
-            this.logger.error('Error processing invoice', {
-              error,
-              invoice_info: getInvoice,
-            });
-            throw new GraphQLError('Error processing invoice');
+              const [addressResult, addressError] = await toWithError(
+                this.lnurlService.getAddressInvoice(url.toString()),
+              );
+
+              if (addressError || !addressResult.pr) {
+                throw new Error('Unable to process Lightning payment');
+              }
+
+              const [info, error] = await toWithError(
+                this.payLightningInvoice(addressResult.pr, wallet_account),
+              );
+
+              if (error) {
+                this.logger.error('Error processing payment', {
+                  error,
+                  invoice_info: addressResult,
+                });
+                throw new GraphQLError('Error processing payment');
+              }
+
+              return info;
+            }
+
+            case `${PaymentOptionCode.BTC}-${PaymentOptionChain.LIQUID}-${PaymentOptionNetwork.MAINNET}`:
+            case `${PaymentOptionCode.USDT}-${PaymentOptionChain.LIQUID}-${PaymentOptionNetwork.MAINNET}`: {
+              const [user] = money_address.split('@');
+
+              const [result, chainError] = await toWithError(
+                this.lnurlService.getLnUrlChainResponse({
+                  account: user,
+                  amount,
+                  currency: code,
+                  chain,
+                  network,
+                }),
+              );
+
+              if (chainError || !result.onchain?.address) {
+                this.logger.error('Error processing payment', {
+                  result,
+                  chainError,
+                });
+                throw new Error('Error processing payment');
+              }
+
+              const [onchainInfo, onchainError] = await toWithError(
+                this.payOnchainLiquidAddress({
+                  amount,
+                  address: result.onchain.address,
+                  asset_id: getLiquidAssetId(code),
+                  wallet_account,
+                }),
+              );
+
+              if (chainError || !onchainInfo) {
+                this.logger.error('Error processing payment', {
+                  onchainInfo,
+                  onchainError,
+                });
+                throw new Error('Error processing payment');
+              }
+
+              return onchainInfo;
+            }
+
+            default:
+              throw new Error('This payment option is unavailable');
           }
-
-          return info;
         },
       ],
-    }).then((results) => results.processInvoice);
+    }).then((results) => results.pay);
   }
 }

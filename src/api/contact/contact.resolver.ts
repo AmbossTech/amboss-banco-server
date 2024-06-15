@@ -110,7 +110,8 @@ export class WalletContactResolver {
     @Parent() { money_address }: WalletContactParent,
   ): Promise<LnUrlCurrencyType[] | null> {
     if (!money_address) return null;
-    return this.contactService.getCurrencies(money_address);
+    const info = await this.contactService.getCurrencies(money_address);
+    return info?.paymentOptions || null;
   }
 }
 

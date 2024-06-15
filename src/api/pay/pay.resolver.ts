@@ -34,11 +34,12 @@ export class PayMutationsResolver {
       throw new GraphQLError('Invalid account type');
     }
 
-    const { base_64 } = await this.payService.payLightningAddress(
-      input.address,
-      input.amount,
-      parent.wallet_account,
-    );
+    const { base_64 } = await this.payService.payLightningAddress({
+      money_address: input.address,
+      amount: input.amount,
+      wallet_account: parent.wallet_account,
+      payment_option: input.payment_option,
+    });
 
     return { base_64, wallet_account: parent.wallet_account };
   }

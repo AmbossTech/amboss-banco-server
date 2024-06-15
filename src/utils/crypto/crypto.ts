@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { PaymentOptionCode } from 'src/libs/lnurl/lnurl.types';
 
 export const getSHA256Hash = (
   str: string | Buffer, // String will be expected to be in utf-8 encoding
@@ -46,4 +47,26 @@ export const featuredLiquidAssets: {
       ticker: 'USDt',
     },
   },
+};
+
+export const getLiquidAssetId = (code: PaymentOptionCode) => {
+  switch (code) {
+    case PaymentOptionCode.BTC:
+      return liquidAssetIds.mainnet.bitcoin;
+    case PaymentOptionCode.USDT:
+      return liquidAssetIds.mainnet.tether;
+    default:
+      throw new Error('Invalid option');
+  }
+};
+
+export const getLiquidAssetDecimals = (code: PaymentOptionCode): number => {
+  switch (code) {
+    case PaymentOptionCode.BTC:
+      return 0;
+    case PaymentOptionCode.USDT:
+      return 8;
+    default:
+      throw new Error('Invalid option');
+  }
 };

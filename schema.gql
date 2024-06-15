@@ -113,14 +113,22 @@ type LiquidTransaction {
   unblinded_url: String!
 }
 
-type LnUrlCurrency {
+input LnAddressPaymentOption {
+  chain: String!
   code: String!
+  network: String!
+}
+
+type LnUrlCurrency {
+  chain: PaymentOptionChain!
+  code: PaymentOptionCode!
+  decimals: Float!
   fixed_fee: String!
   id: String!
   max_sendable: String
   min_sendable: String
   name: String!
-  network: String!
+  network: PaymentOptionNetwork!
   symbol: String!
   variable_fee_percentage: String!
 }
@@ -162,6 +170,7 @@ input PayLiquidAddressInput {
 input PayLnAddressInput {
   address: String!
   amount: Float!
+  payment_option: LnAddressPaymentOption
 }
 
 input PayLnInvoiceInput {
@@ -172,6 +181,21 @@ type PayMutations {
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
+}
+
+enum PaymentOptionChain {
+  BTC
+  LIQUID
+}
+
+enum PaymentOptionCode {
+  BTC
+  LIGHTNING
+  USDT
+}
+
+enum PaymentOptionNetwork {
+  MAINNET
 }
 
 type Query {

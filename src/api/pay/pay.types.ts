@@ -1,8 +1,11 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
-import { LnUrlInfoSchemaType } from 'src/libs/lnurl/lnurl.types';
 import { WalletAccount } from '../wallet/wallet.types';
+import {
+  LnUrlCurrenciesAndInfo,
+  LnUrlCurrencyType,
+} from '../contact/contact.types';
 
 @ObjectType()
 export class CreateLiquidTransaction {
@@ -26,12 +29,27 @@ export class PayMutations {
 }
 
 @InputType()
+export class LnAddressPaymentOption {
+  @Field()
+  code: string;
+
+  @Field()
+  chain: string;
+
+  @Field()
+  network: string;
+}
+
+@InputType()
 export class PayLnAddressInput {
   @Field()
   address: string;
 
   @Field()
   amount: number;
+
+  @Field(() => LnAddressPaymentOption, { nullable: true })
+  payment_option: LnAddressPaymentOption | null;
 }
 
 @InputType()
@@ -73,11 +91,18 @@ export class PayLiquidAddressInput {
   recipients: LiquidRecipientInput[];
 }
 
+export type PayLnAddressPayload = {
+  money_address: string;
+  amount: number;
+  wallet_account: wallet_account;
+  payment_option: LnAddressPaymentOption | null;
+};
+
 export type PayLightningAddressAuto = {
-  getLnAddressInfo: LnUrlInfoSchemaType;
+  getLnAddressInfo: LnUrlCurrenciesAndInfo;
+  getPaymentOption: LnUrlCurrencyType;
   amountCheck: void;
-  getInvoice: string;
-  processInvoice: { base_64: string };
+  pay: { base_64: string };
 };
 
 export type PayParentType = {
@@ -99,3 +124,5 @@ export type ProcessInvoiceAuto = {
     | undefined;
   constructTransaction: { base_64: string };
 };
+
+// export type PayOnchainAddressAutoType = {};

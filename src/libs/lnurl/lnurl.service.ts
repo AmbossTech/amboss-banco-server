@@ -21,6 +21,10 @@ import {
   LnUrlInfoSchema,
   LnUrlInfoSchemaType,
   LnUrlResultSchema,
+  LnUrlResultSchemaType,
+  PaymentOptionChain,
+  PaymentOptionCode,
+  PaymentOptionNetwork,
 } from './lnurl.types';
 import {
   LiquidWalletAssets,
@@ -68,6 +72,7 @@ export class LnurlService {
         async ({
           getAccountCurrencies,
         }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
+          console.log(getAccountCurrencies);
           return {
             callback: `http://${this.config.getOrThrow('server.domain')}/lnurlp/${account}`,
             minSendable: 0,
@@ -110,10 +115,10 @@ export class LnurlService {
     const currencies: AccountCurrency[] = [];
 
     currencies.push({
-      code: LiquidWalletAssets.BTC.code,
+      code: PaymentOptionCode.BTC,
       name: LiquidWalletAssets.BTC.name,
-      chain: WalletAccountType.LIQUID,
-      network: 'mainnet',
+      chain: PaymentOptionChain.LIQUID,
+      network: PaymentOptionNetwork.MAINNET,
       symbol: LiquidWalletAssets.BTC.symbol,
       is_native: true,
       wallet_account: hasLiquidAccount,
@@ -128,10 +133,10 @@ export class LnurlService {
     });
 
     currencies.push({
-      code: LiquidWalletAssets.USDT.code,
+      code: PaymentOptionCode.USDT,
       name: LiquidWalletAssets.USDT.name,
-      chain: WalletAccountType.LIQUID,
-      network: 'mainnet',
+      chain: PaymentOptionChain.LIQUID,
+      network: PaymentOptionNetwork.MAINNET,
       symbol: LiquidWalletAssets.USDT.symbol,
       is_native: true,
       wallet_account: hasLiquidAccount,
@@ -148,7 +153,9 @@ export class LnurlService {
     return currencies;
   }
 
-  async getLnUrlChainResponse(props: CallbackHandlerParams) {
+  async getLnUrlChainResponse(
+    props: CallbackHandlerParams,
+  ): Promise<LnUrlResultSchemaType> {
     const { account, amount } = props;
 
     return auto<GetLnUrlResponseAutoType>({
@@ -226,7 +233,7 @@ export class LnurlService {
       ],
     })
       .then((result) => {
-        return JSON.stringify(result.createPayload);
+        return result.createPayload;
       })
       .catch((err) => {
         return err.message;
@@ -267,10 +274,10 @@ export class LnurlService {
     //     },
     //   ],
 
-    return JSON.stringify({
+    return {
       status: 'ERROR',
       reason: 'Lightning Address is currently unavailable',
-    });
+    };
   }
 
   async getLnUrlResponse(props: CallbackParams): Promise<string> {
@@ -306,15 +313,19 @@ export class LnurlService {
     }
 
     if (!!props.currency) {
-      return this.getLnUrlChainResponse({
+      const response = await this.getLnUrlChainResponse({
         ...props,
         account,
         amount,
         currency: props.currency,
       });
+
+      return JSON.stringify(response);
     }
 
-    return this.getLnUrlInvoiceResponse();
+    const response = await this.getLnUrlInvoiceResponse();
+
+    return JSON.stringify(response);
   }
 
   async getAddressInfo(money_address: string) {

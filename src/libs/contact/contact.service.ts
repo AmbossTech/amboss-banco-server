@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
-  LnUrlCurrencyType,
+  LnUrlCurrenciesAndInfo,
   SendMessageInput,
 } from 'src/api/contact/contact.types';
 import { ContactRepoService } from 'src/repo/contact/contact.repo';
@@ -13,6 +13,12 @@ import { BoltzRestApi } from '../boltz/boltz.rest';
 import { CustomLogger, Logger } from '../logging';
 import { auto } from 'async';
 import { GetCurrenciesAuto } from './contact.types';
+import {
+  PaymentOptionChain,
+  PaymentOptionCode,
+  PaymentOptionNetwork,
+} from '../lnurl/lnurl.types';
+import { getLiquidAssetDecimals } from 'src/utils/crypto/crypto';
 
 @Injectable()
 export class ContactService {
@@ -24,14 +30,16 @@ export class ContactService {
     @Logger('ContactService') private logger: CustomLogger,
   ) {}
 
-  async getCurrencies(money_address: string): Promise<LnUrlCurrencyType[]> {
+  async getCurrencies(
+    money_address: string,
+  ): Promise<LnUrlCurrenciesAndInfo | null> {
     const [lnUrlInfo, error] = await toWithError(
       this.lnurlService.getAddressInfo(money_address),
     );
 
-    if (error || !lnUrlInfo) return [];
+    if (error || !lnUrlInfo) return null;
 
-    return auto<GetCurrenciesAuto>({
+    const paymentOptions = await auto<GetCurrenciesAuto>({
       getLightningCurrency: async (): Promise<
         GetCurrenciesAuto['getLightningCurrency']
       > => {
@@ -66,11 +74,13 @@ export class ContactService {
         return [
           {
             name: 'Lightning',
-            code: 'lightning',
-            network: 'mainnet',
+            code: PaymentOptionCode.LIGHTNING,
+            chain: PaymentOptionChain.BTC,
+            network: PaymentOptionNetwork.MAINNET,
             symbol: '₿',
             min_sendable: finalMinSats,
             max_sendable: finalMaxSats,
+            decimals: 0,
             fixed_fee: (minerFees || 0) + 300,
             variable_fee_percentage: percentage,
           },
@@ -87,10 +97,12 @@ export class ContactService {
           return {
             name: c.name,
             code: c.code,
+            chain: PaymentOptionChain.LIQUID,
             network: c.network,
             symbol: c.symbol,
             min_sendable: null,
             max_sendable: null,
+            decimals: getLiquidAssetDecimals(c.code),
             fixed_fee: 300,
             variable_fee_percentage: 0,
           };
@@ -101,6 +113,11 @@ export class ContactService {
     }).then((result) => {
       return [...result.getLightningCurrency, ...result.getOtherCurrencies];
     });
+
+    return {
+      info: lnUrlInfo,
+      paymentOptions,
+    };
   }
 
   async sendMessage({
