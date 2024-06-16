@@ -1,12 +1,10 @@
 import {
-  Body,
   Controller,
   Get,
   Header,
   HttpException,
   HttpStatus,
   Param,
-  Post,
   Query,
 } from '@nestjs/common';
 import { Public } from 'src/auth/auth.decorators';
@@ -74,17 +72,17 @@ export class LnUrlController {
     });
   }
 
-  @Public()
-  @Post(':account')
-  @Header('Content-Type', 'application/json')
-  async lnurlPost(
-    @Body() body: any,
-    @Param() params: { account: string },
-  ): Promise<string> {
-    console.log(body);
+  // @Public()
+  // @Post(':account')
+  // @Header('Content-Type', 'application/json')
+  // async lnurlPost(
+  //   @Body() body: any,
+  //   @Param() params: { account: string },
+  // ): Promise<string> {
+  //   console.log(body);
 
-    return params.account;
-  }
+  //   return params.account;
+  // }
 }
 
 @Controller('.well-known')

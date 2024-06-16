@@ -80,10 +80,6 @@ export class EsploraLiquidService {
       method: 'POST',
     });
 
-    const status = response.status;
-
-    console.log(status);
-
     return response.text();
   }
 

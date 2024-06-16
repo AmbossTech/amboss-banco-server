@@ -69,7 +69,6 @@ export class LnurlService {
         async ({
           getAccountCurrencies,
         }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
-          console.log(getAccountCurrencies);
           return {
             callback: `http://${this.config.getOrThrow('server.domain')}/lnurlp/${account}`,
             minSendable: 0,
