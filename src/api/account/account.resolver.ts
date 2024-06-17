@@ -90,9 +90,9 @@ export class AccountResolver {
     await this.accountRepo.updateRefreshToken(account.id, hashedRefreshToken);
 
     const cookieOptions: CookieOptions = {
-      // httpOnly: true,
-      // secure: true,
-      // sameSite: true,
+      httpOnly: true,
+      secure: true,
+      sameSite: true,
     };
 
     res.cookie('amboss_banco_refresh_token', refreshToken, {
