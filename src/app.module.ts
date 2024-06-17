@@ -9,6 +9,8 @@ import { ApiModule } from './api/api.module';
 import configuration from './libs/config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './libs/redis/redis.module';
+import { HealthController } from './api/health/health.controller';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -27,13 +29,16 @@ import { RedisModule } from './libs/redis/redis.module';
     // Caching
     RedisModule,
 
+    // Health
+    TerminusModule,
+
     // Config
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
 
     // Logger
     CustomLoggerModule.forRoot(),
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [AppService],
 })
 export class AppModule {}

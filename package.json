@@ -32,6 +32,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.9",
+    "@nestjs/terminus": "^10.2.3",
     "@node-rs/argon2": "^1.8.3",
     "@prisma/client": "^5.15.0",
     "@vulpemventures/secp256k1-zkp": "^3.2.1",
