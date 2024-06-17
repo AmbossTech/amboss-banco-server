@@ -95,8 +95,14 @@ export class AccountResolver {
       sameSite: true,
     };
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
-    res.cookie('amboss_banco_access_token', accessToken, cookieOptions);
+    res.cookie('amboss_banco_refresh_token', refreshToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+    res.cookie('amboss_banco_access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 10,
+    });
 
     return {
       id: account.id,
