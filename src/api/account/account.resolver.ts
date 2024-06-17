@@ -152,6 +152,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
+      domain: 'mibanco.app',
       maxAge: 1,
     };
 
@@ -185,10 +186,17 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
+      domain: 'mibanco.app',
     };
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
-    res.cookie('amboss_banco_access_token', accessToken, cookieOptions);
+    res.cookie('amboss_banco_refresh_token', refreshToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+    res.cookie('amboss_banco_access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 10,
+    });
 
     return {
       id: newAccount.id,
@@ -231,10 +239,14 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
+      domain: 'mibanco.app',
     };
 
     // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
-    res.cookie('amboss_banco_access_token', accessToken, cookieOptions);
+    res.cookie('amboss_banco_access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 10,
+    });
 
     return {
       id: user_id,
