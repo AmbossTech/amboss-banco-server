@@ -26,7 +26,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    // this.startSubscription();
+    this.startSubscription();
   }
 
   async subscribeToSwap(ids: string[]) {
