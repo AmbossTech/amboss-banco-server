@@ -24,7 +24,7 @@ export class BoltzService {
       from: 'L-BTC',
       to: 'BTC',
       refundPublicKey: keys.publicKey.toString('hex'),
-      //   referralId: 'AMBOSS',
+      referralId: 'AMBOSS',
     };
 
     const response = await this.boltzRest.createSubmarineSwap(request);
