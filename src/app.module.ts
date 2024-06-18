@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaModule } from './libs/prisma/prisma.module';
 import { GraphqlModule } from './libs/graphql/graphql.module';
 import { CustomLoggerModule } from './libs/logging/logger.module';
@@ -38,7 +36,6 @@ import { TerminusModule } from '@nestjs/terminus';
     // Logger
     CustomLoggerModule.forRoot(),
   ],
-  controllers: [AppController, HealthController],
-  providers: [AppService],
+  controllers: [HealthController],
 })
 export class AppModule {}
