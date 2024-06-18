@@ -22,6 +22,7 @@ import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { UseGuards } from '@nestjs/common';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
 import { GraphQLError } from 'graphql';
+import { ConfigService } from '@nestjs/config';
 
 @Resolver(User)
 export class UserResolver {
@@ -41,12 +42,17 @@ export class UserResolver {
 
 @Resolver()
 export class AccountResolver {
+  domain: string;
+
   constructor(
+    private config: ConfigService,
     private accountRepo: AccountRepo,
     private authService: AuthService,
     private cryptoService: CryptoService,
     private accountService: AccountService,
-  ) {}
+  ) {
+    this.domain = config.getOrThrow('server.cookies.domain');
+  }
 
   @Query(() => User)
   async user(@CurrentUser() { user_id }: any) {
@@ -93,7 +99,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      domain: 'mibanco.app',
+      domain: this.domain,
     };
 
     res.cookie('amboss_banco_refresh_token', refreshToken, {
@@ -152,7 +158,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      domain: 'mibanco.app',
+      domain: this.domain,
       maxAge: 1,
     };
 
@@ -186,7 +192,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      domain: 'mibanco.app',
+      domain: this.domain,
     };
 
     res.cookie('amboss_banco_refresh_token', refreshToken, {
@@ -239,7 +245,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      domain: 'mibanco.app',
+      domain: this.domain,
     };
 
     // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);

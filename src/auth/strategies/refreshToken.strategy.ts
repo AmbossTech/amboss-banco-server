@@ -13,7 +13,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: (req: Request) => getAuthToken(req),
-      secretOrKey: configService.getOrThrow<string>('auth.jwtRefreshSecret'),
+      secretOrKey: configService.getOrThrow<string>('server.jwt.refreshSecret'),
       passReqToCallback: true,
     });
   }

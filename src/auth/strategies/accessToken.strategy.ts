@@ -15,7 +15,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: (req: Request) => getAuthToken(req),
-      secretOrKey: configService.getOrThrow<string>('auth.jwtAccessSecret'),
+      secretOrKey: configService.getOrThrow<string>('server.jwt.accessSecret'),
     });
   }
 

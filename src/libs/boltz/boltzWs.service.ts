@@ -26,6 +26,12 @@ export class BoltzWsService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
+    const enableWebsocket = this.configService.get<boolean>(
+      'server.boltz.enableWebsocket',
+    );
+
+    if (!enableWebsocket) return;
+
     this.startSubscription();
   }
 

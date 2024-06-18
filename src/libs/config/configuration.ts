@@ -8,10 +8,6 @@ export default () => {
   const isProduction = process.env.NODE_ENV === 'production';
   const logLevel = process.env.LOG_LEVEL || 'silly';
 
-  const jwtAccessSecret = process.env.JWT_ACCESS_SECRET || 'JWT_ACCESS_SECRET';
-  const jwtRefreshSecret =
-    process.env.JWT_REFRESH_SECRET || 'JWT_REFRESH_SECRET';
-
   const yamlFilename = process.env.YAML_FILENAME || 'config.yaml';
   const configFilePath = join(resolve(), yamlFilename);
 
@@ -32,10 +28,13 @@ export default () => {
     throw new Error(`Invalid config in yaml file.`);
   }
 
+  if (!isProduction) {
+    console.log(result.data);
+  }
+
   return {
     isProduction,
     logLevel,
-    auth: { jwtAccessSecret, jwtRefreshSecret },
     ...configYaml,
   };
 };

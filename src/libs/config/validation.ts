@@ -5,6 +5,16 @@ export type ConfigSchemaType = z.infer<typeof ConfigSchema>;
 export const ConfigSchema = z.object({
   server: z.object({
     domain: z.string(),
+    cookies: z.object({
+      domain: z.string(),
+    }),
+    jwt: z.object({
+      accessSecret: z.string(),
+      refreshSecret: z.string(),
+    }),
+    boltz: z.object({
+      enableWebsocket: z.boolean(),
+    }),
   }),
   redis: z.object({
     host: z.string(),

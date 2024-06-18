@@ -14,7 +14,9 @@ export class AuthService {
       this.jwtService.signAsync(
         { sub: userId },
         {
-          secret: this.configService.getOrThrow<string>('auth.jwtAccessSecret'),
+          secret: this.configService.getOrThrow<string>(
+            'server.jwt.accessSecret',
+          ),
           expiresIn: '10m',
         },
       ),
@@ -22,7 +24,7 @@ export class AuthService {
         { sub: userId },
         {
           secret: this.configService.getOrThrow<string>(
-            'auth.jwtRefreshSecret',
+            'server.jwt.refreshSecret',
           ),
           expiresIn: '7d',
         },
