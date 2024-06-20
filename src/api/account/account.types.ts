@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { CreateWalletInput } from '../wallet/wallet.types';
 
 @ObjectType()
 export class User {
@@ -82,4 +83,7 @@ export class SignUpInput {
 
   @Field(() => Secp256k1KeyPairInput)
   secp256k1_key_pair: Secp256k1KeyPairInput;
+
+  @Field(() => CreateWalletInput, { nullable: true })
+  wallet: CreateWalletInput | null;
 }

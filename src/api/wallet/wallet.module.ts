@@ -21,9 +21,16 @@ import {
 import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { FiatModule } from 'src/libs/fiat/fiat.module';
+import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
 
 @Module({
-  imports: [WalletRepoModule, EsploraServiceModule, LiquidModule, FiatModule],
+  imports: [
+    WalletServiceModule,
+    WalletRepoModule,
+    EsploraServiceModule,
+    LiquidModule,
+    FiatModule,
+  ],
   providers: [
     MainWalletMutationsResolver,
     WalletMutationsResolver,

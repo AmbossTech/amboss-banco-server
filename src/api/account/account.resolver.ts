@@ -23,6 +23,7 @@ import { UseGuards } from '@nestjs/common';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
 import { GraphQLError } from 'graphql';
 import { ConfigService } from '@nestjs/config';
+import { WalletService } from 'src/libs/wallet/wallet.service';
 
 @Resolver(User)
 export class UserResolver {
@@ -50,6 +51,7 @@ export class AccountResolver {
     private authService: AuthService,
     private cryptoService: CryptoService,
     private accountService: AccountService,
+    private walletService: WalletService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -203,6 +205,10 @@ export class AccountResolver {
       ...cookieOptions,
       maxAge: 1000 * 60 * 10,
     });
+
+    if (!!input.wallet) {
+      await this.walletService.createWallet(newAccount.id, input.wallet);
+    }
 
     return {
       id: newAccount.id,
