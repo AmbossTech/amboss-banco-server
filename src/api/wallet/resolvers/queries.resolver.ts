@@ -239,7 +239,10 @@ export class WalletAccountResolver {
 
     const { descriptor } = account.details;
 
-    const wollet = await this.liquidService.getUpdatedWallet(descriptor);
+    const wollet = await this.liquidService.getUpdatedWallet(
+      descriptor,
+      'none',
+    );
 
     return { descriptor, walletAccount: account, wollet };
 

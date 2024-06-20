@@ -12,7 +12,7 @@ WORKDIR /app
 ENV DISABLE_OPENCOLLECTIVE=true
 
 COPY package*.json ./
-COPY lwk_wasm-0.6.2.tgz ./
+COPY lwk_wasm-0.6.3.tgz ./
 
 # Install app dependencies
 RUN npm ci

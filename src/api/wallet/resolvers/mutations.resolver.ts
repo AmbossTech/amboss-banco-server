@@ -43,7 +43,10 @@ export class WalletMutationsResolver {
     }
 
     await each(wallet.wallet.wallet_account, async (w) => {
-      await this.liquidService.getUpdatedWallet(w.details.descriptor, true);
+      await this.liquidService.getUpdatedWallet(
+        w.details.descriptor,
+        input.full_scan ? 'full' : 'partial',
+      );
     });
 
     return true;

@@ -205,6 +205,7 @@ type RefreshToken {
 }
 
 input RefreshWalletInput {
+  full_scan: Boolean
   wallet_id: String!
 }
 

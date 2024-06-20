@@ -291,6 +291,9 @@ export class CreateOnchainAddressInput {
 export class RefreshWalletInput {
   @Field(() => String)
   wallet_id: string;
+
+  @Field(() => Boolean, { nullable: true })
+  full_scan: boolean | null;
 }
 
 @InputType()

@@ -17,9 +17,12 @@ import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import { RedisService } from '../redis/redis.service';
 import { EsploraLiquidService } from '../esplora/liquid.service';
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
+import { auto } from 'async';
+import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
+import { CustomLogger, Logger } from '../logging';
 
 export const getUpdateKey = (descriptor: string) =>
-  `banco-walletdelta-${getSHA256Hash(descriptor)}-v4`;
+  `banco-walletdelta-${getSHA256Hash(descriptor)}`;
 
 const getBlockedAddressKey = (address: string) =>
   `banco-blocked-address-${address}`;
@@ -30,6 +33,7 @@ export class LiquidService {
     private redis: RedisService,
     private config: ConfigService,
     private esploraLiquid: EsploraLiquidService,
+    @Logger('LiquidService') private logger: CustomLogger,
   ) {}
 
   async createPset(
@@ -64,50 +68,98 @@ export class LiquidService {
 
     txBuilder = txBuilder.feeRate(input.fee_rate);
 
-    const wollet = await this.getUpdatedWallet(descriptor);
+    const wollet = await this.getUpdatedWallet(descriptor, 'partial');
     return txBuilder.finish(wollet);
   }
 
-  async getUpdate(
-    wollet: Wollet,
+  async getUpdatedWallet(
     descriptor: string,
-    forceUpdate?: boolean,
-  ): Promise<Update | null> {
+    updateType: 'partial' | 'full' | 'none',
+  ): Promise<Wollet> {
+    const wollet = getWalletFromDescriptor(descriptor);
+
     const key = getUpdateKey(descriptor);
 
-    const cachedUpdate = await this.redis.get<string>(key);
+    return auto<GetUpdatedWalletAutoType>({
+      getUpdates: async (): Promise<GetUpdatedWalletAutoType['getUpdates']> => {
+        if (updateType === 'full') return { deltaStrings: [], deltas: [] };
 
-    if (!!cachedUpdate && !forceUpdate) {
-      const uint8array = Buffer.from(cachedUpdate, 'hex');
-      return new Update(uint8array);
-    }
+        const deltaStrings = await this.redis.get<LiquidRedisCache>(key);
 
-    const liquidEsploraUrl = this.config.getOrThrow('urls.esplora.liquid');
+        if (!deltaStrings) return { deltaStrings: [], deltas: [] };
 
-    const client = new EsploraClient(liquidEsploraUrl + '/api');
+        const deltas = deltaStrings.map((u) => {
+          const uint8array = Buffer.from(u, 'hex');
+          return new Update(uint8array);
+        });
 
-    const start = new Date();
-    console.log({ start: start.toISOString() });
+        return { deltaStrings, deltas };
+      },
 
-    const update = await client.fullScan(wollet);
+      getWolletWithUpdates: [
+        'getUpdates',
+        async ({
+          getUpdates,
+        }: Pick<GetUpdatedWalletAutoType, 'getUpdates'>): Promise<
+          GetUpdatedWalletAutoType['getWolletWithUpdates']
+        > => {
+          if (!!getUpdates.deltas.length) {
+            getUpdates.deltas.forEach((u) => {
+              wollet.applyUpdate(u);
+            });
+          }
+          return wollet;
+        },
+      ],
 
-    const end = new Date();
+      updateWollet: [
+        'getUpdates',
+        'getWolletWithUpdates',
+        async ({
+          getUpdates,
+          getWolletWithUpdates,
+        }: Pick<
+          GetUpdatedWalletAutoType,
+          'getUpdates' | 'getWolletWithUpdates'
+        >): Promise<GetUpdatedWalletAutoType['updateWollet']> => {
+          if (updateType === 'none') return getWolletWithUpdates;
 
-    console.log({
-      end: end.toISOString(),
-      duration: end.getTime() - start.getTime(),
-    });
+          const liquidEsploraUrl = this.config.getOrThrow(
+            'urls.esplora.liquid',
+          );
 
-    if (update) {
-      const uint8array = update.serialize();
-      const string = Buffer.from(uint8array).toString('hex');
+          const client = new EsploraClient(liquidEsploraUrl, true);
 
-      await this.redis.set(key, string, { ttl: 60 * 60 * 24 }); // Cached for one day
+          const start = new Date();
+          this.logger.debug('Scan start time', { start: start.toISOString() });
 
-      return update;
-    }
+          const update = await client.fullScan(getWolletWithUpdates);
 
-    return null;
+          const end = new Date();
+
+          this.logger.debug('Scan end time', {
+            end: end.toISOString(),
+            duration: end.getTime() - start.getTime(),
+          });
+
+          if (!update) return getWolletWithUpdates;
+          if (update.onlyTip()) return getWolletWithUpdates;
+
+          const uint8array = update.serialize();
+          const deltaString = Buffer.from(uint8array).toString('hex');
+
+          const allDeltas = [...getUpdates.deltaStrings, deltaString];
+
+          await this.redis.set<LiquidRedisCache>(key, allDeltas, {
+            ttl: 60 * 60 * 24 * 7,
+          }); // Cached for one week
+
+          getWolletWithUpdates.applyUpdate(update);
+
+          return getWolletWithUpdates;
+        },
+      ],
+    }).then((results) => results.updateWollet);
   }
 
   async broadcastPset(base64_pset: string): Promise<string> {
@@ -118,21 +170,6 @@ export class LiquidService {
     const tx_id = await this.esploraLiquid.postTransactionHex(tx_hex);
 
     return tx_id;
-  }
-
-  async getUpdatedWallet(
-    descriptor: string,
-    forceUpdate?: boolean,
-  ): Promise<Wollet> {
-    const wollet = getWalletFromDescriptor(descriptor);
-
-    const update = await this.getUpdate(wollet, descriptor, forceUpdate);
-
-    if (update) {
-      wollet.applyUpdate(update);
-    }
-
-    return wollet;
   }
 
   // async getBalances(descriptor: string): Promise<Map<string, number>> {
@@ -172,7 +209,7 @@ export class LiquidService {
     descriptor: string,
     lock = false,
   ): Promise<AddressResult> {
-    const wollet = await this.getUpdatedWallet(descriptor);
+    const wollet = await this.getUpdatedWallet(descriptor, 'partial');
 
     let lastUsedIndex = wollet.address().index();
     let foundLastUnused = false;
