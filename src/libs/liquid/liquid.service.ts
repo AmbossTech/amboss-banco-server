@@ -77,7 +77,6 @@ export class LiquidService {
     updateType: 'partial' | 'full' | 'none',
   ): Promise<Wollet> {
     const wollet = getWalletFromDescriptor(descriptor);
-
     const key = getUpdateKey(descriptor);
 
     return auto<GetUpdatedWalletAutoType>({
@@ -122,10 +121,12 @@ export class LiquidService {
           GetUpdatedWalletAutoType,
           'getUpdates' | 'getWolletWithUpdates'
         >): Promise<GetUpdatedWalletAutoType['updateWollet']> => {
-          if (updateType === 'none') return getWolletWithUpdates;
+          if (updateType === 'none' && !getWolletWithUpdates.neverScanned()) {
+            return getWolletWithUpdates;
+          }
 
           const liquidEsploraUrl = this.config.getOrThrow(
-            'urls.esplora.liquid',
+            'urls.esplora.waterfall',
           );
 
           const client = new EsploraClient(liquidEsploraUrl, true);

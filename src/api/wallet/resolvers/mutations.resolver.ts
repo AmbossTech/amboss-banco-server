@@ -10,17 +10,17 @@ import { CurrentUser } from 'src/auth/auth.decorators';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
-import { LiquidService, getUpdateKey } from 'src/libs/liquid/liquid.service';
-import { RedisService } from 'src/libs/redis/redis.service';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
+import { CustomLogger, Logger } from 'src/libs/logging';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
   constructor(
-    private redis: RedisService,
     private walletRepo: WalletRepoService,
     private liquidService: LiquidService,
     private walletService: WalletService,
+    @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
   @ResolveField()
@@ -85,6 +85,10 @@ export class WalletMutationsResolver {
     @Args('input') input: BroadcastLiquidTransactionInput,
     @CurrentUser() { user_id }: any,
   ) {
+    this.logger.debug('Broadcasting new transaction', {
+      account_id: input.wallet_account_id,
+    });
+
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
       input.wallet_account_id,
@@ -95,8 +99,6 @@ export class WalletMutationsResolver {
     }
 
     const tx_id = await this.liquidService.broadcastPset(input.signed_pset);
-
-    await this.redis.delete(getUpdateKey(walletAccount.details.descriptor));
 
     return { tx_id };
   }

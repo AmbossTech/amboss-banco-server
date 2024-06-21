@@ -25,6 +25,7 @@ export const ConfigSchema = z.object({
     boltz: z.string(),
     esplora: z.object({
       liquid: z.string(),
+      waterfall: z.string(),
     }),
   }),
   fiat: z
