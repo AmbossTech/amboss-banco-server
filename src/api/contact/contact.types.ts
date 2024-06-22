@@ -41,6 +41,9 @@ export class ContactMessage {
   id: string;
 
   @Field()
+  created_at: string;
+
+  @Field()
   contact_is_sender: boolean;
 
   @Field()

@@ -13,6 +13,7 @@ input BroadcastLiquidTransactionInput {
 
 type ContactMessage {
   contact_is_sender: Boolean!
+  created_at: String!
   id: String!
   payload: String!
 }

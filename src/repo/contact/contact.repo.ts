@@ -119,6 +119,9 @@ export class ContactRepoService {
   }
 
   async getContactMessages(contact_id: string) {
-    return this.prisma.contact_message.findMany({ where: { contact_id } });
+    return this.prisma.contact_message.findMany({
+      where: { contact_id },
+      orderBy: { created_at: 'asc' },
+    });
   }
 }

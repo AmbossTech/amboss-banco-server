@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  ContactMessageResolver,
   ContactMutationsResolver,
   LnUrlCurrencyResolver,
   MainContactResolver,
@@ -26,6 +27,7 @@ import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
     WalletContactsResolver,
     WalletContactResolver,
     LnUrlCurrencyResolver,
+    ContactMessageResolver,
   ],
 })
 export class ContactModule {}

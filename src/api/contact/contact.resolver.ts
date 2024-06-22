@@ -6,6 +6,7 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import {
+  ContactMessage,
   ContactMutations,
   CreateContactInput,
   LightningAddressResponseSchema,
@@ -30,12 +31,21 @@ import { ContactService } from 'src/libs/contact/contact.service';
 import { v5 } from 'uuid';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
+import { contact_message } from '@prisma/client';
 
 @Resolver(LnUrlCurrency)
 export class LnUrlCurrencyResolver {
   @ResolveField()
   id(@Parent() parent: LnUrlCurrencySchemaType) {
     return v5(JSON.stringify(parent), v5.URL);
+  }
+}
+
+@Resolver(ContactMessage)
+export class ContactMessageResolver {
+  @ResolveField()
+  created_at(@Parent() { created_at }: contact_message) {
+    return created_at.toISOString();
   }
 }
 

@@ -4,9 +4,16 @@ import { LnurlModule } from '../lnurl/lnurl.module';
 import { ContactRepoModule } from 'src/repo/contact/contact.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 import { BoltzRestModule } from '../boltz/boltz.module';
+import { EventsModule } from 'src/api/sse/sse.module';
 
 @Module({
-  imports: [LnurlModule, ContactRepoModule, WalletRepoModule, BoltzRestModule],
+  imports: [
+    EventsModule,
+    LnurlModule,
+    ContactRepoModule,
+    WalletRepoModule,
+    BoltzRestModule,
+  ],
   providers: [ContactService],
   exports: [ContactService],
 })
