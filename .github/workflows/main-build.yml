@@ -7,6 +7,9 @@ on:
 
 jobs:
   main_build_image:
+    permissions:
+      actions: write
+
     runs-on: ubuntu-latest
     outputs:
       shortref: ${{ steps.prep.outputs.shortref }}
@@ -72,3 +75,14 @@ jobs:
         run: |
           echo "Image ID: ${{ steps.docker_build.outputs.imageid }}"
           echo "Image Digest: ${{ steps.docker_build.outputs.digest }}"
+
+      - name: Trigger Deployment
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          # Set the required variables
+          repo_owner="AmbossTech"
+          repo_name="amboss-banco-ci"
+          event_type="trigger-workflow"
+
+          gh workflow -R $repo_owner/$repo_name -r main run deploy-banco-server-prod.yaml -f tag=${{ steps.prep.outputs.shortref }}
