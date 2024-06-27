@@ -142,8 +142,8 @@ export class SendMessageInput {
   @Field(() => String, { nullable: true })
   receiver_payload: string | null;
 
-  @Field(() => String, { nullable: true })
-  sender_payload: string | null;
+  @Field()
+  sender_payload: string;
 }
 
 export type WalletContactsParent = {
