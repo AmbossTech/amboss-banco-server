@@ -152,7 +152,6 @@ type Mutation {
   recieveViaSwap(input: ReceiveSwapInput!): RecieveSwap!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
-  swap: Boolean!
   wallets: WalletMutations!
 }
 
@@ -201,7 +200,7 @@ enum PaymentOptionNetwork {
 }
 
 type Query {
-  getSwapQuote: Boolean!
+  getSwapQuote(input: SwapQuoteInput!): Boolean!
   hello: String!
   user: User!
   wallets: WalletQueries!
@@ -210,6 +209,7 @@ type Query {
 input ReceiveSwapInput {
   deposit_coin: String!
   deposit_network: String!
+  wallet_account_id: String!
 }
 
 type RecieveSwap {
@@ -282,6 +282,12 @@ type SimpleWalletAccount {
 type SimpleWalletContact {
   id: String!
   money_address: String!
+}
+
+input SwapQuoteInput {
+  amount: String!
+  deposit_coin: String!
+  deposit_network: String!
 }
 
 type User {
