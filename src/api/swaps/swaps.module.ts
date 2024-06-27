@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SwapsResolver } from './swaps.resolver';
-import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
+import { WalletSwapsResolver } from './swaps.resolver';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 
 @Module({
-  imports: [BoltzRestModule, SwapsRepoModule],
-  providers: [SwapsResolver],
+  imports: [SwapsRepoModule],
+  providers: [WalletSwapsResolver],
 })
 export class SwapsModule {}

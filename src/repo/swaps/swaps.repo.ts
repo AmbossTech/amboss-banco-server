@@ -5,10 +5,36 @@ import {
   AccountSwapResponseType,
   SwapProvider,
 } from './swaps.types';
+import { wallet_account_swap } from '@prisma/client';
 
 @Injectable()
 export class SwapsRepoService {
   constructor(private prisma: PrismaService) {}
+
+  async getWalletSwaps(id: string): Promise<wallet_account_swap[]> {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { id },
+      select: {
+        wallet_account: {
+          select: {
+            wallet_account_swap: true,
+          },
+        },
+      },
+    });
+
+    if (!wallet?.wallet_account.length) return [];
+
+    const swaps: wallet_account_swap[] = [];
+
+    wallet.wallet_account.forEach((a) => {
+      a.wallet_account_swap.forEach((s) => {
+        swaps.push(s);
+      });
+    });
+
+    return swaps;
+  }
 
   async getReverseSwapByInvoice(invoice: string) {
     return this.prisma.wallet_account_swap.findFirst({

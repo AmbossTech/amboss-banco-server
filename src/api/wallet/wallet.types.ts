@@ -13,6 +13,7 @@ import {
 } from 'src/repo/wallet/wallet.types';
 import { Secp256k1KeyPairInput } from '../account/account.types';
 import { WalletContacts } from '../contact/contact.types';
+import { WalletSwaps } from '../swaps/swaps.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
@@ -183,6 +184,18 @@ export class Secp256k1KeyPair {
 }
 
 @ObjectType()
+export class MoneyAddress {
+  @Field()
+  id: string;
+
+  @Field()
+  user: string;
+
+  @Field(() => [String])
+  domains: string[];
+}
+
+@ObjectType()
 export class Wallet {
   @Field()
   id: string;
@@ -190,8 +203,8 @@ export class Wallet {
   @Field()
   name: string;
 
-  @Field({ nullable: true })
-  money_address: string;
+  @Field(() => [MoneyAddress])
+  money_address: MoneyAddress[];
 
   @Field(() => WalletDetails)
   details: WalletDetails;
@@ -204,6 +217,9 @@ export class Wallet {
 
   @Field(() => [WalletAccount])
   accounts: WalletAccount[];
+
+  @Field(() => WalletSwaps)
+  swaps: WalletSwaps;
 }
 
 @ObjectType()
@@ -339,4 +355,8 @@ export type AssetInfoParent = {
   precision: number;
   is_featured: boolean;
   id: string;
+};
+
+export type MoneyAddressParent = {
+  user: string;
 };

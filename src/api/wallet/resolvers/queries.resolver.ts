@@ -22,6 +22,8 @@ import {
   Secp256k1KeyPair,
   AssetInfoParent,
   FiatInfo,
+  MoneyAddress,
+  MoneyAddressParent,
 } from '../wallet.types';
 import {
   alwaysPresentAssets,
@@ -38,6 +40,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { WalletContactsParent } from 'src/api/contact/contact.types';
 import { FiatService } from 'src/libs/fiat/fiat.service';
+import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
 
 @Resolver(FiatInfo)
 export class FiatInfoResolver {
@@ -274,6 +277,26 @@ export class WalletDetailsResolver {
   }
 }
 
+@Resolver(MoneyAddress)
+export class MoneyAddressResolver {
+  constructor(private config: ConfigService) {}
+
+  @ResolveField()
+  id(@Parent() parent: MoneyAddressParent) {
+    return v5(JSON.stringify(parent), v5.URL);
+  }
+
+  @ResolveField()
+  user(@Parent() { user }: MoneyAddressParent) {
+    return user;
+  }
+
+  @ResolveField()
+  domains() {
+    return [this.config.getOrThrow('server.domain')];
+  }
+}
+
 @Resolver(Wallet)
 export class WalletResolver {
   constructor(private config: ConfigService) {}
@@ -307,7 +330,7 @@ export class WalletResolver {
 
   @ResolveField()
   money_address(@Parent() parent: GetAccountWalletsResult) {
-    return `${parent.money_address_user}@${this.config.getOrThrow('server.domain')}`;
+    return [{ user: parent.money_address_user }];
   }
 
   @ResolveField()
@@ -318,6 +341,11 @@ export class WalletResolver {
   @ResolveField()
   accounts(@Parent() parent: GetAccountWalletsResult) {
     return parent.wallet.wallet_account;
+  }
+
+  @ResolveField()
+  swaps(@Parent() parent: GetAccountWalletsResult): WalletSwapsParent {
+    return { wallet_id: parent.wallet_id };
   }
 }
 
