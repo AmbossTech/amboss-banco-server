@@ -132,6 +132,7 @@ export class WalletLiquidAssetResolver {
 
   @ResolveField()
   balance(@Parent() { balance }: AssetParentType) {
+    console.log({ balance });
     return balance.toString();
   }
 
@@ -350,7 +351,10 @@ export class WalletQueriesResolver {
 
   @ResolveField()
   async find_many(@CurrentUser() { user_id }: any) {
-    return this.walletRepo.getAccountWallets(user_id);
+    console.log({ user_id });
+    const wallets = await this.walletRepo.getAccountWallets(user_id);
+    console.log({ wallets });
+    return wallets;
   }
 
   @ResolveField()

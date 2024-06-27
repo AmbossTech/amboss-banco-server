@@ -101,7 +101,7 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      domain: this.domain,
+      // domain: this.domain,
     };
 
     res.cookie('amboss_banco_refresh_token', refreshToken, {

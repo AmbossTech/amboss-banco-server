@@ -129,6 +129,8 @@ export class LiquidService {
             'urls.esplora.waterfall',
           );
 
+          console.log({ liquidEsploraUrl });
+
           const client = new EsploraClient(liquidEsploraUrl, true);
 
           const start = new Date();
