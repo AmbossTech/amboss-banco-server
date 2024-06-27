@@ -137,13 +137,18 @@ input LoginInput {
   master_password_hash: String!
 }
 
+type MoneyAddress {
+  domains: [String!]!
+  id: String!
+  user: String!
+}
+
 type Mutation {
   checkPassword(password: String!): Boolean!
   contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
   pay(input: PayInput!): PayMutations!
-  payInvoice(invoice: String!): Boolean!
   recieveViaSwap(input: ReceiveSwapInput!): RecieveSwap!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
@@ -246,7 +251,7 @@ input SendMessageInput {
   contact_id: String!
   receiver_money_address: String!
   receiver_payload: String
-  sender_payload: String
+  sender_payload: String!
 }
 
 input SignUpInput {
@@ -256,6 +261,10 @@ input SignUpInput {
   protected_symmetric_key: String!
   secp256k1_key_pair: Secp256k1KeyPairInput!
   wallet: CreateWalletInput
+}
+
+type SimpleSwap {
+  id: String!
 }
 
 type SimpleWallet {
@@ -286,9 +295,10 @@ type Wallet {
   contacts: WalletContacts!
   details: WalletDetails!
   id: String!
-  money_address: String
+  money_address: [MoneyAddress!]!
   name: String!
   secp256k1_key_pair: Secp256k1KeyPair!
+  swaps: WalletSwaps!
 }
 
 type WalletAccount {
@@ -333,6 +343,11 @@ type WalletMutations {
 type WalletQueries {
   find_many: [SimpleWallet!]!
   find_one(id: String!): Wallet!
+  id: String!
+}
+
+type WalletSwaps {
+  find_many: [SimpleSwap!]!
   id: String!
 }
 

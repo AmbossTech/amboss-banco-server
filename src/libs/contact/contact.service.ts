@@ -183,13 +183,11 @@ export class ContactService {
       }
     }
 
-    if (!!sender_payload) {
-      await this.contactRepo.saveContactMessage({
-        money_address_user: contact.wallet_on_accounts.money_address_user,
-        contact_money_address: receiver_money_address,
-        contact_is_sender: false,
-        payload_string: sender_payload,
-      });
-    }
+    await this.contactRepo.saveContactMessage({
+      money_address_user: contact.wallet_on_accounts.money_address_user,
+      contact_money_address: receiver_money_address,
+      contact_is_sender: false,
+      payload_string: sender_payload,
+    });
   }
 }

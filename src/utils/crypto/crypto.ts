@@ -39,12 +39,12 @@ export const featuredLiquidAssets: {
     [liquidAssetIds.mainnet.bitcoin]: {
       precision: 0,
       name: 'Liquid Bitcoin',
-      ticker: 'LBTC',
+      ticker: 'BTC',
     },
     [liquidAssetIds.mainnet.tether]: {
       precision: 8,
       name: 'Tether USD',
-      ticker: 'USDt',
+      ticker: 'USDT',
     },
   },
 };

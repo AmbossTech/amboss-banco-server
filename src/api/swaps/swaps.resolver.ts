@@ -1,10 +1,33 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { BoltzService } from '../../libs/boltz/boltz.service';
 import { CurrentUser, Public } from 'src/auth/auth.decorators';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { ReceiveSwapInput, RecieveSwap } from './swaps.types';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { WalletSwaps, WalletSwapsParent } from './swaps.types';
+import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 
+@Resolver(WalletSwaps)
+export class WalletSwapsResolver {
+  constructor(private swapRepo: SwapsRepoService) {}
+
+  @ResolveField()
+  id(@Parent() { wallet_id }: WalletSwapsParent) {
+    return wallet_id;
+  }
+
+  @ResolveField()
+  async find_many(@Parent() { wallet_id }: WalletSwapsParent) {
+    return this.swapRepo.getWalletSwaps(wallet_id);
+  }
+}
 @Resolver()
 export class SwapsResolver {
   constructor(
@@ -12,16 +35,6 @@ export class SwapsResolver {
     private sideShiftService: SideShiftService,
     private liquidService: LiquidService,
   ) {}
-
-  @Public()
-  @Mutation(() => Boolean)
-  async payInvoice(@Args('invoice') invoice: string) {
-    await this.boltzService.createSubmarineSwap(
-      invoice,
-      '838bc43b-ffb5-485b-85d5-e468947e3ab8',
-    );
-    return true;
-  }
 
   @Public()
   @Query(() => Boolean)

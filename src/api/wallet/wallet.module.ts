@@ -8,6 +8,7 @@ import {
   FiatInfoResolver,
   LiquidAccountResolver,
   MainWalletQueriesResolver,
+  MoneyAddressResolver,
   SimpleWalletAccountResolver,
   SimpleWalletResolver,
   WalletAccountResolver,
@@ -46,6 +47,7 @@ import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
     LiquidAccountResolver,
     WalletDetailsResolver,
     FiatInfoResolver,
+    MoneyAddressResolver,
   ],
 })
 export class WalletModule {}
