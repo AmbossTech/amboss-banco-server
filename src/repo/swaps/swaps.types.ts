@@ -1,10 +1,23 @@
+import {
+  SideShiftFixedSwap,
+  SideShiftFixedSwapInput,
+  SideShiftVariableSwap,
+  SideShiftVariableSwapInput,
+} from 'src/libs/sideshift/sideshift.types';
+
 export enum SwapProvider {
   BOLTZ = 'BOLTZ',
+  SIDESHIFT = 'SIDESHIFT',
 }
 
 export enum BoltzSwapType {
   SUBMARINE = 'SUBMARINE',
   REVERSE = 'REVERSE',
+}
+
+export enum SideShiftSwapType {
+  FIXED = 'FIXED',
+  VARIABLE = 'VARIABLE',
 }
 
 export type BoltzSubmarineRequestType = {
@@ -44,6 +57,16 @@ export type AccountSwapRequestType =
       provider: SwapProvider.BOLTZ;
       type: BoltzSwapType.REVERSE;
       payload: BoltzReverseRequestType;
+    }
+  | {
+      provider: SwapProvider.SIDESHIFT;
+      type: SideShiftSwapType.VARIABLE;
+      payload: SideShiftVariableSwapInput;
+    }
+  | {
+      provider: SwapProvider.SIDESHIFT;
+      type: SideShiftSwapType.FIXED;
+      payload: SideShiftFixedSwapInput;
     };
 
 export type AccountSwapResponseType =
@@ -93,4 +116,14 @@ export type AccountSwapResponseType =
         onchainAmount: number;
         blindingKey: string;
       };
+    }
+  | {
+      provider: SwapProvider.SIDESHIFT;
+      type: SideShiftSwapType.VARIABLE;
+      payload: SideShiftVariableSwap;
+    }
+  | {
+      provider: SwapProvider.SIDESHIFT;
+      type: SideShiftSwapType.FIXED;
+      payload: SideShiftFixedSwap;
     };

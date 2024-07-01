@@ -8,6 +8,7 @@ import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
 import { MainPayResolver, PayMutationsResolver } from './pay.resolver';
 import { PayService } from './pay.service';
+import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PayService } from './pay.service';
     BoltzRestModule,
     LiquidModule,
     ContactServiceModule,
+    SideShiftModule,
   ],
   providers: [PayService, MainPayResolver, PayMutationsResolver],
 })

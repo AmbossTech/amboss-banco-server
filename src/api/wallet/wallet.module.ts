@@ -24,6 +24,7 @@ import {
   WalletQueriesResolver,
   WalletResolver,
 } from './resolvers/queries.resolver';
+import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import {
     EsploraServiceModule,
     LiquidModule,
     FiatModule,
+    SideShiftModule,
   ],
   providers: [
     MainWalletMutationsResolver,

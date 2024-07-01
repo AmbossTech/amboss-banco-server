@@ -1,0 +1,26 @@
+version: '3'
+services:
+  postgres_banco:
+    container_name: postgres_banco
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_banco_datadir:/var/lib/postgresql/data
+
+  redis_banco:
+    container_name: redis_banco
+    image: 'redis:7.2.4'
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_datadir:/data
+
+volumes:
+  postgres_banco_datadir:
+  redis_datadir:

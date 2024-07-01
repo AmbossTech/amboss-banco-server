@@ -11,9 +11,11 @@ import {
   BroadcastLiquidTransactionInput,
   CreateOnchainAddressInput,
   CreateWalletInput,
+  ReceiveSwapInput,
   RefreshWalletInput,
   WalletMutations,
 } from '../wallet.types';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -21,6 +23,7 @@ export class WalletMutationsResolver {
     private walletRepo: WalletRepoService,
     private liquidService: LiquidService,
     private walletService: WalletService,
+    private sideShiftService: SideShiftService,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -71,6 +74,45 @@ export class WalletMutationsResolver {
     );
 
     return { address: address.address().toString() };
+  }
+
+  @ResolveField()
+  async create_onchain_address_swap(
+    @Args('input') input: ReceiveSwapInput,
+    @CurrentUser() { user_id }: any,
+  ) {
+    const walletAccount = await this.walletRepo.getAccountWalletAccount(
+      user_id,
+      input.wallet_account_id,
+    );
+
+    if (!walletAccount) {
+      throw new GraphQLError('Wallet account not found');
+    }
+
+    const address = await this.liquidService.getOnchainAddress(
+      walletAccount?.details.descriptor,
+    );
+
+    const swap = await this.sideShiftService.createVariableSwap(
+      {
+        depositCoin: input.deposit_coin,
+        depositNetwork: input.deposit_network,
+        settleCoin: 'btc',
+        settleNetwork: 'liquid',
+        settleAddress: address.address().toString(),
+      },
+      input.wallet_account_id,
+    );
+
+    return {
+      id: swap.id,
+      coin: swap.depositCoin,
+      min: swap.depositMin,
+      max: swap.depositMax,
+      network: swap.depositNetwork,
+      receive_address: swap.depositAddress,
+    };
   }
 
   @ResolveField()
