@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { GetAccountWalletsResult } from 'src/api/wallet/wallet.types';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
-import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
-import { Secp256k1KeyPairType } from '../account/account.types';
 import { generateMoneyAddress } from 'src/utils/names/names';
+
+import { Secp256k1KeyPairType } from '../account/account.types';
+import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
 
 @Injectable()
 export class WalletRepoService {

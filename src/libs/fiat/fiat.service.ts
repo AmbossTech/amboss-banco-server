@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CoingeckoApiService } from './coingecko/coingecko.service';
+
 import { RedisService } from '../redis/redis.service';
+import { CoingeckoApiService } from './coingecko/coingecko.service';
 
 @Injectable()
 export class FiatService {

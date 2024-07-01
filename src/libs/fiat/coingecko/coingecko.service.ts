@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { fetch } from 'undici';
-import { simplePrice } from './coingecko.types';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { fetch } from 'undici';
+
+import { simplePrice } from './coingecko.types';
 
 @Injectable()
 export class CoingeckoApiService {

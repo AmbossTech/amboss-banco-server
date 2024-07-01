@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { auto } from 'async';
 import {
   Address,
   AddressResult,
@@ -11,15 +12,14 @@ import {
   Update,
   Wollet,
 } from 'lwk_wasm';
-
-import { getWalletFromDescriptor } from './lwk.utils';
-import { getSHA256Hash } from 'src/utils/crypto/crypto';
-import { RedisService } from '../redis/redis.service';
-import { EsploraLiquidService } from '../esplora/liquid.service';
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
-import { auto } from 'async';
-import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
+import { getSHA256Hash } from 'src/utils/crypto/crypto';
+
+import { EsploraLiquidService } from '../esplora/liquid.service';
 import { CustomLogger, Logger } from '../logging';
+import { RedisService } from '../redis/redis.service';
+import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
+import { getWalletFromDescriptor } from './lwk.utils';
 
 export const getUpdateKey = (descriptor: string) =>
   `banco-walletdelta-${getSHA256Hash(descriptor)}`;

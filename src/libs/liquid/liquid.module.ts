@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { LiquidService } from './liquid.service';
 import { EsploraServiceModule } from '../esplora/esplora.module';
+import { LiquidService } from './liquid.service';
 
 @Module({
   imports: [EsploraServiceModule],

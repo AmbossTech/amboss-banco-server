@@ -1,22 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { auto } from 'async';
+import { GraphQLError } from 'graphql';
 import {
   LnUrlCurrenciesAndInfo,
   SendMessageInput,
 } from 'src/api/contact/contact.types';
-import { ContactRepoService } from 'src/repo/contact/contact.repo';
-import { GraphQLError } from 'graphql';
-import { ConfigService } from '@nestjs/config';
-import { toWithError } from 'src/utils/async';
-import { LnurlService } from '../lnurl/lnurl.service';
-import { BoltzRestApi } from '../boltz/boltz.rest';
-import { CustomLogger, Logger } from '../logging';
-import { auto } from 'async';
-import { GetCurrenciesAuto } from './contact.types';
-import { PaymentOptionCode, PaymentOptionNetwork } from '../lnurl/lnurl.types';
-import { getLiquidAssetDecimals } from 'src/utils/crypto/crypto';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { EventsService } from 'src/api/sse/sse.service';
 import { EventTypes } from 'src/api/sse/sse.utils';
+import { ContactRepoService } from 'src/repo/contact/contact.repo';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+import { toWithError } from 'src/utils/async';
+import { getLiquidAssetDecimals } from 'src/utils/crypto/crypto';
+
+import { BoltzRestApi } from '../boltz/boltz.rest';
+import { LnurlService } from '../lnurl/lnurl.service';
+import { PaymentOptionCode, PaymentOptionNetwork } from '../lnurl/lnurl.types';
+import { CustomLogger, Logger } from '../logging';
+import { GetCurrenciesAuto } from './contact.types';
 
 @Injectable()
 export class ContactService {

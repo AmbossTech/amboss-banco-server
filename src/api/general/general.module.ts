@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { GeneralResolvers } from './general.resolver';
 
 @Module({

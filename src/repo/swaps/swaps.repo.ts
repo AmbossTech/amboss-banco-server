@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { wallet_account_swap } from '@prisma/client';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
+
 import {
   AccountSwapRequestType,
   AccountSwapResponseType,
   SwapProvider,
 } from './swaps.types';
-import { wallet_account_swap } from '@prisma/client';
 
 @Injectable()
 export class SwapsRepoService {

@@ -11,6 +11,7 @@ import {
   WalletAccountType,
   WalletType,
 } from 'src/repo/wallet/wallet.types';
+
 import { Secp256k1KeyPairInput } from '../account/account.types';
 import { WalletContacts } from '../contact/contact.types';
 import { WalletSwaps } from '../swaps/swaps.types';

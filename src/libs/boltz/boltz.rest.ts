@@ -1,23 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { fetch } from 'undici';
+import { Musig } from 'boltz-core';
 import {
-  SwapReverseInfoType,
-  SwapSubmarineInfoType,
+  BoltzReverseRequestType,
+  BoltzSubmarineRequestType,
+} from 'src/repo/swaps/swaps.types';
+import { fetch } from 'undici';
+
+import { RedisService } from '../redis/redis.service';
+import {
   boltzError,
   boltzMagicRouteHint,
   boltzReverseSwapResponse,
   boltzSubmarineSwapClaimResponse,
   boltzSubmarineSwapResponse,
   swapReverseInfoSchema,
+  SwapReverseInfoType,
   swapSubmarineInfoSchema,
+  SwapSubmarineInfoType,
 } from './boltz.types';
-import {
-  BoltzReverseRequestType,
-  BoltzSubmarineRequestType,
-} from 'src/repo/swaps/swaps.types';
-import { Musig } from 'boltz-core';
-import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class BoltzRestApi {

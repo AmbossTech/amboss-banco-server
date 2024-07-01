@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { SignUpInput } from './account.types';
-import { AccountRepo } from 'src/repo/account/account.repo';
 import { GraphQLError } from 'graphql';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
-import { NewAccountType } from 'src/repo/account/account.types';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { AccountRepo } from 'src/repo/account/account.repo';
+import { NewAccountType } from 'src/repo/account/account.types';
+
+import { SignUpInput } from './account.types';
 
 @Injectable()
 export class AccountService {

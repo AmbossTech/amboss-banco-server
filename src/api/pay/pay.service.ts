@@ -1,33 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { auto } from 'async';
-import { GraphQLError } from 'graphql';
-import { LnurlService } from 'src/libs/lnurl/lnurl.service';
-import { CustomLogger, Logger } from 'src/libs/logging';
-import { toWithError } from 'src/utils/async';
-import {
-  PayLightningAddressAuto,
-  PayLiquidAddressInput,
-  PayLnAddressPayload,
-  ProcessInvoiceAuto,
-} from './pay.types';
-import Big from 'big.js';
 import { wallet_account } from '@prisma/client';
+import { auto } from 'async';
+import Big from 'big.js';
+import { GraphQLError } from 'graphql';
+import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
 import {
   checkMagicRouteHintInfo,
   decodeBip21Url,
   findMagicRoutingHint,
 } from 'src/libs/boltz/boltz.utils';
-import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
-import { LiquidService } from 'src/libs/liquid/liquid.service';
-import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
-import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { ContactService } from 'src/libs/contact/contact.service';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import {
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from 'src/libs/lnurl/lnurl.types';
+import { CustomLogger, Logger } from 'src/libs/logging';
+import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
+import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
+import { toWithError } from 'src/utils/async';
 import { getLiquidAssetId } from 'src/utils/crypto/crypto';
+
+import {
+  PayLightningAddressAuto,
+  PayLiquidAddressInput,
+  PayLnAddressPayload,
+  ProcessInvoiceAuto,
+} from './pay.types';
 
 @Injectable()
 export class PayService {

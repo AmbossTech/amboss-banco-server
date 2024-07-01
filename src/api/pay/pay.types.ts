@@ -1,11 +1,12 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
-import { WalletAccount } from '../wallet/wallet.types';
+
 import {
   LnUrlCurrenciesAndInfo,
   LnUrlCurrencyType,
 } from '../contact/contact.types';
+import { WalletAccount } from '../wallet/wallet.types';
 
 @ObjectType()
 export class CreateLiquidTransaction {

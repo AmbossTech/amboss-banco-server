@@ -1,10 +1,11 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CustomLogger, Logger } from '../logging';
 import { auto, eachSeries, forever } from 'async';
-import ws from 'ws';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { SwapProvider } from 'src/repo/swaps/swaps.types';
+import ws from 'ws';
+
+import { CustomLogger, Logger } from '../logging';
 import { BoltzSubscriptionAutoType } from './boltz.types';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 

@@ -1,8 +1,9 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
 import { join, resolve } from 'path';
-import { ConfigSchema } from './validation';
 import { z } from 'zod';
+
+import { ConfigSchema } from './validation';
 
 export default () => {
   const isProduction = process.env.NODE_ENV === 'production';

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
+
 import { NewAccountType } from './account.types';
 
 @Injectable()

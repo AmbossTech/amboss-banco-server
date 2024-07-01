@@ -1,6 +1,7 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { WalletSwaps, WalletSwapsParent } from './swaps.types';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
+
+import { WalletSwaps, WalletSwapsParent } from './swaps.types';
 
 @Resolver(WalletSwaps)
 export class WalletSwapsResolver {

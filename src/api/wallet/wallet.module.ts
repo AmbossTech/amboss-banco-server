@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
+import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
+import { FiatModule } from 'src/libs/fiat/fiat.module';
+import { LiquidModule } from 'src/libs/liquid/liquid.module';
+import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
+
 import {
   MainWalletMutationsResolver,
   WalletMutationsResolver,
@@ -19,10 +24,6 @@ import {
   WalletQueriesResolver,
   WalletResolver,
 } from './resolvers/queries.resolver';
-import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
-import { LiquidModule } from 'src/libs/liquid/liquid.module';
-import { FiatModule } from 'src/libs/fiat/fiat.module';
-import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 
 @Module({

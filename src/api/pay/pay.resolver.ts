@@ -5,6 +5,14 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { GraphQLError } from 'graphql';
+import { CurrentUser } from 'src/auth/auth.decorators';
+import { CustomLogger, Logger } from 'src/libs/logging';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+import { WalletAccountType } from 'src/repo/wallet/wallet.types';
+import { isUUID } from 'src/utils/string';
+
+import { PayService } from './pay.service';
 import {
   PayInput,
   PayLiquidAddressInput,
@@ -16,15 +24,8 @@ import {
   SwapQuote,
   SwapQuoteInput,
 } from './pay.types';
-import { CurrentUser } from 'src/auth/auth.decorators';
-import { PayService } from './pay.service';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { GraphQLError } from 'graphql';
-import { isUUID } from 'src/utils/string';
-import { CustomLogger, Logger } from 'src/libs/logging';
-import { WalletAccountType } from 'src/repo/wallet/wallet.types';
-import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { RedisService } from 'src/libs/redis/redis.service';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
 
 @Resolver(PayMutations)

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { fromEvent } from 'rxjs';
 import { EventEmitter } from 'events';
+import { fromEvent } from 'rxjs';
 
 @Injectable()
 export class EventsService {

@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ContactService } from './contact.service';
-import { LnurlModule } from '../lnurl/lnurl.module';
+import { EventsModule } from 'src/api/sse/sse.module';
 import { ContactRepoModule } from 'src/repo/contact/contact.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
+
 import { BoltzRestModule } from '../boltz/boltz.module';
-import { EventsModule } from 'src/api/sse/sse.module';
+import { LnurlModule } from '../lnurl/lnurl.module';
+import { ContactService } from './contact.service';
 
 @Module({
   imports: [

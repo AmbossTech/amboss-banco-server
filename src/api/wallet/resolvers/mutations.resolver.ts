@@ -1,4 +1,12 @@
 import { Args, Mutation, ResolveField, Resolver } from '@nestjs/graphql';
+import { each } from 'async';
+import { GraphQLError } from 'graphql';
+import { CurrentUser } from 'src/auth/auth.decorators';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { CustomLogger, Logger } from 'src/libs/logging';
+import { WalletService } from 'src/libs/wallet/wallet.service';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+
 import {
   BroadcastLiquidTransactionInput,
   CreateOnchainAddressInput,
@@ -7,13 +15,6 @@ import {
   RefreshWalletInput,
   WalletMutations,
 } from '../wallet.types';
-import { CurrentUser } from 'src/auth/auth.decorators';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { each } from 'async';
-import { GraphQLError } from 'graphql';
-import { LiquidService } from 'src/libs/liquid/liquid.service';
-import { WalletService } from 'src/libs/wallet/wallet.service';
-import { CustomLogger, Logger } from 'src/libs/logging';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 
 @Resolver(WalletMutations)

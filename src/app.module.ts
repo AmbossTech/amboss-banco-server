@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './libs/prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+import { TerminusModule } from '@nestjs/terminus';
+
+import { ApiModule } from './api/api.module';
+import { HealthController } from './api/health/health.controller';
+import { AuthModule } from './auth/auth.module';
+import configuration from './libs/config/configuration';
 import { GraphqlModule } from './libs/graphql/graphql.module';
 import { CustomLoggerModule } from './libs/logging/logger.module';
-import { ConfigModule } from '@nestjs/config';
-import { ApiModule } from './api/api.module';
-import configuration from './libs/config/configuration';
-import { AuthModule } from './auth/auth.module';
+import { PrismaModule } from './libs/prisma/prisma.module';
 import { RedisModule } from './libs/redis/redis.module';
-import { HealthController } from './api/health/health.controller';
-import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [

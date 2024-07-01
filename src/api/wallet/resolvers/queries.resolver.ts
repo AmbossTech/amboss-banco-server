@@ -1,46 +1,46 @@
+import { ConfigService } from '@nestjs/config';
 import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { orderBy } from 'lodash';
-import { v5 } from 'uuid';
-
-import {
-  AssetParentType,
-  GetAccountWalletsResult,
-  SimpleWallet,
-  SimpleWalletAccount,
-  Wallet,
-  WalletAccount,
-  LiquidAsset,
-  LiquidAssetInfo,
-  LiquidTransaction,
-  WalletQueries,
-  WalletTxWithAssetId,
-  LiquidAccountParentType,
-  LiquidAccount,
-  WalletDetails,
-  Secp256k1KeyPair,
-  AssetInfoParent,
-  FiatInfo,
-  MoneyAddress,
-  MoneyAddressParent,
-} from '../wallet.types';
-import {
-  alwaysPresentAssets,
-  featuredLiquidAssets,
-} from 'src/utils/crypto/crypto';
-import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { WalletContactsParent } from 'src/api/contact/contact.types';
+import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
+import { FiatService } from 'src/libs/fiat/fiat.service';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import {
   WalletAccountDetailsType,
   WalletAccountType,
 } from 'src/repo/wallet/wallet.types';
-import { ConfigService } from '@nestjs/config';
-import { WalletContactsParent } from 'src/api/contact/contact.types';
-import { FiatService } from 'src/libs/fiat/fiat.service';
-import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
+import {
+  alwaysPresentAssets,
+  featuredLiquidAssets,
+} from 'src/utils/crypto/crypto';
+import { v5 } from 'uuid';
+
+import {
+  AssetInfoParent,
+  AssetParentType,
+  FiatInfo,
+  GetAccountWalletsResult,
+  LiquidAccount,
+  LiquidAccountParentType,
+  LiquidAsset,
+  LiquidAssetInfo,
+  LiquidTransaction,
+  MoneyAddress,
+  MoneyAddressParent,
+  Secp256k1KeyPair,
+  SimpleWallet,
+  SimpleWalletAccount,
+  Wallet,
+  WalletAccount,
+  WalletDetails,
+  WalletQueries,
+  WalletTxWithAssetId,
+} from '../wallet.types';
 
 @Resolver(FiatInfo)
 export class FiatInfoResolver {

@@ -1,8 +1,9 @@
 import { Controller, Sse } from '@nestjs/common';
-import { EventsService } from './sse.service';
-import { EventTypes } from './sse.utils';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { CustomLogger, Logger } from 'src/libs/logging';
+
+import { EventsService } from './sse.service';
+import { EventTypes } from './sse.utils';
 
 @Controller('events')
 export class EventsController {
