@@ -1,22 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { auto } from 'async';
 import { moneyAddressType } from 'src/api/contact/contact.types';
-import { RedisService } from '../redis/redis.service';
-import {
-  lightningAddressToPubkeyUrl,
-  lightningAddressToUrl,
-} from 'src/utils/lnurl';
 import {
   AccountCurrency,
   CallbackHandlerParams,
   CallbackParams,
-  GetLnUrlResponseAutoType,
   GetLnurlAutoType,
+  GetLnUrlResponseAutoType,
   LightningAddressPubkeyResponseSchema,
 } from 'src/api/lnurl/lnurl.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { CustomLogger, Logger } from '../logging';
+import {
+  LiquidWalletAssets,
+  WalletAccountType,
+} from 'src/repo/wallet/wallet.types';
+import { liquidAssetIds } from 'src/utils/crypto/crypto';
+import {
+  lightningAddressToPubkeyUrl,
+  lightningAddressToUrl,
+} from 'src/utils/lnurl';
 import { fetch } from 'undici';
+
+import { BoltzRestApi } from '../boltz/boltz.rest';
+import { LiquidService } from '../liquid/liquid.service';
+import { CustomLogger, Logger } from '../logging';
+import { RedisService } from '../redis/redis.service';
 import {
   LnUrlInfoSchema,
   LnUrlInfoSchemaType,
@@ -25,14 +34,6 @@ import {
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from './lnurl.types';
-import {
-  LiquidWalletAssets,
-  WalletAccountType,
-} from 'src/repo/wallet/wallet.types';
-import { liquidAssetIds } from 'src/utils/crypto/crypto';
-import { auto } from 'async';
-import { BoltzRestApi } from '../boltz/boltz.rest';
-import { LiquidService } from '../liquid/liquid.service';
 
 @Injectable()
 export class LnurlService {

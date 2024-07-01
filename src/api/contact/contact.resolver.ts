@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import {
   Args,
   Mutation,
@@ -5,6 +6,19 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { contact_message } from '@prisma/client';
+import { GraphQLError } from 'graphql';
+import { CurrentUser } from 'src/auth/auth.decorators';
+import { ContactService } from 'src/libs/contact/contact.service';
+import { LnurlService } from 'src/libs/lnurl/lnurl.service';
+import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
+import { CustomLogger, Logger } from 'src/libs/logging';
+import { ContactRepoService } from 'src/repo/contact/contact.repo';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+import { lightningAddressToUrl } from 'src/utils/lnurl';
+import { fetch } from 'undici';
+import { v5 } from 'uuid';
+
 import {
   ContactMessage,
   ContactMutations,
@@ -12,26 +26,13 @@ import {
   LightningAddressResponseSchema,
   LnUrlCurrency,
   LnUrlCurrencyType,
+  moneyAddressType,
   SendMessageInput,
   WalletContact,
   WalletContactParent,
   WalletContacts,
   WalletContactsParent,
-  moneyAddressType,
 } from './contact.types';
-import { CurrentUser } from 'src/auth/auth.decorators';
-import { ContactRepoService } from 'src/repo/contact/contact.repo';
-import { GraphQLError } from 'graphql';
-import { ConfigService } from '@nestjs/config';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { fetch } from 'undici';
-import { lightningAddressToUrl } from 'src/utils/lnurl';
-import { LnurlService } from 'src/libs/lnurl/lnurl.service';
-import { ContactService } from 'src/libs/contact/contact.service';
-import { v5 } from 'uuid';
-import { CustomLogger, Logger } from 'src/libs/logging';
-import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
-import { contact_message } from '@prisma/client';
 
 @Resolver(LnUrlCurrency)
 export class LnUrlCurrencyResolver {

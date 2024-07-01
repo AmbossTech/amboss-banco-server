@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { hash, verify } from '@node-rs/argon2';
+
 import { ARGON_DEFAULTS } from './crypto.utils';
 
 @Injectable()

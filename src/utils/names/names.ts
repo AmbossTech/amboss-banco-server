@@ -1,9 +1,10 @@
 import {
-  NumberDictionary,
   animals,
   colors,
+  NumberDictionary,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
+
 import { fruits } from './fruitList';
 
 const numberDictionary = NumberDictionary.generate({ min: 10, max: 99 });

@@ -1,8 +1,8 @@
 import { crypto } from 'bitcoinjs-lib';
-import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
+import { decode, PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
 import { ECPairFactory } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import { decode } from 'bolt11';
+
 import { BoltzMagicRouteHintType } from './boltz.types';
 
 const ECPair = ECPairFactory(ecc);

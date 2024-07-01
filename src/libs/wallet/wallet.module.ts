@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { WalletService } from './wallet.service';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
+
+import { WalletService } from './wallet.service';
 
 @Module({
   imports: [WalletRepoModule],

@@ -8,9 +8,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { Public } from 'src/auth/auth.decorators';
-import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { CallbackParams } from './lnurl.types';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+
+import { CallbackParams } from './lnurl.types';
 
 // @Controller('message')
 // export class MessageController {

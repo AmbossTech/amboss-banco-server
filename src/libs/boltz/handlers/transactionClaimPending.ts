@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
-import bolt11 from 'bolt11';
-import { Musig, SwapTreeSerializer, TaprootUtils } from 'boltz-core';
+import { wallet_account_swap } from '@prisma/client';
 import zkpInit from '@vulpemventures/secp256k1-zkp';
 import { crypto } from 'bitcoinjs-lib';
+import bolt11 from 'bolt11';
+import { Musig, SwapTreeSerializer, TaprootUtils } from 'boltz-core';
 import { randomBytes } from 'crypto';
-import * as ecc from 'tiny-secp256k1';
 import { ECPairFactory } from 'ecpair';
-import { wallet_account_swap } from '@prisma/client';
-import { BoltzRestApi } from '../boltz.rest';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { toWithError } from 'src/utils/async';
+import * as ecc from 'tiny-secp256k1';
+
+import { BoltzRestApi } from '../boltz.rest';
 
 @Injectable()
 export class TransactionClaimPendingService {

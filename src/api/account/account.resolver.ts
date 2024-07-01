@@ -1,3 +1,5 @@
+import { UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   Args,
   Context,
@@ -6,6 +8,16 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { CookieOptions, Response } from 'express';
+import { GraphQLError } from 'graphql';
+import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
+import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
+import { AuthService } from 'src/libs/auth/auth.service';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
+import { WalletService } from 'src/libs/wallet/wallet.service';
+import { AccountRepo } from 'src/repo/account/account.repo';
+
+import { AccountService } from './account.service';
 import {
   LoginInput,
   NewAccount,
@@ -13,17 +25,6 @@ import {
   SignUpInput,
   User,
 } from './account.types';
-import { AccountService } from './account.service';
-import { AuthService } from 'src/libs/auth/auth.service';
-import { AccountRepo } from 'src/repo/account/account.repo';
-import { CryptoService } from 'src/libs/crypto/crypto.service';
-import { CookieOptions, Response } from 'express';
-import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
-import { UseGuards } from '@nestjs/common';
-import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
-import { GraphQLError } from 'graphql';
-import { ConfigService } from '@nestjs/config';
-import { WalletService } from 'src/libs/wallet/wallet.service';
 
 @Resolver(User)
 export class UserResolver {
