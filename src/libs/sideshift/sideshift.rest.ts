@@ -66,12 +66,13 @@ export class SideShiftRestService {
     const json = await response.json();
 
     if (json.error) {
+      const errorMsg: string = json.error.message;
       this.logger.error(`Sideshift API error`, {
-        error: json.error,
+        error: errorMsg,
         endpoint,
         body,
       });
-      throw new Error(json.error);
+      throw new Error(errorMsg);
     }
     const parsed = responseObj.safeParse(json);
     if (parsed.error) {
