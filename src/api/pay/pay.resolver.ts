@@ -11,7 +11,10 @@ import {
   PayLnAddressInput,
   PayLnInvoiceInput,
   PayMutations,
+  PayNetworkSwap,
   PayParentType,
+  SwapQuote,
+  SwapQuoteInput,
 } from './pay.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { PayService } from './pay.service';
@@ -20,10 +23,17 @@ import { GraphQLError } from 'graphql';
 import { isUUID } from 'src/utils/string';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
+import { RedisService } from 'src/libs/redis/redis.service';
+import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
 
 @Resolver(PayMutations)
 export class PayMutationsResolver {
-  constructor(private payService: PayService) {}
+  constructor(
+    private payService: PayService,
+    private redisService: RedisService,
+    private sideShiftService: SideShiftService,
+  ) {}
 
   @ResolveField()
   async money_address(
@@ -82,6 +92,77 @@ export class PayMutationsResolver {
     );
 
     return { base_64, wallet_account: parent.wallet_account };
+  }
+
+  @ResolveField()
+  async network_swap(
+    @Args('input') input: PayNetworkSwap,
+    @Parent() parent: PayParentType,
+  ) {
+    const quote = await this.redisService.get<SwapQuote>(input.quote_id);
+
+    if (!quote) {
+      throw new GraphQLError(`Quote not found`);
+    }
+
+    const { quote_id, settle_address } = input;
+
+    const swap = await this.sideShiftService.createFixedSwap(
+      {
+        quoteId: quote_id,
+        settleAddress: settle_address,
+      },
+      parent.wallet_account.id,
+    );
+
+    // Get sats amount
+    const paymentAmount = +swap.depositAmount * 100_000_000;
+
+    const { base_64 } = await this.payService.payLiquidAddress(
+      parent.wallet_account,
+      {
+        fee_rate: 100,
+        recipients: [
+          {
+            address: swap.depositAddress,
+            amount: paymentAmount.toString(),
+          },
+        ],
+      },
+    );
+
+    return { base_64, wallet_account: parent.wallet_account };
+  }
+
+  @ResolveField()
+  async network_swap_quote(
+    @Args('input')
+    { settle_amount, settle_coin, settle_network }: SwapQuoteInput,
+  ): Promise<SwapQuote> {
+    const quote = await this.sideShiftService.getQuote({
+      depositCoin: 'BTC',
+      depositNetwork: 'liquid',
+      settleAmount: settle_amount,
+      settleCoin: settle_coin,
+      settleNetwork: settle_network,
+    });
+
+    // Sideshift quote is valid for 15 minutes.
+    await this.redisService.set<SideShiftQuote>(quote.id, quote, {
+      ttl: 15 * 60,
+    });
+
+    return {
+      ...quote,
+      created_at: quote.createdAt,
+      deposit_coin: quote.depositCoin,
+      deposit_network: quote.depositNetwork,
+      expires_at: quote.expiresAt,
+      settle_coin: quote.settleCoin,
+      settle_network: quote.settleNetwork,
+      deposit_amount: quote.depositAmount,
+      settle_amount: quote.settleAmount,
+    };
   }
 }
 

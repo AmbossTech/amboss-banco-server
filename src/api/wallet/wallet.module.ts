@@ -23,6 +23,7 @@ import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { FiatModule } from 'src/libs/fiat/fiat.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
+import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
     EsploraServiceModule,
     LiquidModule,
     FiatModule,
+    SideShiftModule,
   ],
   providers: [
     MainWalletMutationsResolver,

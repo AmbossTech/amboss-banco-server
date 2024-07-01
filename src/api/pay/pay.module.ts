@@ -7,6 +7,7 @@ import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 import { ContactServiceModule } from 'src/libs/contact/contact.module';
+import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ContactServiceModule } from 'src/libs/contact/contact.module';
     BoltzRestModule,
     LiquidModule,
     ContactServiceModule,
+    SideShiftModule,
   ],
   providers: [PayService, MainPayResolver, PayMutationsResolver],
 })

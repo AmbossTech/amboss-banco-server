@@ -40,6 +40,27 @@ export class CreateOnchainAddress {
 }
 
 @ObjectType()
+export class ReceiveSwap {
+  @Field()
+  id: string;
+
+  @Field()
+  receive_address: string;
+
+  @Field()
+  coin: string;
+
+  @Field()
+  network: string;
+
+  @Field()
+  min: string;
+
+  @Field()
+  max: string;
+}
+
+@ObjectType()
 export class BroadcastLiquidTransaction {
   @Field()
   tx_id: string;
@@ -254,6 +275,9 @@ export class WalletMutations {
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
 
+  @Field(() => ReceiveSwap)
+  create_onchain_address_swap: ReceiveSwap;
+
   @Field(() => BroadcastLiquidTransaction)
   broadcast_liquid_transaction: BroadcastLiquidTransaction;
 
@@ -319,6 +343,18 @@ export class BroadcastLiquidTransactionInput {
 
   @Field()
   signed_pset: string;
+}
+
+@InputType()
+export class ReceiveSwapInput {
+  @Field()
+  deposit_coin: string;
+
+  @Field()
+  deposit_network: string;
+
+  @Field()
+  wallet_account_id: string;
 }
 
 export type AssetParentType = {

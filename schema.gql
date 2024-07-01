@@ -185,6 +185,13 @@ type PayMutations {
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
+  network_swap(input: PayNetworkSwap!): CreateLiquidTransaction!
+  network_swap_quote(input: SwapQuoteInput!): SwapQuote!
+}
+
+input PayNetworkSwap {
+  quote_id: String!
+  settle_address: String!
 }
 
 enum PaymentOptionCode {
@@ -202,6 +209,21 @@ type Query {
   hello: String!
   user: User!
   wallets: WalletQueries!
+}
+
+type ReceiveSwap {
+  coin: String!
+  id: String!
+  max: String!
+  min: String!
+  network: String!
+  receive_address: String!
+}
+
+input ReceiveSwapInput {
+  deposit_coin: String!
+  deposit_network: String!
+  wallet_account_id: String!
 }
 
 type RefreshToken {
@@ -267,6 +289,25 @@ type SimpleWalletContact {
   money_address: String!
 }
 
+type SwapQuote {
+  created_at: String!
+  deposit_amount: String!
+  deposit_coin: String!
+  deposit_network: String!
+  expires_at: String!
+  id: String!
+  rate: String!
+  settle_amount: String!
+  settle_coin: String!
+  settle_network: String!
+}
+
+input SwapQuoteInput {
+  settle_amount: String!
+  settle_coin: String!
+  settle_network: String!
+}
+
 type User {
   default_wallet_id: String
   email: String!
@@ -320,6 +361,7 @@ type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
   create_onchain_address(input: CreateOnchainAddressInput!): CreateOnchainAddress!
+  create_onchain_address_swap(input: ReceiveSwapInput!): ReceiveSwap!
   refresh_wallet(input: RefreshWalletInput!): Boolean!
 }
 

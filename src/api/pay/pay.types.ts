@@ -17,6 +17,39 @@ export class CreateLiquidTransaction {
 }
 
 @ObjectType()
+export class SwapQuote {
+  @Field()
+  id: string;
+
+  @Field()
+  created_at: string;
+
+  @Field()
+  deposit_coin: string;
+
+  @Field()
+  settle_coin: string;
+
+  @Field()
+  deposit_network: string;
+
+  @Field()
+  settle_network: string;
+
+  @Field()
+  expires_at: string;
+
+  @Field()
+  deposit_amount: string;
+
+  @Field()
+  settle_amount: string;
+
+  @Field()
+  rate: string;
+}
+
+@ObjectType()
 export class PayMutations {
   @Field()
   money_address: CreateLiquidTransaction;
@@ -26,6 +59,12 @@ export class PayMutations {
 
   @Field()
   liquid_address: CreateLiquidTransaction;
+
+  @Field()
+  network_swap: CreateLiquidTransaction;
+
+  @Field()
+  network_swap_quote: SwapQuote;
 }
 
 @InputType()
@@ -73,7 +112,7 @@ export class LiquidRecipientInput {
   amount: string;
 
   @Field({ nullable: true })
-  asset_id: string;
+  asset_id?: string;
 }
 
 @InputType()
@@ -86,6 +125,27 @@ export class PayLiquidAddressInput {
 
   @Field(() => [LiquidRecipientInput])
   recipients: LiquidRecipientInput[];
+}
+
+@InputType()
+export class PayNetworkSwap {
+  @Field()
+  quote_id: string;
+
+  @Field()
+  settle_address: string;
+}
+
+@InputType()
+export class SwapQuoteInput {
+  @Field()
+  settle_amount: string;
+
+  @Field()
+  settle_coin: string;
+
+  @Field()
+  settle_network: string;
 }
 
 export type PayLnAddressPayload = {
