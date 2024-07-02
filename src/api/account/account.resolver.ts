@@ -13,6 +13,7 @@ import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
 import { AuthService } from 'src/libs/auth/auth.service';
+import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
@@ -44,7 +45,7 @@ export class UserResolver {
 
 @Resolver()
 export class AccountResolver {
-  domain: string;
+  domains: string[];
 
   constructor(
     private config: ConfigService,
@@ -54,7 +55,9 @@ export class AccountResolver {
     private accountService: AccountService,
     private walletService: WalletService,
   ) {
-    this.domain = config.getOrThrow('server.cookies.domain');
+    this.domains = config.getOrThrow<
+      ConfigSchemaType['server']['cookies']['domains']
+    >('server.cookies.domains');
   }
 
   @Query(() => User)
@@ -98,20 +101,22 @@ export class AccountResolver {
 
     await this.accountRepo.updateRefreshToken(account.id, hashedRefreshToken);
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-    };
+    this.domains.forEach((domain) => {
+      const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        domain,
+      };
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
+      res.cookie('amboss_banco_refresh_token', refreshToken, {
+        ...cookieOptions,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      });
+      res.cookie('amboss_banco_access_token', accessToken, {
+        ...cookieOptions,
+        maxAge: 1000 * 60 * 10,
+      });
     });
 
     return {
@@ -157,16 +162,18 @@ export class AccountResolver {
 
     await this.accountRepo.updateRefreshToken(user_id, null);
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-      maxAge: 1,
-    };
+    this.domains.forEach((domain) => {
+      const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        domain,
+        maxAge: 1,
+      };
 
-    res.cookie('amboss_banco_refresh_token', '', cookieOptions);
-    res.cookie('amboss_banco_access_token', '', cookieOptions);
+      res.cookie('amboss_banco_refresh_token', '', cookieOptions);
+      res.cookie('amboss_banco_access_token', '', cookieOptions);
+    });
 
     return true;
   }
@@ -191,20 +198,22 @@ export class AccountResolver {
       hashedRefreshToken,
     );
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-    };
+    this.domains.forEach((domain) => {
+      const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        domain,
+      };
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
+      res.cookie('amboss_banco_refresh_token', refreshToken, {
+        ...cookieOptions,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+      });
+      res.cookie('amboss_banco_access_token', accessToken, {
+        ...cookieOptions,
+        maxAge: 1000 * 60 * 10,
+      });
     });
 
     if (!!input.wallet) {
@@ -248,17 +257,19 @@ export class AccountResolver {
 
     // await this.accountRepo.updateRefreshToken(user_id, hashedRefreshToken);
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-    };
+    this.domains.forEach((domain) => {
+      const cookieOptions: CookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        domain,
+      };
 
-    // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
+      // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
+      res.cookie('amboss_banco_access_token', accessToken, {
+        ...cookieOptions,
+        maxAge: 1000 * 60 * 10,
+      });
     });
 
     return {

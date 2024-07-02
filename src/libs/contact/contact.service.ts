@@ -14,6 +14,7 @@ import { toWithError } from 'src/utils/async';
 import { getLiquidAssetDecimals } from 'src/utils/crypto/crypto';
 
 import { BoltzRestApi } from '../boltz/boltz.rest';
+import { ConfigSchemaType } from '../config/validation';
 import { LnurlService } from '../lnurl/lnurl.service';
 import { PaymentOptionCode, PaymentOptionNetwork } from '../lnurl/lnurl.types';
 import { CustomLogger, Logger } from '../logging';
@@ -135,16 +136,19 @@ export class ContactService {
       throw new GraphQLError('Contact not found');
     }
 
-    const serverDomain = this.config.getOrThrow('server.domain');
+    const serverDomains =
+      this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+        'server.domains',
+      );
 
     const [user, domain] = receiver_money_address.split('@');
 
-    const senderAddress = `${contact.wallet_on_accounts.money_address_user}@${serverDomain}`;
+    const senderAddress = `${contact.wallet_on_accounts.money_address_user}@${serverDomains[0]}`;
 
     if (!!receiver_payload) {
-      this.logger.debug('Sending message', { serverDomain, domain });
+      this.logger.debug('Sending message', { serverDomains, domain });
 
-      if (serverDomain === domain) {
+      if (serverDomains.includes(domain)) {
         const wallet = await this.walletRepo.getWalletByLnAddress(user);
 
         if (!wallet) {

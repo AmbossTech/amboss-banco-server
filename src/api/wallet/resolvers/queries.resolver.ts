@@ -6,6 +6,7 @@ import { orderBy } from 'lodash';
 import { WalletContactsParent } from 'src/api/contact/contact.types';
 import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
 import { FiatService } from 'src/libs/fiat/fiat.service';
@@ -284,8 +285,10 @@ export class MoneyAddressResolver {
   }
 
   @ResolveField()
-  domains() {
-    return [this.config.getOrThrow('server.domain')];
+  domains(): string[] {
+    return this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+      'server.domains',
+    );
   }
 }
 

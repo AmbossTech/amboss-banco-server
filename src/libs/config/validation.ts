@@ -5,9 +5,9 @@ export type ConfigSchemaType = z.infer<typeof ConfigSchema>;
 export const ConfigSchema = z.object({
   server: z.object({
     encryptionKey: z.string().min(64),
-    domain: z.string(),
+    domains: z.array(z.string()),
     cookies: z.object({
-      domain: z.string(),
+      domains: z.array(z.string()),
     }),
     jwt: z.object({
       accessSecret: z.string(),
