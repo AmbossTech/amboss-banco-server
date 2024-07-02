@@ -4,6 +4,7 @@ import {
   Parent,
   ResolveField,
   Resolver,
+  Query,
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
@@ -12,18 +13,19 @@ import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
 import { isUUID } from 'src/utils/string';
 
-import { PayService } from './pay.service';
+import { PayService } from '../pay.service';
 import {
   PayInput,
   PayLiquidAddressInput,
   PayLnAddressInput,
   PayLnInvoiceInput,
   PayMutations,
-  PayNetworkSwap,
+  PayNetworkSwapInput,
   PayParentType,
+  PayQueries,
   SwapQuote,
   SwapQuoteInput,
-} from './pay.types';
+} from '../pay.types';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
@@ -97,7 +99,7 @@ export class PayMutationsResolver {
 
   @ResolveField()
   async network_swap(
-    @Args('input') input: PayNetworkSwap,
+    @Args('input') input: PayNetworkSwapInput,
     @Parent() parent: PayParentType,
   ) {
     const quote = await this.redisService.get<SwapQuote>(input.quote_id);
@@ -134,41 +136,10 @@ export class PayMutationsResolver {
 
     return { base_64, wallet_account: parent.wallet_account };
   }
-
-  @ResolveField()
-  async network_swap_quote(
-    @Args('input')
-    { settle_amount, settle_coin, settle_network }: SwapQuoteInput,
-  ): Promise<SwapQuote> {
-    const quote = await this.sideShiftService.getQuote({
-      depositCoin: 'BTC',
-      depositNetwork: 'liquid',
-      settleAmount: settle_amount,
-      settleCoin: settle_coin,
-      settleNetwork: settle_network,
-    });
-
-    // Sideshift quote is valid for 15 minutes.
-    await this.redisService.set<SideShiftQuote>(quote.id, quote, {
-      ttl: 15 * 60,
-    });
-
-    return {
-      ...quote,
-      created_at: quote.createdAt,
-      deposit_coin: quote.depositCoin,
-      deposit_network: quote.depositNetwork,
-      expires_at: quote.expiresAt,
-      settle_coin: quote.settleCoin,
-      settle_network: quote.settleNetwork,
-      deposit_amount: quote.depositAmount,
-      settle_amount: quote.settleAmount,
-    };
-  }
 }
 
 @Resolver()
-export class MainPayResolver {
+export class MainPayMutationsResolver {
   constructor(
     private walletRepo: WalletRepoService,
     @Logger('MainPayResolver') private logger: CustomLogger,

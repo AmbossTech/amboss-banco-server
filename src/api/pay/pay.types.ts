@@ -63,7 +63,10 @@ export class PayMutations {
 
   @Field()
   network_swap: CreateLiquidTransaction;
+}
 
+@ObjectType()
+export class PayQueries {
   @Field()
   network_swap_quote: SwapQuote;
 }
@@ -129,7 +132,7 @@ export class PayLiquidAddressInput {
 }
 
 @InputType()
-export class PayNetworkSwap {
+export class PayNetworkSwapInput {
   @Field()
   quote_id: string;
 

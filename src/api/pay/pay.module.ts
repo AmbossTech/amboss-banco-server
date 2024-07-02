@@ -6,9 +6,16 @@ import { LnurlModule } from 'src/libs/lnurl/lnurl.module';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
-import { MainPayResolver, PayMutationsResolver } from './pay.resolver';
+import {
+  MainPayMutationsResolver,
+  PayMutationsResolver,
+} from './resolvers/mutations.resolver';
 import { PayService } from './pay.service';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
+import {
+  MainPayQueriesResolver,
+  PayQueriesResolver,
+} from './resolvers/queries.resolver';
 
 @Module({
   imports: [
@@ -20,6 +27,12 @@ import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
     ContactServiceModule,
     SideShiftModule,
   ],
-  providers: [PayService, MainPayResolver, PayMutationsResolver],
+  providers: [
+    PayService,
+    MainPayMutationsResolver,
+    PayMutationsResolver,
+    MainPayQueriesResolver,
+    PayQueriesResolver,
+  ],
 })
 export class PayModule {}

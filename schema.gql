@@ -185,13 +185,16 @@ type PayMutations {
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
-  network_swap(input: PayNetworkSwap!): CreateLiquidTransaction!
-  network_swap_quote(input: SwapQuoteInput!): SwapQuote!
+  network_swap(input: PayNetworkSwapInput!): CreateLiquidTransaction!
 }
 
-input PayNetworkSwap {
+input PayNetworkSwapInput {
   quote_id: String!
   settle_address: String!
+}
+
+type PayQueries {
+  network_swap_quote(input: SwapQuoteInput!): SwapQuote!
 }
 
 enum PaymentOptionCode {
@@ -207,6 +210,7 @@ enum PaymentOptionNetwork {
 
 type Query {
   hello: String!
+  pay: PayQueries!
   user: User!
   wallets: WalletQueries!
 }
