@@ -40,6 +40,7 @@ export class WalletService {
 
         const details: WalletAccountDetailsType = {
           type: WalletAccountType.LIQUID,
+          descriptor: '',
           descriptor_hash,
           local_protected_descriptor,
         };
