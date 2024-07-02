@@ -1,16 +1,16 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 
 import {
   LnUrlCurrenciesAndInfo,
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
-import {
-  SideShiftCoin,
-  SideShiftNetwork,
-} from 'src/libs/sideshift/sideshift.types';
 
 @ObjectType()
 export class CreateLiquidTransaction {

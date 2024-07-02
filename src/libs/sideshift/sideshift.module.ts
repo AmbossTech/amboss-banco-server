@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { SideShiftService } from './sideshift.service';
-import { SideShiftRestService } from './sideshift.rest';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
+
+import { SideShiftRestService } from './sideshift.rest';
+import { SideShiftService } from './sideshift.service';
 
 @Module({
   imports: [SwapsRepoModule],

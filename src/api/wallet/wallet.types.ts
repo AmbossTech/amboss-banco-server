@@ -7,6 +7,10 @@ import {
 import { wallet, wallet_account, wallet_on_accounts } from '@prisma/client';
 import { WalletTx, Wollet } from 'lwk_wasm';
 import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
+import {
   WalletAccountDetailsType,
   WalletAccountType,
   WalletType,
@@ -15,10 +19,6 @@ import {
 import { Secp256k1KeyPairInput } from '../account/account.types';
 import { WalletContacts } from '../contact/contact.types';
 import { WalletSwaps } from '../swaps/swaps.types';
-import {
-  SideShiftCoin,
-  SideShiftNetwork,
-} from 'src/libs/sideshift/sideshift.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
