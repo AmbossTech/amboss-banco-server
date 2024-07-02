@@ -108,7 +108,6 @@ export class WalletMutationsResolver {
 
     const swap = await this.sideShiftService.createVariableSwap(
       {
-        clientIp: ip,
         depositCoin: input.deposit_coin,
         depositNetwork: input.deposit_network,
         settleCoin: SideShiftCoin.BTC,
@@ -116,6 +115,7 @@ export class WalletMutationsResolver {
         settleAddress: address.address().toString(),
       },
       input.wallet_account_id,
+      ip,
     );
 
     return {

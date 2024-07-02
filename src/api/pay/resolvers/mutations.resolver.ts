@@ -1,15 +1,17 @@
 import {
   Args,
+  Context,
   Mutation,
   Parent,
   ResolveField,
   Resolver,
-  Query,
-  Context,
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { RedisService } from 'src/libs/redis/redis.service';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
 import { isUUID } from 'src/utils/string';
@@ -23,14 +25,8 @@ import {
   PayMutations,
   PayNetworkSwapInput,
   PayParentType,
-  PayQueries,
   SwapQuote,
-  SwapQuoteInput,
 } from '../pay.types';
-import { RedisService } from 'src/libs/redis/redis.service';
-import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
-import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
-import { ContextType } from 'src/libs/graphql/context.type';
 
 @Resolver(PayMutations)
 export class PayMutationsResolver {
@@ -115,11 +111,11 @@ export class PayMutationsResolver {
 
     const swap = await this.sideShiftService.createFixedSwap(
       {
-        clientIp: ip,
         quoteId: quote_id,
         settleAddress: settle_address,
       },
       parent.wallet_account.id,
+      ip,
     );
 
     // Get sats amount

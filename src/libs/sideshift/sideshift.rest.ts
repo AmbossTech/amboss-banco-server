@@ -1,19 +1,20 @@
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { z } from 'zod';
+
+import { CustomLogger, Logger } from '../logging';
 import {
+  BaseSideShiftInput,
+  SideShiftFixedSwap,
+  SideShiftFixedSwapInput,
+  sideShiftFixedSwapOutput,
   SideShiftQuote,
   SideShiftQuoteInput,
-  SideShiftFixedSwapInput,
   sideShiftQuoteOutput,
+  SideShiftVariableSwap,
   SideShiftVariableSwapInput,
   sideShiftVariableSwapOutput,
-  SideShiftVariableSwap,
-  SideShiftFixedSwap,
-  sideShiftFixedSwapOutput,
-  BaseSideShiftInput,
 } from './sideshift.types';
-import { Injectable } from '@nestjs/common';
-import { z } from 'zod';
-import { CustomLogger, Logger } from '../logging';
 
 @Injectable()
 export class SideShiftRestService {
@@ -29,24 +30,30 @@ export class SideShiftRestService {
     this.secret = this.config.getOrThrow('sideshift.secret');
     this.affiliateId = this.config.getOrThrow('sideshift.affiliateId');
   }
-  async createFixedShift(input: SideShiftFixedSwapInput) {
+  async createFixedShift(input: SideShiftFixedSwapInput, ip: string) {
     return this.post<SideShiftFixedSwap>(
       `shifts/fixed`,
       input,
+      ip,
       sideShiftFixedSwapOutput,
     );
   }
 
-  async getQuote(input: SideShiftQuoteInput): Promise<SideShiftQuote> {
-    return this.post<SideShiftQuote>(`quotes`, input, sideShiftQuoteOutput);
+  async getQuote(
+    input: SideShiftQuoteInput,
+    ip: string,
+  ): Promise<SideShiftQuote> {
+    return this.post<SideShiftQuote>(`quotes`, input, ip, sideShiftQuoteOutput);
   }
 
   async createVariableSwap(
     input: SideShiftVariableSwapInput,
+    ip: string,
   ): Promise<SideShiftVariableSwap> {
     return this.post<SideShiftVariableSwap>(
       `shifts/variable`,
       input,
+      ip,
       sideShiftVariableSwapOutput,
     );
   }
@@ -54,11 +61,9 @@ export class SideShiftRestService {
   private async post<T>(
     endpoint: string,
     body: BaseSideShiftInput,
+    ip: string,
     responseObj: z.ZodObject<any>,
   ): Promise<T> {
-    const ip = body.clientIp;
-    // @ts-ignore
-    delete body['clientIp'];
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       body: JSON.stringify({ affiliateId: this.affiliateId, ...body }),

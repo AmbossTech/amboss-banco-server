@@ -13,7 +13,6 @@ export enum SideShiftNetwork {
 }
 
 export type BaseSideShiftInput = {
-  clientIp: string;
   affiliateId?: string;
 };
 

@@ -1,5 +1,6 @@
-import { Args, ResolveField, Resolver, Query, Context } from '@nestjs/graphql';
-import { PayQueries, SwapQuote, SwapQuoteInput } from '../pay.types';
+import { Args, Context, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Public } from 'src/auth/auth.decorators';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
@@ -7,8 +8,8 @@ import {
   SideShiftNetwork,
   SideShiftQuote,
 } from 'src/libs/sideshift/sideshift.types';
-import { Public } from 'src/auth/auth.decorators';
-import { ContextType } from 'src/libs/graphql/context.type';
+
+import { PayQueries, SwapQuote, SwapQuoteInput } from '../pay.types';
 
 @Resolver(PayQueries)
 export class PayQueriesResolver {
@@ -23,14 +24,16 @@ export class PayQueriesResolver {
     { settle_amount, settle_coin, settle_network }: SwapQuoteInput,
     @Context() { ip }: ContextType,
   ): Promise<SwapQuote> {
-    const quote = await this.sideShiftService.getQuote({
-      clientIp: ip,
-      depositCoin: SideShiftCoin.BTC,
-      depositNetwork: SideShiftNetwork.liquid,
-      settleAmount: settle_amount,
-      settleCoin: settle_coin,
-      settleNetwork: settle_network,
-    });
+    const quote = await this.sideShiftService.getQuote(
+      {
+        depositCoin: SideShiftCoin.BTC,
+        depositNetwork: SideShiftNetwork.liquid,
+        settleAmount: settle_amount,
+        settleCoin: settle_coin,
+        settleNetwork: settle_network,
+      },
+      ip,
+    );
 
     // Sideshift quote is valid for 15 minutes.
     await this.redisService.set<SideShiftQuote>(quote.id, quote, {
