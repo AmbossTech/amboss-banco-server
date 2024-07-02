@@ -3,7 +3,6 @@ import { z } from 'zod';
 export enum SideShiftCoin {
   BTC = 'BTC',
   USDT = 'USDT',
-  USDC = 'USDC',
 }
 
 export enum SideShiftNetwork {

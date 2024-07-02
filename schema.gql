@@ -265,7 +265,6 @@ input SendMessageInput {
 
 enum SideShiftCoin {
   BTC
-  USDC
   USDT
 }
 
