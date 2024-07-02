@@ -8,8 +8,14 @@ import {
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 
@@ -21,12 +27,6 @@ import {
   RefreshWalletInput,
   WalletMutations,
 } from '../wallet.types';
-import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
-import { ContextType } from 'src/libs/graphql/context.type';
-import {
-  SideShiftCoin,
-  SideShiftNetwork,
-} from 'src/libs/sideshift/sideshift.types';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -91,7 +91,7 @@ export class WalletMutationsResolver {
   async create_onchain_address_swap(
     @Args('input') input: ReceiveSwapInput,
     @CurrentUser() { user_id }: any,
-    @Context() { ip }: ContextType,
+    @Context() { ipInfo }: ContextType,
   ) {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
@@ -115,7 +115,7 @@ export class WalletMutationsResolver {
         settleAddress: address.address().toString(),
       },
       input.wallet_account_id,
-      ip,
+      ipInfo ? ipInfo.ip : undefined,
     );
 
     return {

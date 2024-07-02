@@ -99,7 +99,7 @@ export class PayMutationsResolver {
   async network_swap(
     @Args('input') input: PayNetworkSwapInput,
     @Parent() parent: PayParentType,
-    @Context() { ip }: ContextType,
+    @Context() { ipInfo }: ContextType,
   ) {
     const quote = await this.redisService.get<SwapQuote>(input.quote_id);
 
@@ -115,7 +115,7 @@ export class PayMutationsResolver {
         settleAddress: settle_address,
       },
       parent.wallet_account.id,
-      ip,
+      ipInfo ? ipInfo.ip : undefined,
     );
 
     // Get sats amount

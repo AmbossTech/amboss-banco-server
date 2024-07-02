@@ -19,7 +19,7 @@ export class SideShiftService {
 
   async getQuote(
     input: SideShiftQuoteInput,
-    clientIp: string,
+    clientIp?: string,
   ): Promise<SideShiftQuote> {
     return this.restService.getQuote(input, clientIp);
   }
@@ -27,7 +27,7 @@ export class SideShiftService {
   async createVariableSwap(
     input: SideShiftVariableSwapInput,
     walletAccountId: string,
-    clientIp: string,
+    clientIp?: string,
   ) {
     const swap = await this.restService.createVariableSwap(input, clientIp);
     await this.swapRepo.createSwap(
@@ -49,7 +49,7 @@ export class SideShiftService {
   async createFixedSwap(
     input: SideShiftFixedSwapInput,
     walletAccountId: string,
-    clientIp: string,
+    clientIp?: string,
   ) {
     const swap = await this.restService.createFixedShift(input, clientIp);
     await this.swapRepo.createSwap(

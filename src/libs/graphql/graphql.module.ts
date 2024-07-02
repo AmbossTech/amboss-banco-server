@@ -1,10 +1,13 @@
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { Ipware } from '@fullerstack/nax-ipware';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Request, Response } from 'express';
+
 import { ContextType } from './context.type';
 
+const ipware = new Ipware();
 @Module({
   imports: [
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -22,20 +25,12 @@ import { ContextType } from './context.type';
           res: Response;
         }): Promise<ContextType> => {
           const { req, res } = context;
-          const forwardHeader = req.headers['x-forwarded-for'];
-          const remoteAddress = req.socket.remoteAddress || req.ip;
-          let ip = remoteAddress || forwardHeader;
-          if (!ip) {
-            throw new Error(`Cannot get ip from request`);
-          }
-          if (typeof ip === 'object') {
-            ip = ip[0];
-          }
+          const ipInfo = ipware.getClientIP(req);
 
           return {
             req,
             res,
-            ip,
+            ipInfo,
           };
         },
       }),

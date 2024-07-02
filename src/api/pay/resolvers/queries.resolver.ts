@@ -22,7 +22,7 @@ export class PayQueriesResolver {
   async network_swap_quote(
     @Args('input')
     { settle_amount, settle_coin, settle_network }: SwapQuoteInput,
-    @Context() { ip }: ContextType,
+    @Context() { ipInfo }: ContextType,
   ): Promise<SwapQuote> {
     const quote = await this.sideShiftService.getQuote(
       {
@@ -32,7 +32,7 @@ export class PayQueriesResolver {
         settleCoin: settle_coin,
         settleNetwork: settle_network,
       },
-      ip,
+      ipInfo ? ipInfo.ip : undefined,
     );
 
     // Sideshift quote is valid for 15 minutes.

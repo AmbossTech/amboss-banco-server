@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { GraphQLError } from 'graphql';
 import { z } from 'zod';
 
 import { CustomLogger, Logger } from '../logging';
@@ -30,40 +31,43 @@ export class SideShiftRestService {
     this.secret = this.config.getOrThrow('sideshift.secret');
     this.affiliateId = this.config.getOrThrow('sideshift.affiliateId');
   }
-  async createFixedShift(input: SideShiftFixedSwapInput, ip: string) {
+  async createFixedShift(input: SideShiftFixedSwapInput, ip?: string) {
     return this.post<SideShiftFixedSwap>(
       `shifts/fixed`,
       input,
-      ip,
       sideShiftFixedSwapOutput,
+      ip,
     );
   }
 
   async getQuote(
     input: SideShiftQuoteInput,
-    ip: string,
+    ip?: string,
   ): Promise<SideShiftQuote> {
-    return this.post<SideShiftQuote>(`quotes`, input, ip, sideShiftQuoteOutput);
+    return this.post<SideShiftQuote>(`quotes`, input, sideShiftQuoteOutput, ip);
   }
 
   async createVariableSwap(
     input: SideShiftVariableSwapInput,
-    ip: string,
+    ip?: string,
   ): Promise<SideShiftVariableSwap> {
     return this.post<SideShiftVariableSwap>(
       `shifts/variable`,
       input,
-      ip,
       sideShiftVariableSwapOutput,
+      ip,
     );
   }
 
   private async post<T>(
     endpoint: string,
     body: BaseSideShiftInput,
-    ip: string,
     responseObj: z.ZodObject<any>,
+    ip?: string,
   ): Promise<T> {
+    if (!ip) {
+      throw new GraphQLError(`Unable to use SideShift`);
+    }
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       body: JSON.stringify({ affiliateId: this.affiliateId, ...body }),
@@ -91,7 +95,10 @@ export class SideShiftRestService {
     return parsed.data as T;
   }
 
-  private async get<T>(endpoint: string, ip: string): Promise<T> {
+  private async get<T>(endpoint: string, ip?: string): Promise<T> {
+    if (!ip) {
+      throw new GraphQLError(`Unable to use SideShift`);
+    }
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       headers: {
         'x-sideshift-secret': this.secret,
