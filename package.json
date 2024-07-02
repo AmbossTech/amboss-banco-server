@@ -19,7 +19,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
-    "upgrade-latest": "npx npm-check -u"
+    "upgrade-latest": "npx npm-check -u",
+    "prepare": "husky"
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
@@ -112,5 +113,12 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "cross-env TZ=UTC jest --bail --passWithNoTests",
+      "eslint --fix"
+    ]
   }
 }
