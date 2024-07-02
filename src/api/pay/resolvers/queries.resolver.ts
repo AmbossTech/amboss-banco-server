@@ -1,5 +1,4 @@
 import { Args, Context, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { Public } from 'src/auth/auth.decorators';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -56,7 +55,6 @@ export class PayQueriesResolver {
 
 @Resolver()
 export class MainPayQueriesResolver {
-  @Public()
   @Query(() => PayQueries)
   pay() {
     return {};
