@@ -6,6 +6,7 @@ import { ApiModule } from './api/api.module';
 import { HealthController } from './api/health/health.controller';
 import { AuthModule } from './auth/auth.module';
 import configuration from './libs/config/configuration';
+import { CryptoModule } from './libs/crypto/crypto.module';
 import { GraphqlModule } from './libs/graphql/graphql.module';
 import { CustomLoggerModule } from './libs/logging/logger.module';
 import { PrismaModule } from './libs/prisma/prisma.module';
@@ -30,6 +31,9 @@ import { RedisModule } from './libs/redis/redis.module';
 
     // Health
     TerminusModule,
+
+    // Crypto
+    CryptoModule,
 
     // Config
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
