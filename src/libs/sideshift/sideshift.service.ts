@@ -4,9 +4,11 @@ import { SideShiftSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
 
 import { SideShiftRestService } from './sideshift.rest';
 import {
+  SideShiftFixedSwap,
   SideShiftFixedSwapInput,
   SideShiftQuote,
   SideShiftQuoteInput,
+  SideShiftVariableSwap,
   SideShiftVariableSwapInput,
 } from './sideshift.types';
 
@@ -28,7 +30,7 @@ export class SideShiftService {
     input: SideShiftVariableSwapInput,
     walletAccountId: string,
     clientIp?: string,
-  ) {
+  ): Promise<SideShiftVariableSwap> {
     const swap = await this.restService.createVariableSwap(input, clientIp);
     await this.swapRepo.createSwap(
       walletAccountId,
@@ -50,7 +52,7 @@ export class SideShiftService {
     input: SideShiftFixedSwapInput,
     walletAccountId: string,
     clientIp?: string,
-  ) {
+  ): Promise<SideShiftFixedSwap> {
     const swap = await this.restService.createFixedShift(input, clientIp);
     await this.swapRepo.createSwap(
       walletAccountId,
