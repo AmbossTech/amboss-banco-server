@@ -7,6 +7,10 @@ import {
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 
 @ObjectType()
 export class CreateLiquidTransaction {
@@ -145,11 +149,11 @@ export class SwapQuoteInput {
   @Field()
   settle_amount: string;
 
-  @Field()
-  settle_coin: string;
+  @Field(() => SideShiftCoin)
+  settle_coin: SideShiftCoin;
 
-  @Field()
-  settle_network: string;
+  @Field(() => SideShiftNetwork)
+  settle_network: SideShiftNetwork;
 }
 
 export type PayLnAddressPayload = {

@@ -23,6 +23,10 @@ import {
 } from '../wallet.types';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -107,8 +111,8 @@ export class WalletMutationsResolver {
         clientIp: ip,
         depositCoin: input.deposit_coin,
         depositNetwork: input.deposit_network,
-        settleCoin: 'btc',
-        settleNetwork: 'liquid',
+        settleCoin: SideShiftCoin.BTC,
+        settleNetwork: SideShiftNetwork.liquid,
         settleAddress: address.address().toString(),
       },
       input.wallet_account_id,

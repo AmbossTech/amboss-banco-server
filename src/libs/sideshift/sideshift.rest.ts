@@ -25,9 +25,9 @@ export class SideShiftRestService {
     private config: ConfigService,
     @Logger(SideShiftRestService.name) private logger: CustomLogger,
   ) {
-    this.baseUrl = this.config.getOrThrow('urls.sideshift.url');
-    this.secret = this.config.getOrThrow('urls.sideshift.secret');
-    this.affiliateId = this.config.getOrThrow('urls.sideshift.affiliateId');
+    this.baseUrl = this.config.getOrThrow('sideshift.url');
+    this.secret = this.config.getOrThrow('sideshift.secret');
+    this.affiliateId = this.config.getOrThrow('sideshift.affiliateId');
   }
   async createFixedShift(input: SideShiftFixedSwapInput) {
     return this.post<SideShiftFixedSwap>(

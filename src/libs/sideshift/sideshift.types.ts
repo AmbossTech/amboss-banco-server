@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+export enum SideShiftCoin {
+  BTC = 'BTC',
+  USDT = 'USDT',
+  USDC = 'USDC',
+}
+
+export enum SideShiftNetwork {
+  bitcoin = 'bitcoin',
+  liquid = 'liquid',
+  tron = 'tron',
+  ethereum = 'ethereum',
+}
+
 export type BaseSideShiftInput = {
   clientIp: string;
   affiliateId?: string;
@@ -14,17 +27,17 @@ export type SideShiftFixedSwapInput = BaseSideShiftInput & {
 export type SideShiftVariableSwapInput = BaseSideShiftInput & {
   settleAddress: string;
   refundAddress?: string;
-  depositCoin: string;
-  settleCoin: string;
-  depositNetwork: string;
-  settleNetwork: string;
+  depositCoin: SideShiftCoin;
+  settleCoin: SideShiftCoin;
+  depositNetwork: SideShiftNetwork;
+  settleNetwork: SideShiftNetwork;
 };
 
 export type SideShiftQuoteInput = BaseSideShiftInput & {
-  depositCoin: string;
-  depositNetwork: string;
-  settleCoin: string;
-  settleNetwork: string;
+  depositCoin: SideShiftCoin;
+  depositNetwork: SideShiftNetwork;
+  settleCoin: SideShiftCoin;
+  settleNetwork: SideShiftNetwork;
   settleAmount: string;
 };
 

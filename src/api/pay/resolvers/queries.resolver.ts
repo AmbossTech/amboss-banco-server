@@ -2,7 +2,11 @@ import { Args, ResolveField, Resolver, Query, Context } from '@nestjs/graphql';
 import { PayQueries, SwapQuote, SwapQuoteInput } from '../pay.types';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
-import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+  SideShiftQuote,
+} from 'src/libs/sideshift/sideshift.types';
 import { Public } from 'src/auth/auth.decorators';
 import { ContextType } from 'src/libs/graphql/context.type';
 
@@ -21,8 +25,8 @@ export class PayQueriesResolver {
   ): Promise<SwapQuote> {
     const quote = await this.sideShiftService.getQuote({
       clientIp: ip,
-      depositCoin: 'BTC',
-      depositNetwork: 'liquid',
+      depositCoin: SideShiftCoin.BTC,
+      depositNetwork: SideShiftNetwork.liquid,
       settleAmount: settle_amount,
       settleCoin: settle_coin,
       settleNetwork: settle_network,

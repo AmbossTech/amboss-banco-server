@@ -15,9 +15,15 @@ import {
 import { Secp256k1KeyPairInput } from '../account/account.types';
 import { WalletContacts } from '../contact/contact.types';
 import { WalletSwaps } from '../swaps/swaps.types';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
+registerEnumType(SideShiftCoin, { name: 'SideShiftCoin' });
+registerEnumType(SideShiftNetwork, { name: 'SideShiftNetwork' });
 
 @ObjectType()
 export class FiatInfo {
@@ -48,11 +54,11 @@ export class ReceiveSwap {
   @Field()
   receive_address: string;
 
-  @Field()
-  coin: string;
+  @Field(() => SideShiftCoin)
+  coin: SideShiftCoin;
 
-  @Field()
-  network: string;
+  @Field(() => SideShiftNetwork)
+  network: SideShiftNetwork;
 
   @Field()
   min: string;
@@ -348,11 +354,11 @@ export class BroadcastLiquidTransactionInput {
 
 @InputType()
 export class ReceiveSwapInput {
-  @Field()
-  deposit_coin: string;
+  @Field(() => SideShiftCoin)
+  deposit_coin: SideShiftCoin;
 
-  @Field()
-  deposit_network: string;
+  @Field(() => SideShiftNetwork)
+  deposit_network: SideShiftNetwork;
 
   @Field()
   wallet_account_id: string;
