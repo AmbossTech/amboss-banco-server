@@ -9,6 +9,7 @@ import {
   SideShiftVariableSwap,
   SideShiftFixedSwap,
   sideShiftFixedSwapOutput,
+  BaseSideShiftInput,
 } from './sideshift.types';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
@@ -52,15 +53,19 @@ export class SideShiftRestService {
 
   private async post<T>(
     endpoint: string,
-    body: any,
+    body: BaseSideShiftInput,
     responseObj: z.ZodObject<any>,
   ): Promise<T> {
+    const ip = body.clientIp;
+    // @ts-ignore
+    delete body['clientIp'];
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       body: JSON.stringify({ affiliateId: this.affiliateId, ...body }),
       headers: {
         'x-sideshift-secret': this.secret,
         'content-type': 'application/json',
+        ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
       },
     });
     const json = await response.json();
@@ -81,11 +86,12 @@ export class SideShiftRestService {
     return parsed.data as T;
   }
 
-  private async get<T>(endpoint: string): Promise<T> {
+  private async get<T>(endpoint: string, ip: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       headers: {
         'x-sideshift-secret': this.secret,
         'content-type': 'application/json',
+        ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
       },
     });
     const json = await response.json();

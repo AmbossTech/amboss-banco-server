@@ -1,4 +1,10 @@
-import { Args, Mutation, ResolveField, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Context,
+  Mutation,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
@@ -16,6 +22,7 @@ import {
   WalletMutations,
 } from '../wallet.types';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
+import { ContextType } from 'src/libs/graphql/context.type';
 
 @Resolver(WalletMutations)
 export class WalletMutationsResolver {
@@ -80,6 +87,7 @@ export class WalletMutationsResolver {
   async create_onchain_address_swap(
     @Args('input') input: ReceiveSwapInput,
     @CurrentUser() { user_id }: any,
+    @Context() { ip }: ContextType,
   ) {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
@@ -96,6 +104,7 @@ export class WalletMutationsResolver {
 
     const swap = await this.sideShiftService.createVariableSwap(
       {
+        clientIp: ip,
         depositCoin: input.deposit_coin,
         depositNetwork: input.deposit_network,
         settleCoin: 'btc',

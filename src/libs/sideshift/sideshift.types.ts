@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export type BaseSideShiftInput = {
+  clientIp: string;
   affiliateId?: string;
 };
 

@@ -5,6 +5,7 @@ import {
   ResolveField,
   Resolver,
   Query,
+  Context,
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
@@ -29,6 +30,7 @@ import {
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { SideShiftQuote } from 'src/libs/sideshift/sideshift.types';
+import { ContextType } from 'src/libs/graphql/context.type';
 
 @Resolver(PayMutations)
 export class PayMutationsResolver {
@@ -101,6 +103,7 @@ export class PayMutationsResolver {
   async network_swap(
     @Args('input') input: PayNetworkSwapInput,
     @Parent() parent: PayParentType,
+    @Context() { ip }: ContextType,
   ) {
     const quote = await this.redisService.get<SwapQuote>(input.quote_id);
 
@@ -112,6 +115,7 @@ export class PayMutationsResolver {
 
     const swap = await this.sideShiftService.createFixedSwap(
       {
+        clientIp: ip,
         quoteId: quote_id,
         settleAddress: settle_address,
       },
