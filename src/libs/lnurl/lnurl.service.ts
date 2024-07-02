@@ -23,6 +23,7 @@ import {
 import { fetch } from 'undici';
 
 import { BoltzRestApi } from '../boltz/boltz.rest';
+import { CryptoService } from '../crypto/crypto.service';
 import { LiquidService } from '../liquid/liquid.service';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
@@ -43,6 +44,7 @@ export class LnurlService {
     private boltzApi: BoltzRestApi,
     private liquidService: LiquidService,
     private walletRepo: WalletRepoService,
+    private cryptoService: CryptoService,
     @Logger('LnurlService') private logger: CustomLogger,
   ) {}
 
@@ -192,8 +194,12 @@ export class LnurlService {
       createPayload: [
         'checkCurrency',
         async ({ checkCurrency }) => {
+          const descriptor = this.cryptoService.decryptString(
+            checkCurrency.wallet_account.details.local_protected_descriptor,
+          );
+
           const addressObject = await this.liquidService.getOnchainAddress(
-            checkCurrency.wallet_account.details.descriptor,
+            descriptor,
             true,
           );
 

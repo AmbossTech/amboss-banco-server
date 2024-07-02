@@ -11,6 +11,7 @@ import {
   findMagicRoutingHint,
 } from 'src/libs/boltz/boltz.utils';
 import { ContactService } from 'src/libs/contact/contact.service';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import {
@@ -39,6 +40,7 @@ export class PayService {
     private lnurlService: LnurlService,
     private liquidService: LiquidService,
     private contactService: ContactService,
+    private cryptoService: CryptoService,
     @Logger('PayService') private logger: CustomLogger,
   ) {}
 
@@ -46,10 +48,11 @@ export class PayService {
     wallet_account: wallet_account,
     input: PayLiquidAddressInput,
   ) {
-    const pset = await this.liquidService.createPset(
-      wallet_account.details.descriptor,
-      input,
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
     );
+
+    const pset = await this.liquidService.createPset(descriptor, input);
 
     const base_64 = pset.toString();
 
@@ -135,19 +138,20 @@ export class PayService {
 
           const amountSats = Math.ceil(info.amount * 10 ** 8);
 
-          const pset = await this.liquidService.createPset(
-            wallet_account.details.descriptor,
-            {
-              fee_rate: 100,
-              recipients: [
-                {
-                  address: info.address,
-                  amount: amountSats + '',
-                  asset_id: info.asset,
-                },
-              ],
-            },
+          const descriptor = this.cryptoService.decryptString(
+            wallet_account.details.local_protected_descriptor,
           );
+
+          const pset = await this.liquidService.createPset(descriptor, {
+            fee_rate: 100,
+            recipients: [
+              {
+                address: info.address,
+                amount: amountSats + '',
+                asset_id: info.asset,
+              },
+            ],
+          });
 
           const base_64 = pset.toString();
 
@@ -174,21 +178,21 @@ export class PayService {
       asset_id,
       wallet_account,
     });
-    // const finalAmount = Math.ceil(amount * 10 ** 8);
 
-    const pset = await this.liquidService.createPset(
-      wallet_account.details.descriptor,
-      {
-        fee_rate: 100,
-        recipients: [
-          {
-            address,
-            amount: amount + '',
-            asset_id,
-          },
-        ],
-      },
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
     );
+
+    const pset = await this.liquidService.createPset(descriptor, {
+      fee_rate: 100,
+      recipients: [
+        {
+          address,
+          amount: amount + '',
+          asset_id,
+        },
+      ],
+    });
 
     const base_64 = pset.toString();
 

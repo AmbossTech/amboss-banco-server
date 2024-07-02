@@ -6,6 +6,7 @@ import { orderBy } from 'lodash';
 import { WalletContactsParent } from 'src/api/contact/contact.types';
 import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
 import { FiatService } from 'src/libs/fiat/fiat.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
@@ -220,7 +221,10 @@ export class SimpleWalletAccountResolver {
 
 @Resolver(WalletAccount)
 export class WalletAccountResolver {
-  constructor(private liquidService: LiquidService) {}
+  constructor(
+    private liquidService: LiquidService,
+    private cryptoService: CryptoService,
+  ) {}
 
   @ResolveField()
   async account_type(@Parent() account: wallet_account) {
@@ -229,7 +233,11 @@ export class WalletAccountResolver {
 
   @ResolveField()
   async descriptor(@Parent() account: wallet_account) {
-    return account.details.descriptor;
+    const descriptor = this.cryptoService.decryptString(
+      account.details.local_protected_descriptor,
+    );
+
+    return descriptor;
   }
 
   @ResolveField()
@@ -240,7 +248,9 @@ export class WalletAccountResolver {
       return null;
     }
 
-    const { descriptor } = account.details;
+    const descriptor = this.cryptoService.decryptString(
+      account.details.local_protected_descriptor,
+    );
 
     const wollet = await this.liquidService.getUpdatedWallet(
       descriptor,
@@ -248,24 +258,6 @@ export class WalletAccountResolver {
     );
 
     return { descriptor, walletAccount: account, wollet };
-
-    // const balances = await this.liquidService.getBalances(descriptor);
-    // const txs = await this.liquidService.getTransactions(descriptor);
-
-    // const alwaysShownBalances = new Map<string, number>();
-
-    // alwaysPresentAssets.mainnet.forEach((a) => alwaysShownBalances.set(a, 0));
-
-    // const mergedAssets = new Map([...alwaysShownBalances, ...balances]);
-
-    // const balanceArray = Array.from(mergedAssets, ([asset_id, balance]) => ({
-    //   wallet_id: account.id,
-    //   asset_id,
-    //   balance,
-    //   txs,
-    // }));
-
-    // return orderBy(balanceArray, 'asset_id', 'desc');
   }
 }
 
