@@ -28,12 +28,18 @@ export class SideShiftRestService {
     private config: ConfigService,
     @Logger(SideShiftRestService.name) private logger: CustomLogger,
   ) {
-    this.baseUrl = this.config.getOrThrow('sideshift.url');
-    this.secret = this.config.getOrThrow('sideshift.secret');
-    this.affiliateId = this.config.getOrThrow('sideshift.affiliateId');
+    this.baseUrl = this.config.get('sideshift.url') || '';
+    this.secret = this.config.get('sideshift.secret') || '';
+    this.affiliateId = this.config.get('sideshift.affiliateId') || '';
+  }
+
+  private isEnabled() {
+    return !!this.affiliateId && !!this.baseUrl && !!this.secret;
   }
 
   async getPermissions(ip: string) {
+    if (!this.isEnabled()) throw new Error('Swaps disabled');
+
     return this.get<SideShiftPermissions>(
       'permissions',
       sideShiftPermissionsOutput,
@@ -42,6 +48,8 @@ export class SideShiftRestService {
   }
 
   async createFixedShift(input: SideShiftFixedSwapInput, ip: string) {
+    if (!this.isEnabled()) throw new Error('Swaps disabled');
+
     return this.post<SideShiftFixedSwap>(
       `shifts/fixed`,
       input,
@@ -54,6 +62,8 @@ export class SideShiftRestService {
     input: SideShiftQuoteInput,
     ip: string,
   ): Promise<SideShiftQuote> {
+    if (!this.isEnabled()) throw new Error('Swaps disabled');
+
     return this.post<SideShiftQuote>(`quotes`, input, sideShiftQuoteOutput, ip);
   }
 
@@ -61,6 +71,8 @@ export class SideShiftRestService {
     input: SideShiftVariableSwapInput,
     ip: string,
   ): Promise<SideShiftVariableSwap> {
+    if (!this.isEnabled()) throw new Error('Swaps disabled');
+
     return this.post<SideShiftVariableSwap>(
       `shifts/variable`,
       input,

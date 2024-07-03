@@ -39,9 +39,12 @@ export const ConfigSchema = z.object({
         .optional(),
     })
     .optional(),
-  sideshift: z.object({
-    url: z.string(),
-    secret: z.string(),
-    affiliateId: z.string(),
-  }),
+
+  sideshift: z
+    .object({
+      url: z.string(),
+      secret: z.string(),
+      affiliateId: z.string(),
+    })
+    .optional(),
 });

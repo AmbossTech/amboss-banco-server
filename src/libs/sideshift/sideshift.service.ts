@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { GraphQLError } from 'graphql';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { SideShiftSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
+import { toWithError } from 'src/utils/async';
 
 import { RedisService } from '../redis/redis.service';
 import { SideShiftRestService } from './sideshift.rest';
@@ -44,7 +45,11 @@ export class SideShiftService {
     const cached = await this.redis.get<SideShiftPermissions>(key);
     if (!!cached) return cached.createShift;
 
-    const permissions = await this.restService.getPermissions(clientIp);
+    const [permissions, error] = await toWithError(
+      this.restService.getPermissions(clientIp),
+    );
+
+    if (error) return false;
 
     await this.redis.set(key, permissions, { ttl: 60 * 60 });
 
@@ -62,7 +67,14 @@ export class SideShiftService {
       throw new GraphQLError('Not allowed to swap');
     }
 
-    const swap = await this.restService.createVariableSwap(input, clientIp);
+    const [swap, error] = await toWithError(
+      this.restService.createVariableSwap(input, clientIp),
+    );
+
+    if (error) {
+      throw new GraphQLError(error.message);
+    }
+
     await this.swapRepo.createSwap(
       walletAccountId,
       {
@@ -90,7 +102,14 @@ export class SideShiftService {
       throw new GraphQLError('Not allowed to swap');
     }
 
-    const swap = await this.restService.createFixedShift(input, clientIp);
+    const [swap, error] = await toWithError(
+      this.restService.createFixedShift(input, clientIp),
+    );
+
+    if (error) {
+      throw new GraphQLError(error.message);
+    }
+
     await this.swapRepo.createSwap(
       walletAccountId,
       {
