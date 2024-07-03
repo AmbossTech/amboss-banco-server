@@ -12,9 +12,8 @@ export const LiquidWalletAssets = {
 
 export type WalletAccountDetailsType = {
   type: WalletAccountType.LIQUID;
-  descriptor: string;
-  descriptor_hash?: string;
-  local_protected_descriptor?: string;
+  descriptor_hash: string;
+  local_protected_descriptor: string;
 };
 
 export enum WalletType {
