@@ -23,6 +23,8 @@ import {
 import { fetch } from 'undici';
 
 import { BoltzRestApi } from '../boltz/boltz.rest';
+import { ConfigSchemaType } from '../config/validation';
+import { CryptoService } from '../crypto/crypto.service';
 import { LiquidService } from '../liquid/liquid.service';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
@@ -43,6 +45,7 @@ export class LnurlService {
     private boltzApi: BoltzRestApi,
     private liquidService: LiquidService,
     private walletRepo: WalletRepoService,
+    private cryptoService: CryptoService,
     @Logger('LnurlService') private logger: CustomLogger,
   ) {}
 
@@ -70,18 +73,20 @@ export class LnurlService {
         async ({
           getAccountCurrencies,
         }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
+          const domains =
+            this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+              'server.domains',
+            );
+
           return {
-            callback: `http://${this.config.getOrThrow('server.domain')}/lnurlp/${account}`,
+            callback: `http://${domains[0]}/lnurlp/${account}`,
             minSendable: 0,
             maxSendable: 0,
             // minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
             // maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
             metadata: JSON.stringify([
               ['text/plain', `Payment to ${account}`],
-              [
-                'text/identifier',
-                `${account}@${this.config.getOrThrow('server.domain')}`,
-              ],
+              ['text/identifier', `${account}@${domains[0]}`],
             ]),
             // payerData: {
             //   // name: { mandatory: false },
@@ -192,8 +197,12 @@ export class LnurlService {
       createPayload: [
         'checkCurrency',
         async ({ checkCurrency }) => {
+          const descriptor = this.cryptoService.decryptString(
+            checkCurrency.wallet_account.details.local_protected_descriptor,
+          );
+
           const addressObject = await this.liquidService.getOnchainAddress(
-            checkCurrency.wallet_account.details.descriptor,
+            descriptor,
             true,
           );
 
@@ -323,13 +332,16 @@ export class LnurlService {
     const cached = await this.redis.get<LnUrlInfoSchemaType>(key);
     if (!!cached) return cached;
 
-    const serverDomain = this.config.getOrThrow('server.domain');
+    const domains =
+      this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+        'server.domains',
+      );
 
     const [user, domain] = money_address.split('@');
 
     let lnUrlData;
 
-    if (serverDomain === domain) {
+    if (domains.includes(domain)) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
 
       if (!wallet) return null;
@@ -380,11 +392,14 @@ export class LnurlService {
       }
     }
 
-    const serverDomain = this.config.getOrThrow('server.domain');
+    const domains =
+      this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+        'server.domains',
+      );
 
     const [user, domain] = money_address.split('@');
 
-    if (serverDomain === domain) {
+    if (domains.includes(domain)) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
 
       if (!wallet) return null;

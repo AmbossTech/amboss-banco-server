@@ -9,6 +9,7 @@ import {
 import { contact_message } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { ConfigSchemaType } from 'src/libs/config/validation';
 import { ContactService } from 'src/libs/contact/contact.service';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
@@ -204,11 +205,14 @@ export class ContactMutationsResolver {
       }
     }
 
-    const serverDomain = this.config.getOrThrow('server.domain');
+    const domains =
+      this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
+        'server.domains',
+      );
 
     const [user, domain] = money_address.split('@');
 
-    if (serverDomain === domain) {
+    if (domains.includes(domain)) {
       const wallet = await this.walletRepo.getWalletByLnAddress(user);
 
       if (!wallet) {

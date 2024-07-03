@@ -6,7 +6,11 @@ import {
   ReducedAccountInfo,
 } from 'src/api/wallet/wallet.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
-import { WalletAccountType, WalletType } from 'src/repo/wallet/wallet.types';
+import {
+  WalletAccountDetailsType,
+  WalletAccountType,
+  WalletType,
+} from 'src/repo/wallet/wallet.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import { generateFruitName } from 'src/utils/names/names';
 
@@ -34,18 +38,13 @@ export class WalletService {
           c.liquid_descriptor,
         );
 
-        return [
-          ...p,
-          {
-            name: accountName,
-            details: {
-              type: WalletAccountType.LIQUID,
-              descriptor: c.liquid_descriptor,
-              descriptor_hash,
-              local_protected_descriptor,
-            },
-          },
-        ];
+        const details: WalletAccountDetailsType = {
+          type: WalletAccountType.LIQUID,
+          descriptor_hash,
+          local_protected_descriptor,
+        };
+
+        return [...p, { name: accountName, details }];
       }
       return p;
     }, []);

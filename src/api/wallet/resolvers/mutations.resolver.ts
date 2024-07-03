@@ -9,6 +9,7 @@ import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -35,6 +36,7 @@ export class WalletMutationsResolver {
     private liquidService: LiquidService,
     private walletService: WalletService,
     private sideShiftService: SideShiftService,
+    private cryptoService: CryptoService,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -57,8 +59,12 @@ export class WalletMutationsResolver {
     }
 
     await each(wallet.wallet.wallet_account, async (w) => {
+      const descriptor = this.cryptoService.decryptString(
+        w.details.local_protected_descriptor,
+      );
+
       await this.liquidService.getUpdatedWallet(
-        w.details.descriptor,
+        descriptor,
         input.full_scan ? 'full' : 'partial',
       );
     });
@@ -80,9 +86,11 @@ export class WalletMutationsResolver {
       throw new GraphQLError('Wallet account not found');
     }
 
-    const address = await this.liquidService.getOnchainAddress(
-      walletAccount.details.descriptor,
+    const descriptor = this.cryptoService.decryptString(
+      walletAccount.details.local_protected_descriptor,
     );
+
+    const address = await this.liquidService.getOnchainAddress(descriptor);
 
     return { address: address.address().toString() };
   }
