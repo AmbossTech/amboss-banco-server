@@ -8,8 +8,8 @@ import {
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
-import { ContextType } from 'src/libs/graphql/context.type';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -110,9 +110,11 @@ export class WalletMutationsResolver {
       throw new GraphQLError('Wallet account not found');
     }
 
-    const address = await this.liquidService.getOnchainAddress(
-      walletAccount?.details.descriptor,
+    const descriptor = this.cryptoService.decryptString(
+      walletAccount.details.local_protected_descriptor,
     );
+
+    const address = await this.liquidService.getOnchainAddress(descriptor);
 
     const swap = await this.sideShiftService.createVariableSwap(
       {

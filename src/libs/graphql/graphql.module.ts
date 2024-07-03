@@ -20,11 +20,13 @@ const ipware = new Ipware();
         playground: false,
         plugins: [ApolloServerPluginLandingPageLocalDefault()],
         status400ForVariableCoercionErrors: true,
-        context: async (context: {
+        context: async ({
+          req,
+          res,
+        }: {
           req: Request;
           res: Response;
         }): Promise<ContextType> => {
-          const { req, res } = context;
           const ipInfo = ipware.getClientIP(req);
 
           return {

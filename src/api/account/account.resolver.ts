@@ -102,7 +102,6 @@ export class AccountResolver {
       httpOnly: true,
       secure: true,
       sameSite: true,
-      // Don't set the domain on localhost
       domain: this.domain.includes('localhost') ? undefined : this.domain,
     };
 
@@ -244,11 +243,6 @@ export class AccountResolver {
     const { accessToken, refreshToken } =
       await this.authService.getTokens(user_id);
 
-    // const hashedRefreshToken =
-    //   await this.cryptoService.argon2Hash(refreshToken);
-
-    // await this.accountRepo.updateRefreshToken(user_id, hashedRefreshToken);
-
     const cookieOptions: CookieOptions = {
       httpOnly: true,
       secure: true,
@@ -256,7 +250,6 @@ export class AccountResolver {
       domain: this.domain,
     };
 
-    // res.cookie('amboss_banco_refresh_token', refreshToken, cookieOptions);
     res.cookie('amboss_banco_access_token', accessToken, {
       ...cookieOptions,
       maxAge: 1000 * 60 * 10,
