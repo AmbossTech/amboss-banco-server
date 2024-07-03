@@ -8,12 +8,15 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
+import { toWithError } from 'src/utils/async';
 import { isUUID } from 'src/utils/string';
 
 import { PayService } from '../pay.service';
@@ -34,6 +37,9 @@ export class PayMutationsResolver {
     private payService: PayService,
     private redisService: RedisService,
     private sideShiftService: SideShiftService,
+    private liquidService: LiquidService,
+    private cryptoService: CryptoService,
+    @Logger('PayMutationsResolver') private logger: CustomLogger,
   ) {}
 
   @ResolveField()
@@ -98,7 +104,7 @@ export class PayMutationsResolver {
   @ResolveField()
   async network_swap(
     @Args('input') input: PayNetworkSwapInput,
-    @Parent() parent: PayParentType,
+    @Parent() { wallet_account }: PayParentType,
     @Context() { ipInfo }: ContextType,
   ) {
     const quote = await this.redisService.get<SwapQuote>(input.quote_id);
@@ -109,32 +115,46 @@ export class PayMutationsResolver {
 
     const { quote_id, settle_address } = input;
 
-    const swap = await this.sideShiftService.createFixedSwap(
-      {
-        quoteId: quote_id,
-        settleAddress: settle_address,
-      },
-      parent.wallet_account.id,
-      ipInfo ? ipInfo.ip : undefined,
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
     );
+
+    const refundAddress = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
+    );
+
+    const [swap, error] = await toWithError(
+      this.sideShiftService.createFixedSwap(
+        {
+          quoteId: quote_id,
+          settleAddress: settle_address,
+          refundAddress: refundAddress.address().toString(),
+        },
+        wallet_account.id,
+        ipInfo?.ip,
+      ),
+    );
+
+    if (error) {
+      this.logger.error('Error doing swap', { swap, error });
+      throw new GraphQLError('Error doing swap');
+    }
 
     // Get sats amount
     const paymentAmount = +swap.depositAmount * 100_000_000;
 
-    const { base_64 } = await this.payService.payLiquidAddress(
-      parent.wallet_account,
-      {
-        fee_rate: 100,
-        recipients: [
-          {
-            address: swap.depositAddress,
-            amount: paymentAmount.toString(),
-          },
-        ],
-      },
-    );
+    const { base_64 } = await this.payService.payLiquidAddress(wallet_account, {
+      fee_rate: 100,
+      recipients: [
+        {
+          address: swap.depositAddress,
+          amount: paymentAmount.toString(),
+        },
+      ],
+    });
 
-    return { base_64, wallet_account: parent.wallet_account };
+    return { base_64, wallet_account };
   }
 }
 

@@ -95,26 +95,26 @@ export class SideShiftRestService {
     return parsed.data as T;
   }
 
-  private async get<T>(endpoint: string, ip?: string): Promise<T> {
-    if (!ip) {
-      throw new GraphQLError(`Unable to use SideShift`);
-    }
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      headers: {
-        'x-sideshift-secret': this.secret,
-        'content-type': 'application/json',
-        ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
-      },
-    });
-    const json = await response.json();
+  // private async get<T>(endpoint: string, ip?: string): Promise<T> {
+  //   if (!ip) {
+  //     throw new GraphQLError(`Unable to use SideShift`);
+  //   }
+  //   const response = await fetch(`${this.baseUrl}${endpoint}`, {
+  //     headers: {
+  //       'x-sideshift-secret': this.secret,
+  //       'content-type': 'application/json',
+  //       ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
+  //     },
+  //   });
+  //   const json = await response.json();
 
-    if (json.error) {
-      this.logger.error(`Sideshift API error`, {
-        error: json.error,
-        endpoint,
-      });
-      throw new Error(json.error);
-    }
-    return json;
-  }
+  //   if (json.error) {
+  //     this.logger.error(`Sideshift API error`, {
+  //       error: json.error,
+  //       endpoint,
+  //     });
+  //     throw new Error(json.error);
+  //   }
+  //   return json;
+  // }
 }

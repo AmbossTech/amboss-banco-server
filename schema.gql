@@ -216,17 +216,17 @@ type Query {
 }
 
 type ReceiveSwap {
-  coin: SideShiftCoin!
+  coin: SwapCoin!
   id: String!
   max: String!
   min: String!
-  network: SideShiftNetwork!
+  network: SwapNetwork!
   receive_address: String!
 }
 
 input ReceiveSwapInput {
-  deposit_coin: SideShiftCoin!
-  deposit_network: SideShiftNetwork!
+  deposit_coin: SwapCoin!
+  deposit_network: SwapNetwork!
   wallet_account_id: String!
 }
 
@@ -263,18 +263,6 @@ input SendMessageInput {
   sender_payload: String!
 }
 
-enum SideShiftCoin {
-  BTC
-  USDT
-}
-
-enum SideShiftNetwork {
-  bitcoin
-  ethereum
-  liquid
-  tron
-}
-
 input SignUpInput {
   email: String!
   master_password_hash: String!
@@ -305,6 +293,18 @@ type SimpleWalletContact {
   money_address: String!
 }
 
+enum SwapCoin {
+  BTC
+  USDT
+}
+
+enum SwapNetwork {
+  bitcoin
+  ethereum
+  liquid
+  tron
+}
+
 type SwapQuote {
   created_at: String!
   deposit_amount: String!
@@ -320,8 +320,8 @@ type SwapQuote {
 
 input SwapQuoteInput {
   settle_amount: String!
-  settle_coin: SideShiftCoin!
-  settle_network: SideShiftNetwork!
+  settle_coin: SwapCoin!
+  settle_network: SwapNetwork!
 }
 
 type User {

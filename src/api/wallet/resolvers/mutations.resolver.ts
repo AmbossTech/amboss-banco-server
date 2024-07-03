@@ -19,6 +19,7 @@ import {
 } from 'src/libs/sideshift/sideshift.types';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+import { toWithError } from 'src/utils/async';
 
 import {
   BroadcastLiquidTransactionInput,
@@ -90,7 +91,10 @@ export class WalletMutationsResolver {
       walletAccount.details.local_protected_descriptor,
     );
 
-    const address = await this.liquidService.getOnchainAddress(descriptor);
+    const address = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
+    );
 
     return { address: address.address().toString() };
   }
@@ -114,19 +118,29 @@ export class WalletMutationsResolver {
       walletAccount.details.local_protected_descriptor,
     );
 
-    const address = await this.liquidService.getOnchainAddress(descriptor);
-
-    const swap = await this.sideShiftService.createVariableSwap(
-      {
-        depositCoin: input.deposit_coin,
-        depositNetwork: input.deposit_network,
-        settleCoin: SideShiftCoin.BTC,
-        settleNetwork: SideShiftNetwork.liquid,
-        settleAddress: address.address().toString(),
-      },
-      input.wallet_account_id,
-      ipInfo ? ipInfo.ip : undefined,
+    const address = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
     );
+
+    const [swap, error] = await toWithError(
+      this.sideShiftService.createVariableSwap(
+        {
+          depositCoin: input.deposit_coin,
+          depositNetwork: input.deposit_network,
+          settleCoin: SideShiftCoin.BTC,
+          settleNetwork: SideShiftNetwork.liquid,
+          settleAddress: address.address().toString(),
+        },
+        input.wallet_account_id,
+        ipInfo?.ip,
+      ),
+    );
+
+    if (error) {
+      this.logger.error('Error creating address', { swap, error });
+      throw new GraphQLError('Error creating address');
+    }
 
     return {
       id: swap.id,

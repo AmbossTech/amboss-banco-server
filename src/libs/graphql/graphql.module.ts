@@ -27,12 +27,10 @@ const ipware = new Ipware();
           req: Request;
           res: Response;
         }): Promise<ContextType> => {
-          const ipInfo = ipware.getClientIP(req);
-
           return {
             req,
             res,
-            ipInfo,
+            ipInfo: ipware.getClientIP(req),
           };
         },
       }),

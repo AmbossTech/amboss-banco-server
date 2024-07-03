@@ -22,8 +22,8 @@ import { WalletSwaps } from '../swaps/swaps.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
-registerEnumType(SideShiftCoin, { name: 'SideShiftCoin' });
-registerEnumType(SideShiftNetwork, { name: 'SideShiftNetwork' });
+registerEnumType(SideShiftCoin, { name: 'SwapCoin' });
+registerEnumType(SideShiftNetwork, { name: 'SwapNetwork' });
 
 @ObjectType()
 export class FiatInfo {

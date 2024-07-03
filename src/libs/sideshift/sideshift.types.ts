@@ -18,7 +18,7 @@ export type BaseSideShiftInput = {
 
 export type SideShiftFixedSwapInput = BaseSideShiftInput & {
   settleAddress: string;
-  refundAddress?: string;
+  refundAddress: string;
   quoteId: string;
 };
 

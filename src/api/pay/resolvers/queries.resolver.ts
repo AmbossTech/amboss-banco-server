@@ -31,7 +31,7 @@ export class PayQueriesResolver {
         settleCoin: settle_coin,
         settleNetwork: settle_network,
       },
-      ipInfo ? ipInfo.ip : undefined,
+      ipInfo?.ip,
     );
 
     // Sideshift quote is valid for 15 minutes.
