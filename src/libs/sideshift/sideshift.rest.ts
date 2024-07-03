@@ -95,7 +95,7 @@ export class SideShiftRestService {
       });
       throw new Error(errorMsg);
     }
-    const parsed = responseObj.safeParse(json);
+    const parsed = responseObj.passthrough().safeParse(json);
     if (parsed.error) {
       throw new Error(parsed.error.message);
     }
@@ -124,7 +124,7 @@ export class SideShiftRestService {
       throw new Error(json.error);
     }
 
-    const parsed = responseObj.safeParse(json);
+    const parsed = responseObj.passthrough().safeParse(json);
     if (parsed.error) {
       throw new Error(parsed.error.message);
     }

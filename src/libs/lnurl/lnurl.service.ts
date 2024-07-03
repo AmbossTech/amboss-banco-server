@@ -415,7 +415,8 @@ export class LnurlService {
 
         const info = await rawInfo.json();
 
-        const parsed = LightningAddressPubkeyResponseSchema.safeParse(info);
+        const parsed =
+          LightningAddressPubkeyResponseSchema.passthrough().safeParse(info);
 
         if (!parsed.success) return null;
 
