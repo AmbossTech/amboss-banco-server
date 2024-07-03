@@ -105,7 +105,7 @@ export class PayMutationsResolver {
   async network_swap(
     @Args('input') input: PayNetworkSwapInput,
     @Parent() { wallet_account }: PayParentType,
-    @Context() { ipInfo }: ContextType,
+    @Context() { ip }: ContextType,
   ) {
     const quote = await this.redisService.get<SwapQuote>(input.quote_id);
 
@@ -132,7 +132,7 @@ export class PayMutationsResolver {
           refundAddress: refundAddress.address().toString(),
         },
         wallet_account.id,
-        ipInfo?.ip,
+        ip,
       ),
     );
 

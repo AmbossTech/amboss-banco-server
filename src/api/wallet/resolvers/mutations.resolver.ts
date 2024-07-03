@@ -103,7 +103,7 @@ export class WalletMutationsResolver {
   async create_onchain_address_swap(
     @Args('input') input: ReceiveSwapInput,
     @CurrentUser() { user_id }: any,
-    @Context() { ipInfo }: ContextType,
+    @Context() { ip }: ContextType,
   ) {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
@@ -133,7 +133,7 @@ export class WalletMutationsResolver {
           settleAddress: address.address().toString(),
         },
         input.wallet_account_id,
-        ipInfo?.ip,
+        ip,
       ),
     );
 

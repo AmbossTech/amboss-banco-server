@@ -39,6 +39,12 @@ export type SideShiftQuoteInput = BaseSideShiftInput & {
   settleAmount: string;
 };
 
+export const sideShiftPermissionsOutput = z.object({
+  createShift: z.boolean(),
+});
+
+export type SideShiftPermissions = z.infer<typeof sideShiftPermissionsOutput>;
+
 export const sideShiftQuoteOutput = z.object({
   id: z.string(),
   createdAt: z.string(),

@@ -14,6 +14,8 @@ import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
+import { ContextType } from 'src/libs/graphql/context.type';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
 
@@ -24,7 +26,23 @@ import {
   RefreshToken,
   SignUpInput,
   User,
+  UserSwapInfo,
 } from './account.types';
+
+@Resolver(UserSwapInfo)
+export class UserSwapInfoResolver {
+  constructor(private sideshiftService: SideShiftService) {}
+
+  @ResolveField()
+  id(@CurrentUser() { user_id }: any) {
+    return user_id;
+  }
+
+  @ResolveField()
+  async shifts_enabled(@Context() { ip }: ContextType) {
+    return this.sideshiftService.isAllowedToSwap(ip);
+  }
+}
 
 @Resolver(User)
 export class UserResolver {
@@ -39,6 +57,11 @@ export class UserResolver {
     if (!account?.wallets.length) return null;
 
     return account.wallets[0].wallet_id;
+  }
+
+  @ResolveField()
+  async swap_info() {
+    return {};
   }
 }
 

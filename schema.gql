@@ -328,6 +328,12 @@ type User {
   default_wallet_id: String
   email: String!
   id: String!
+  swap_info: UserSwapInfo!
+}
+
+type UserSwapInfo {
+  id: String!
+  shifts_enabled: Boolean!
 }
 
 type Wallet {

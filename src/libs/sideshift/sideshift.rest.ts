@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GraphQLError } from 'graphql';
 import { z } from 'zod';
 
 import { CustomLogger, Logger } from '../logging';
@@ -9,6 +8,8 @@ import {
   SideShiftFixedSwap,
   SideShiftFixedSwapInput,
   sideShiftFixedSwapOutput,
+  SideShiftPermissions,
+  sideShiftPermissionsOutput,
   SideShiftQuote,
   SideShiftQuoteInput,
   sideShiftQuoteOutput,
@@ -31,7 +32,16 @@ export class SideShiftRestService {
     this.secret = this.config.getOrThrow('sideshift.secret');
     this.affiliateId = this.config.getOrThrow('sideshift.affiliateId');
   }
-  async createFixedShift(input: SideShiftFixedSwapInput, ip?: string) {
+
+  async getPermissions(ip: string) {
+    return this.get<SideShiftPermissions>(
+      'permissions',
+      sideShiftPermissionsOutput,
+      ip,
+    );
+  }
+
+  async createFixedShift(input: SideShiftFixedSwapInput, ip: string) {
     return this.post<SideShiftFixedSwap>(
       `shifts/fixed`,
       input,
@@ -42,14 +52,14 @@ export class SideShiftRestService {
 
   async getQuote(
     input: SideShiftQuoteInput,
-    ip?: string,
+    ip: string,
   ): Promise<SideShiftQuote> {
     return this.post<SideShiftQuote>(`quotes`, input, sideShiftQuoteOutput, ip);
   }
 
   async createVariableSwap(
     input: SideShiftVariableSwapInput,
-    ip?: string,
+    ip: string,
   ): Promise<SideShiftVariableSwap> {
     return this.post<SideShiftVariableSwap>(
       `shifts/variable`,
@@ -63,18 +73,15 @@ export class SideShiftRestService {
     endpoint: string,
     body: BaseSideShiftInput,
     responseObj: z.ZodObject<any>,
-    ip?: string,
+    ip: string,
   ): Promise<T> {
-    if (!ip) {
-      throw new GraphQLError(`Unable to use SideShift`);
-    }
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       body: JSON.stringify({ affiliateId: this.affiliateId, ...body }),
       headers: {
         'x-sideshift-secret': this.secret,
         'content-type': 'application/json',
-        ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
+        'x-user-ip': ip,
       },
     });
     const json = await response.json();
@@ -95,26 +102,32 @@ export class SideShiftRestService {
     return parsed.data as T;
   }
 
-  // private async get<T>(endpoint: string, ip?: string): Promise<T> {
-  //   if (!ip) {
-  //     throw new GraphQLError(`Unable to use SideShift`);
-  //   }
-  //   const response = await fetch(`${this.baseUrl}${endpoint}`, {
-  //     headers: {
-  //       'x-sideshift-secret': this.secret,
-  //       'content-type': 'application/json',
-  //       ...(!ip.includes('127.0.0.1') ? { 'x-user-ip': ip } : {}),
-  //     },
-  //   });
-  //   const json = await response.json();
+  private async get<T>(
+    endpoint: string,
+    responseObj: z.ZodObject<any>,
+    ip: string,
+  ): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      headers: {
+        'x-sideshift-secret': this.secret,
+        'content-type': 'application/json',
+        'x-user-ip': ip,
+      },
+    });
+    const json = await response.json();
 
-  //   if (json.error) {
-  //     this.logger.error(`Sideshift API error`, {
-  //       error: json.error,
-  //       endpoint,
-  //     });
-  //     throw new Error(json.error);
-  //   }
-  //   return json;
-  // }
+    if (json.error) {
+      this.logger.error(`Sideshift API error`, {
+        error: json.error,
+        endpoint,
+      });
+      throw new Error(json.error);
+    }
+
+    const parsed = responseObj.safeParse(json);
+    if (parsed.error) {
+      throw new Error(parsed.error.message);
+    }
+    return parsed.data as T;
+  }
 }
