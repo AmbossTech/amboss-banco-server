@@ -1,6 +1,10 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
+import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
 
 import {
   LnUrlCurrenciesAndInfo,
@@ -18,6 +22,39 @@ export class CreateLiquidTransaction {
 }
 
 @ObjectType()
+export class SwapQuote {
+  @Field()
+  id: string;
+
+  @Field()
+  created_at: string;
+
+  @Field()
+  deposit_coin: string;
+
+  @Field()
+  settle_coin: string;
+
+  @Field()
+  deposit_network: string;
+
+  @Field()
+  settle_network: string;
+
+  @Field()
+  expires_at: string;
+
+  @Field()
+  deposit_amount: string;
+
+  @Field()
+  settle_amount: string;
+
+  @Field()
+  rate: string;
+}
+
+@ObjectType()
 export class PayMutations {
   @Field()
   money_address: CreateLiquidTransaction;
@@ -27,6 +64,15 @@ export class PayMutations {
 
   @Field()
   liquid_address: CreateLiquidTransaction;
+
+  @Field()
+  network_swap: CreateLiquidTransaction;
+}
+
+@ObjectType()
+export class PayQueries {
+  @Field()
+  network_swap_quote: SwapQuote;
 }
 
 @InputType()
@@ -74,7 +120,7 @@ export class LiquidRecipientInput {
   amount: string;
 
   @Field({ nullable: true })
-  asset_id: string;
+  asset_id?: string;
 }
 
 @InputType()
@@ -87,6 +133,27 @@ export class PayLiquidAddressInput {
 
   @Field(() => [LiquidRecipientInput])
   recipients: LiquidRecipientInput[];
+}
+
+@InputType()
+export class PayNetworkSwapInput {
+  @Field()
+  quote_id: string;
+
+  @Field()
+  settle_address: string;
+}
+
+@InputType()
+export class SwapQuoteInput {
+  @Field()
+  settle_amount: string;
+
+  @Field(() => SideShiftCoin)
+  settle_coin: SideShiftCoin;
+
+  @Field(() => SideShiftNetwork)
+  settle_network: SideShiftNetwork;
 }
 
 export type PayLnAddressPayload = {

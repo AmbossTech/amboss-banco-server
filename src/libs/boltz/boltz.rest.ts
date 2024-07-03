@@ -82,7 +82,7 @@ export class BoltzRestApi {
 
     const body = await result.json();
 
-    const parsedError = boltzError.safeParse(body);
+    const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
       throw new Error(parsedError.data.error);
@@ -100,7 +100,7 @@ export class BoltzRestApi {
 
     const body = await result.json();
 
-    const parsedError = boltzError.safeParse(body);
+    const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
       throw new Error(parsedError.data.error);
@@ -114,7 +114,7 @@ export class BoltzRestApi {
 
     const body = await result.json();
 
-    const parsedError = boltzError.safeParse(body);
+    const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
       throw new Error(parsedError.data.error);
@@ -135,7 +135,7 @@ export class BoltzRestApi {
 
     const body = await result.json();
 
-    const parsedError = boltzError.safeParse(body);
+    const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
       throw new Error(parsedError.data.error);

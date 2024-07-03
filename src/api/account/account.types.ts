@@ -3,6 +3,15 @@ import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { CreateWalletInput } from '../wallet/wallet.types';
 
 @ObjectType()
+export class UserSwapInfo {
+  @Field()
+  id: string;
+
+  @Field()
+  shifts_enabled: boolean;
+}
+
+@ObjectType()
 export class User {
   @Field()
   id: string;
@@ -12,6 +21,9 @@ export class User {
 
   @Field(() => String, { nullable: true })
   default_wallet_id: string | null;
+
+  @Field(() => UserSwapInfo)
+  swap_info: UserSwapInfo;
 }
 
 @ObjectType()

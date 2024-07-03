@@ -1,5 +1,6 @@
 import {
   Args,
+  Context,
   Mutation,
   Parent,
   ResolveField,
@@ -7,24 +8,39 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { CryptoService } from 'src/libs/crypto/crypto.service';
+import { ContextType } from 'src/libs/graphql/context.type';
+import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { RedisService } from 'src/libs/redis/redis.service';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
+import { toWithError } from 'src/utils/async';
 import { isUUID } from 'src/utils/string';
 
-import { PayService } from './pay.service';
+import { PayService } from '../pay.service';
 import {
   PayInput,
   PayLiquidAddressInput,
   PayLnAddressInput,
   PayLnInvoiceInput,
   PayMutations,
+  PayNetworkSwapInput,
   PayParentType,
-} from './pay.types';
+  SwapQuote,
+} from '../pay.types';
 
 @Resolver(PayMutations)
 export class PayMutationsResolver {
-  constructor(private payService: PayService) {}
+  constructor(
+    private payService: PayService,
+    private redisService: RedisService,
+    private sideShiftService: SideShiftService,
+    private liquidService: LiquidService,
+    private cryptoService: CryptoService,
+    @Logger('PayMutationsResolver') private logger: CustomLogger,
+  ) {}
 
   @ResolveField()
   async money_address(
@@ -84,10 +100,66 @@ export class PayMutationsResolver {
 
     return { base_64, wallet_account: parent.wallet_account };
   }
+
+  @ResolveField()
+  async network_swap(
+    @Args('input') input: PayNetworkSwapInput,
+    @Parent() { wallet_account }: PayParentType,
+    @Context() { ip }: ContextType,
+  ) {
+    const quote = await this.redisService.get<SwapQuote>(input.quote_id);
+
+    if (!quote) {
+      throw new GraphQLError(`Quote not found`);
+    }
+
+    const { quote_id, settle_address } = input;
+
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
+    );
+
+    const refundAddress = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
+    );
+
+    const [swap, error] = await toWithError(
+      this.sideShiftService.createFixedSwap(
+        {
+          quoteId: quote_id,
+          settleAddress: settle_address,
+          refundAddress: refundAddress.address().toString(),
+        },
+        wallet_account.id,
+        ip,
+      ),
+    );
+
+    if (error) {
+      this.logger.error('Error doing swap', { swap, error });
+      throw new GraphQLError('Error doing swap');
+    }
+
+    // Get sats amount
+    const paymentAmount = +swap.depositAmount * 100_000_000;
+
+    const { base_64 } = await this.payService.payLiquidAddress(wallet_account, {
+      fee_rate: 100,
+      recipients: [
+        {
+          address: swap.depositAddress,
+          amount: paymentAmount.toString(),
+        },
+      ],
+    });
+
+    return { base_64, wallet_account };
+  }
 }
 
 @Resolver()
-export class MainPayResolver {
+export class MainPayMutationsResolver {
   constructor(
     private walletRepo: WalletRepoService,
     @Logger('MainPayResolver') private logger: CustomLogger,
