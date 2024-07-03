@@ -3,11 +3,19 @@ import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
 import { ContactServiceModule } from 'src/libs/contact/contact.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { LnurlModule } from 'src/libs/lnurl/lnurl.module';
+import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
-import { MainPayResolver, PayMutationsResolver } from './pay.resolver';
 import { PayService } from './pay.service';
+import {
+  MainPayMutationsResolver,
+  PayMutationsResolver,
+} from './resolvers/mutations.resolver';
+import {
+  MainPayQueriesResolver,
+  PayQueriesResolver,
+} from './resolvers/queries.resolver';
 
 @Module({
   imports: [
@@ -17,7 +25,14 @@ import { PayService } from './pay.service';
     BoltzRestModule,
     LiquidModule,
     ContactServiceModule,
+    SideShiftModule,
   ],
-  providers: [PayService, MainPayResolver, PayMutationsResolver],
+  providers: [
+    PayService,
+    MainPayMutationsResolver,
+    PayMutationsResolver,
+    MainPayQueriesResolver,
+    PayQueriesResolver,
+  ],
 })
 export class PayModule {}

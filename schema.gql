@@ -185,6 +185,16 @@ type PayMutations {
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
+  network_swap(input: PayNetworkSwapInput!): CreateLiquidTransaction!
+}
+
+input PayNetworkSwapInput {
+  quote_id: String!
+  settle_address: String!
+}
+
+type PayQueries {
+  network_swap_quote(input: SwapQuoteInput!): SwapQuote!
 }
 
 enum PaymentOptionCode {
@@ -200,8 +210,24 @@ enum PaymentOptionNetwork {
 
 type Query {
   hello: String!
+  pay: PayQueries!
   user: User!
   wallets: WalletQueries!
+}
+
+type ReceiveSwap {
+  coin: SideShiftCoin!
+  id: String!
+  max: String!
+  min: String!
+  network: SideShiftNetwork!
+  receive_address: String!
+}
+
+input ReceiveSwapInput {
+  deposit_coin: SideShiftCoin!
+  deposit_network: SideShiftNetwork!
+  wallet_account_id: String!
 }
 
 type RefreshToken {
@@ -237,6 +263,18 @@ input SendMessageInput {
   sender_payload: String!
 }
 
+enum SideShiftCoin {
+  BTC
+  USDT
+}
+
+enum SideShiftNetwork {
+  bitcoin
+  ethereum
+  liquid
+  tron
+}
+
 input SignUpInput {
   email: String!
   master_password_hash: String!
@@ -265,6 +303,25 @@ type SimpleWalletAccount {
 type SimpleWalletContact {
   id: String!
   money_address: String!
+}
+
+type SwapQuote {
+  created_at: String!
+  deposit_amount: String!
+  deposit_coin: String!
+  deposit_network: String!
+  expires_at: String!
+  id: String!
+  rate: String!
+  settle_amount: String!
+  settle_coin: String!
+  settle_network: String!
+}
+
+input SwapQuoteInput {
+  settle_amount: String!
+  settle_coin: SideShiftCoin!
+  settle_network: SideShiftNetwork!
 }
 
 type User {
@@ -320,6 +377,7 @@ type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
   create(input: CreateWalletInput!): CreateWallet!
   create_onchain_address(input: CreateOnchainAddressInput!): CreateOnchainAddress!
+  create_onchain_address_swap(input: ReceiveSwapInput!): ReceiveSwap!
   refresh_wallet(input: RefreshWalletInput!): Boolean!
 }
 

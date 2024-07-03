@@ -1,5 +1,6 @@
 import {
   Args,
+  Context,
   Mutation,
   Parent,
   ResolveField,
@@ -7,24 +8,33 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { RedisService } from 'src/libs/redis/redis.service';
+import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { WalletAccountType } from 'src/repo/wallet/wallet.types';
 import { isUUID } from 'src/utils/string';
 
-import { PayService } from './pay.service';
+import { PayService } from '../pay.service';
 import {
   PayInput,
   PayLiquidAddressInput,
   PayLnAddressInput,
   PayLnInvoiceInput,
   PayMutations,
+  PayNetworkSwapInput,
   PayParentType,
-} from './pay.types';
+  SwapQuote,
+} from '../pay.types';
 
 @Resolver(PayMutations)
 export class PayMutationsResolver {
-  constructor(private payService: PayService) {}
+  constructor(
+    private payService: PayService,
+    private redisService: RedisService,
+    private sideShiftService: SideShiftService,
+  ) {}
 
   @ResolveField()
   async money_address(
@@ -84,10 +94,52 @@ export class PayMutationsResolver {
 
     return { base_64, wallet_account: parent.wallet_account };
   }
+
+  @ResolveField()
+  async network_swap(
+    @Args('input') input: PayNetworkSwapInput,
+    @Parent() parent: PayParentType,
+    @Context() { ipInfo }: ContextType,
+  ) {
+    const quote = await this.redisService.get<SwapQuote>(input.quote_id);
+
+    if (!quote) {
+      throw new GraphQLError(`Quote not found`);
+    }
+
+    const { quote_id, settle_address } = input;
+
+    const swap = await this.sideShiftService.createFixedSwap(
+      {
+        quoteId: quote_id,
+        settleAddress: settle_address,
+      },
+      parent.wallet_account.id,
+      ipInfo ? ipInfo.ip : undefined,
+    );
+
+    // Get sats amount
+    const paymentAmount = +swap.depositAmount * 100_000_000;
+
+    const { base_64 } = await this.payService.payLiquidAddress(
+      parent.wallet_account,
+      {
+        fee_rate: 100,
+        recipients: [
+          {
+            address: swap.depositAddress,
+            amount: paymentAmount.toString(),
+          },
+        ],
+      },
+    );
+
+    return { base_64, wallet_account: parent.wallet_account };
+  }
 }
 
 @Resolver()
-export class MainPayResolver {
+export class MainPayMutationsResolver {
   constructor(
     private walletRepo: WalletRepoService,
     @Logger('MainPayResolver') private logger: CustomLogger,

@@ -1,9 +1,13 @@
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { Ipware } from '@fullerstack/nax-ipware';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Request, Response } from 'express';
 
+import { ContextType } from './context.type';
+
+const ipware = new Ipware();
 @Module({
   imports: [
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
@@ -16,10 +20,19 @@ import { Request, Response } from 'express';
         playground: false,
         plugins: [ApolloServerPluginLandingPageLocalDefault()],
         status400ForVariableCoercionErrors: true,
-        context: async ({ req, res }: { req: Request; res: Response }) => ({
-          req,
-          res,
-        }),
+        context: async (context: {
+          req: Request;
+          res: Response;
+        }): Promise<ContextType> => {
+          const { req, res } = context;
+          const ipInfo = ipware.getClientIP(req);
+
+          return {
+            req,
+            res,
+            ipInfo,
+          };
+        },
       }),
     }),
   ],

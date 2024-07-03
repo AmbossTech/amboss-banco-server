@@ -7,6 +7,10 @@ import {
 import { wallet, wallet_account, wallet_on_accounts } from '@prisma/client';
 import { WalletTx, Wollet } from 'lwk_wasm';
 import {
+  SideShiftCoin,
+  SideShiftNetwork,
+} from 'src/libs/sideshift/sideshift.types';
+import {
   WalletAccountDetailsType,
   WalletAccountType,
   WalletType,
@@ -18,6 +22,8 @@ import { WalletSwaps } from '../swaps/swaps.types';
 
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
+registerEnumType(SideShiftCoin, { name: 'SideShiftCoin' });
+registerEnumType(SideShiftNetwork, { name: 'SideShiftNetwork' });
 
 @ObjectType()
 export class FiatInfo {
@@ -38,6 +44,27 @@ export class CreateWallet {
 export class CreateOnchainAddress {
   @Field()
   address: string;
+}
+
+@ObjectType()
+export class ReceiveSwap {
+  @Field()
+  id: string;
+
+  @Field()
+  receive_address: string;
+
+  @Field(() => SideShiftCoin)
+  coin: SideShiftCoin;
+
+  @Field(() => SideShiftNetwork)
+  network: SideShiftNetwork;
+
+  @Field()
+  min: string;
+
+  @Field()
+  max: string;
 }
 
 @ObjectType()
@@ -255,6 +282,9 @@ export class WalletMutations {
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
 
+  @Field(() => ReceiveSwap)
+  create_onchain_address_swap: ReceiveSwap;
+
   @Field(() => BroadcastLiquidTransaction)
   broadcast_liquid_transaction: BroadcastLiquidTransaction;
 
@@ -320,6 +350,18 @@ export class BroadcastLiquidTransactionInput {
 
   @Field()
   signed_pset: string;
+}
+
+@InputType()
+export class ReceiveSwapInput {
+  @Field(() => SideShiftCoin)
+  deposit_coin: SideShiftCoin;
+
+  @Field(() => SideShiftNetwork)
+  deposit_network: SideShiftNetwork;
+
+  @Field()
+  wallet_account_id: string;
 }
 
 export type AssetParentType = {
