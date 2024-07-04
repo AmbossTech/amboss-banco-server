@@ -37,6 +37,19 @@ export class ContactRepoService {
     });
   }
 
+  async getContact(
+    account_id: string,
+    wallet_id: string,
+    money_address: string,
+  ) {
+    return this.prisma.contact.findFirst({
+      where: {
+        wallet_on_accounts: { account_id, wallet_id },
+        money_address,
+      },
+    });
+  }
+
   async upsertContactForAccount(
     account_id: string,
     wallet_id: string,

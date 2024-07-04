@@ -205,6 +205,16 @@ export class ContactMutationsResolver {
       }
     }
 
+    const savedContact = await this.contactsRepo.getContact(
+      user_id,
+      input.wallet_id,
+      input.money_address,
+    );
+
+    if (!!savedContact) {
+      throw new GraphQLError('Contact already exists');
+    }
+
     const domains =
       this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
         'server.domains',
