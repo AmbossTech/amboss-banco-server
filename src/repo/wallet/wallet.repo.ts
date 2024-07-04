@@ -10,6 +10,13 @@ import { WalletAccountDetailsType, WalletDetailsType } from './wallet.types';
 export class WalletRepoService {
   constructor(private prisma: PrismaService) {}
 
+  async updateWalletName(account_id: string, wallet_id: string, name: string) {
+    return this.prisma.wallet_on_accounts.update({
+      where: { account_id_wallet_id: { wallet_id, account_id } },
+      data: { wallet: { update: { name } } },
+    });
+  }
+
   async countAccountWallets(account_id: string) {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }

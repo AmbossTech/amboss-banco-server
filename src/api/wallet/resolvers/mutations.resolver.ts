@@ -161,6 +161,29 @@ export class WalletMutationsResolver {
   }
 
   @ResolveField()
+  async change_name(
+    @Args('id') id: string,
+    @Args('name') name: string,
+    @CurrentUser() { user_id }: any,
+  ) {
+    if (!name) {
+      throw new GraphQLError('No name was provided');
+    }
+
+    if (name.length > 20) {
+      throw new GraphQLError('The name can be up to 20 characters long');
+    }
+
+    const wallet = await this.walletRepo.updateWalletName(user_id, id, name);
+
+    if (!wallet) {
+      throw new GraphQLError('No wallet found');
+    }
+
+    return true;
+  }
+
+  @ResolveField()
   async broadcast_liquid_transaction(
     @Args('input') input: BroadcastLiquidTransactionInput,
     @CurrentUser() { user_id }: any,

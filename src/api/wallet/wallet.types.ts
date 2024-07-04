@@ -279,6 +279,9 @@ export class WalletMutations {
   @Field(() => CreateWallet)
   create: CreateWallet;
 
+  @Field(() => Boolean)
+  change_name: boolean;
+
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
 

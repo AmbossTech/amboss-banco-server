@@ -381,6 +381,7 @@ type WalletDetails {
 
 type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
+  change_name(id: String!, name: String!): Boolean!
   create(input: CreateWalletInput!): CreateWallet!
   create_onchain_address(input: CreateOnchainAddressInput!): CreateOnchainAddress!
   create_onchain_address_swap(input: ReceiveSwapInput!): ReceiveSwap!
