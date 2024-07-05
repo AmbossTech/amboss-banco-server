@@ -7,6 +7,7 @@ import {
   CallbackHandlerParams,
   CallbackParams,
   GetLnurlAutoType,
+  GetLnUrlInvoiceAutoType,
   GetLnUrlResponseAutoType,
   LightningAddressPubkeyResponseSchema,
 } from 'src/api/lnurl/lnurl.types';
@@ -22,7 +23,7 @@ import {
 } from 'src/utils/lnurl';
 import { fetch } from 'undici';
 
-import { BoltzRestApi } from '../boltz/boltz.rest';
+import { BoltzService } from '../boltz/boltz.service';
 import { ConfigSchemaType } from '../config/validation';
 import { CryptoService } from '../crypto/crypto.service';
 import { LiquidService } from '../liquid/liquid.service';
@@ -42,7 +43,7 @@ export class LnurlService {
   constructor(
     private redis: RedisService,
     private config: ConfigService,
-    private boltzApi: BoltzRestApi,
+    private boltzService: BoltzService,
     private liquidService: LiquidService,
     private walletRepo: WalletRepoService,
     private cryptoService: CryptoService,
@@ -51,9 +52,9 @@ export class LnurlService {
 
   async getLnUrlInfo(account: string) {
     return auto<GetLnurlAutoType>({
-      // getBoltzInfo: async () => {
-      //   return this.boltzApi.getReverseSwapInfo();
-      // },
+      getBoltzInfo: async () => {
+        return this.boltzService.getReverseSwapInfo();
+      },
 
       getAccountCurrencies: async () => {
         const currencies = await this.getLnUrlCurrencies(account);
@@ -70,9 +71,11 @@ export class LnurlService {
 
       buildResponse: [
         'getAccountCurrencies',
+        'getBoltzInfo',
         async ({
           getAccountCurrencies,
-        }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
+          getBoltzInfo,
+        }: Pick<GetLnurlAutoType, 'getAccountCurrencies' | 'getBoltzInfo'>) => {
           const domains =
             this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
               'server.domains',
@@ -80,10 +83,8 @@ export class LnurlService {
 
           return {
             callback: `http://${domains[0]}/lnurlp/${account}`,
-            minSendable: 0,
-            maxSendable: 0,
-            // minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
-            // maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
+            minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
+            maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
             metadata: JSON.stringify([
               ['text/plain', `Payment to ${account}`],
               ['text/identifier', `${account}@${domains[0]}`],
@@ -236,44 +237,73 @@ export class LnurlService {
       });
   }
 
-  async getLnUrlInvoiceResponse() {
-    // TODO: Handle creating a Boltz swap to get a lightning invoice
+  async getLnUrlInvoiceResponse(account: string, amount: number) {
+    return auto<GetLnUrlInvoiceAutoType>({
+      checkAmount: async () => {
+        const boltzInfo = await this.boltzService.getReverseSwapInfo();
 
-    //   checkAmount: [
-    //     'checkCurrency',
-    //     async ({
-    //       checkCurrency,
-    //     }: Pick<GetLnUrlResponseAutoType, 'checkCurrency'>) => {
-    //       if (!!checkCurrency) return;
+        const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
 
-    //       const boltzInfo = await this.boltzApi.getReverseSwapInfo();
+        if (maximal < amount) {
+          throw new Error(
+            JSON.stringify({
+              status: 'ERROR',
+              reason: `Amount ${amount} greater than maximum of ${maximal}`,
+            }),
+          );
+        }
 
-    //       const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+        if (minimal > amount) {
+          throw new Error(
+            JSON.stringify({
+              status: 'ERROR',
+              reason: `Amount ${amount} smaller than minimum of ${minimal}`,
+            }),
+          );
+        }
 
-    //       if (maximal < amount) {
-    //         throw new Error(
-    //           JSON.stringify({
-    //             status: 'ERROR',
-    //             reason: `Amount ${amount} greater than maximum of ${maximal}`,
-    //           }),
-    //         );
-    //       }
+        return amount;
+      },
+      createSwap: [
+        'checkAmount',
+        async ({ checkAmount }) => {
+          const accountWallets =
+            await this.walletRepo.getWalletByLnAddress(account);
+          const liquidWalletAccounts =
+            accountWallets?.wallet.wallet_account.filter(
+              (w) => w.details.type === WalletAccountType.LIQUID,
+            );
+          if (!liquidWalletAccounts?.length) {
+            throw new Error(`No wallet available`);
+          }
+          const walletAcc = liquidWalletAccounts[0];
+          const descriptor = this.cryptoService.decryptString(
+            walletAcc.details.local_protected_descriptor,
+          );
+          const address =
+            await this.liquidService.getOnchainAddress(descriptor);
 
-    //       if (minimal > amount) {
-    //         throw new Error(
-    //           JSON.stringify({
-    //             status: 'ERROR',
-    //             reason: `Amount ${amount} smaller than minimum of ${minimal}`,
-    //           }),
-    //         );
-    //       }
-    //     },
-    //   ],
-
-    return {
-      status: 'ERROR',
-      reason: 'Lightning Address is currently unavailable',
-    };
+          return this.boltzService.createReverseSwap(
+            address.address().toString(),
+            checkAmount,
+            walletAcc.id,
+          );
+        },
+      ],
+      createPayload: [
+        'createSwap',
+        async ({
+          createSwap,
+        }: Pick<GetLnUrlInvoiceAutoType, 'createSwap'>): Promise<
+          GetLnUrlInvoiceAutoType['createPayload']
+        > => {
+          return {
+            pr: createSwap.invoice,
+            routes: [],
+          };
+        },
+      ],
+    }).then((result) => result.createPayload);
   }
 
   async getLnUrlResponse(props: CallbackParams): Promise<string> {
@@ -319,7 +349,7 @@ export class LnurlService {
       return JSON.stringify(response);
     }
 
-    const response = await this.getLnUrlInvoiceResponse();
+    const response = await this.getLnUrlInvoiceResponse(account, amount);
 
     return JSON.stringify(response);
   }

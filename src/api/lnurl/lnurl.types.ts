@@ -1,4 +1,8 @@
 import { wallet_account } from '@prisma/client';
+import {
+  BoltzReverseSwapResponseType,
+  SwapReverseInfoType,
+} from 'src/libs/boltz/boltz.types';
 import { z } from 'zod';
 
 export type CallbackParams = {
@@ -24,7 +28,7 @@ export type AccountCurrency = {
 };
 
 export type GetLnurlAutoType = {
-  // getBoltzInfo: SwapReverseInfoType;
+  getBoltzInfo: SwapReverseInfoType;
   getAccountCurrencies: AccountCurrency[];
   buildResponse: any;
 };
@@ -46,5 +50,15 @@ export type GetLnUrlResponseAutoType = {
     pr: string;
     routes: [];
     onchain: { network: string; address: string; bip21: string };
+  };
+};
+
+export type GetLnUrlInvoiceAutoType = {
+  createSwap: BoltzReverseSwapResponseType;
+  checkAmount: number;
+  createPayload: {
+    pr: string;
+    routes: [];
+    onchain?: { network: string; address: string; bip21: string };
   };
 };

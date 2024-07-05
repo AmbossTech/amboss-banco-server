@@ -24,6 +24,7 @@ export const ConfigSchema = z.object({
   }),
   urls: z.object({
     boltz: z.string(),
+    covclaim: z.string(),
     esplora: z.object({
       liquid: z.string(),
       waterfall: z.string(),
