@@ -7,6 +7,7 @@ import {
   CallbackHandlerParams,
   CallbackParams,
   GetLnurlAutoType,
+  GetLnUrlInvoiceAutoType,
   GetLnUrlResponseAutoType,
   LightningAddressPubkeyResponseSchema,
 } from 'src/api/lnurl/lnurl.types';
@@ -22,7 +23,7 @@ import {
 } from 'src/utils/lnurl';
 import { fetch } from 'undici';
 
-import { BoltzRestApi } from '../boltz/boltz.rest';
+import { BoltzService } from '../boltz/boltz.service';
 import { ConfigSchemaType } from '../config/validation';
 import { CryptoService } from '../crypto/crypto.service';
 import { LiquidService } from '../liquid/liquid.service';
@@ -31,8 +32,8 @@ import { RedisService } from '../redis/redis.service';
 import {
   LnUrlInfoSchema,
   LnUrlInfoSchemaType,
+  LnUrlResponseSchemaType,
   LnUrlResultSchema,
-  LnUrlResultSchemaType,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from './lnurl.types';
@@ -42,7 +43,7 @@ export class LnurlService {
   constructor(
     private redis: RedisService,
     private config: ConfigService,
-    private boltzApi: BoltzRestApi,
+    private boltzService: BoltzService,
     private liquidService: LiquidService,
     private walletRepo: WalletRepoService,
     private cryptoService: CryptoService,
@@ -51,9 +52,9 @@ export class LnurlService {
 
   async getLnUrlInfo(account: string) {
     return auto<GetLnurlAutoType>({
-      // getBoltzInfo: async () => {
-      //   return this.boltzApi.getReverseSwapInfo();
-      // },
+      getBoltzInfo: async () => {
+        return this.boltzService.getReverseSwapInfo();
+      },
 
       getAccountCurrencies: async () => {
         const currencies = await this.getLnUrlCurrencies(account);
@@ -70,9 +71,11 @@ export class LnurlService {
 
       buildResponse: [
         'getAccountCurrencies',
+        'getBoltzInfo',
         async ({
           getAccountCurrencies,
-        }: Pick<GetLnurlAutoType, 'getAccountCurrencies'>) => {
+          getBoltzInfo,
+        }: Pick<GetLnurlAutoType, 'getAccountCurrencies' | 'getBoltzInfo'>) => {
           const domains =
             this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
               'server.domains',
@@ -80,10 +83,8 @@ export class LnurlService {
 
           return {
             callback: `http://${domains[0]}/lnurlp/${account}`,
-            minSendable: 0,
-            maxSendable: 0,
-            // minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
-            // maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
+            minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
+            maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
             metadata: JSON.stringify([
               ['text/plain', `Payment to ${account}`],
               ['text/identifier', `${account}@${domains[0]}`],
@@ -153,7 +154,7 @@ export class LnurlService {
 
   async getLnUrlChainResponse(
     props: CallbackHandlerParams,
-  ): Promise<LnUrlResultSchemaType> {
+  ): Promise<LnUrlResponseSchemaType> {
     const { account, amount } = props;
 
     return auto<GetLnUrlResponseAutoType>({
@@ -161,21 +162,11 @@ export class LnurlService {
         const currencies = await this.getLnUrlCurrencies(account);
 
         if (!props.network) {
-          throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: 'A network needs to be provided',
-            }),
-          );
+          throw new Error('A network needs to be provided');
         }
 
         if (!currencies.length) {
-          throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: 'No currencies are available',
-            }),
-          );
+          throw new Error('No currencies are available');
         }
 
         const foundCurrency = currencies.find((c) => {
@@ -184,10 +175,7 @@ export class LnurlService {
 
         if (!foundCurrency) {
           throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: `Currency ${props.currency} on network ${props.network} is not available`,
-            }),
+            `Currency ${props.currency} on network ${props.network} is not available`,
           );
         }
 
@@ -196,7 +184,7 @@ export class LnurlService {
 
       createPayload: [
         'checkCurrency',
-        async ({ checkCurrency }) => {
+        async ({ checkCurrency }): Promise<LnUrlResponseSchemaType> => {
           const descriptor = this.cryptoService.decryptString(
             checkCurrency.wallet_account.details.local_protected_descriptor,
           );
@@ -231,95 +219,143 @@ export class LnurlService {
       .then((result) => {
         return result.createPayload;
       })
-      .catch((err) => {
-        return err.message;
+      .catch((error) => {
+        this.logger.error('Error getting lnurl onchain response', { error });
+        return {
+          status: 'ERROR',
+          reason: error.message,
+        };
       });
   }
 
-  async getLnUrlInvoiceResponse() {
-    // TODO: Handle creating a Boltz swap to get a lightning invoice
+  async getLnUrlInvoiceResponse(
+    account: string,
+    amount: number,
+  ): Promise<LnUrlResponseSchemaType> {
+    return auto<GetLnUrlInvoiceAutoType>({
+      checkAmount: async () => {
+        const boltzInfo = await this.boltzService.getReverseSwapInfo();
 
-    //   checkAmount: [
-    //     'checkCurrency',
-    //     async ({
-    //       checkCurrency,
-    //     }: Pick<GetLnUrlResponseAutoType, 'checkCurrency'>) => {
-    //       if (!!checkCurrency) return;
+        const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
 
-    //       const boltzInfo = await this.boltzApi.getReverseSwapInfo();
+        if (maximal < amount) {
+          throw new Error(
+            `Amount ${amount} greater than maximum of ${maximal}`,
+          );
+        }
 
-    //       const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+        if (minimal > amount) {
+          throw new Error(
+            `Amount ${amount} smaller than minimum of ${minimal}`,
+          );
+        }
 
-    //       if (maximal < amount) {
-    //         throw new Error(
-    //           JSON.stringify({
-    //             status: 'ERROR',
-    //             reason: `Amount ${amount} greater than maximum of ${maximal}`,
-    //           }),
-    //         );
-    //       }
+        return amount;
+      },
 
-    //       if (minimal > amount) {
-    //         throw new Error(
-    //           JSON.stringify({
-    //             status: 'ERROR',
-    //             reason: `Amount ${amount} smaller than minimum of ${minimal}`,
-    //           }),
-    //         );
-    //       }
-    //     },
-    //   ],
+      createSwap: [
+        'checkAmount',
+        async ({ checkAmount }) => {
+          const accountWallets =
+            await this.walletRepo.getWalletByLnAddress(account);
 
-    return {
-      status: 'ERROR',
-      reason: 'Lightning Address is currently unavailable',
-    };
+          const liquidWalletAccounts =
+            accountWallets?.wallet.wallet_account.filter(
+              (w) => w.details.type === WalletAccountType.LIQUID,
+            );
+
+          if (!liquidWalletAccounts?.length) {
+            throw new Error(`No wallet available`);
+          }
+
+          const walletAcc = liquidWalletAccounts[0];
+
+          const descriptor = this.cryptoService.decryptString(
+            walletAcc.details.local_protected_descriptor,
+          );
+
+          const address =
+            await this.liquidService.getOnchainAddress(descriptor);
+
+          return this.boltzService.createReverseSwap(
+            address.address().toString(),
+            checkAmount,
+            walletAcc.id,
+          );
+        },
+      ],
+
+      createPayload: [
+        'createSwap',
+        async ({
+          createSwap,
+        }: Pick<GetLnUrlInvoiceAutoType, 'createSwap'>): Promise<
+          GetLnUrlInvoiceAutoType['createPayload']
+        > => {
+          return {
+            pr: createSwap.invoice,
+            routes: [],
+          };
+        },
+      ],
+    })
+      .then((result) => result.createPayload)
+      .catch((error) => {
+        this.logger.error('Error getting lnurl invoice response', { error });
+        return {
+          status: 'ERROR',
+          reason: error.message,
+        };
+      });
   }
 
   async getLnUrlResponse(props: CallbackParams): Promise<string> {
     if (!props.account) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No account provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No account provided',
+      });
     }
 
     const account = props.account.toLowerCase();
 
     if (!props.amount) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No amount provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No amount provided',
+      });
     }
 
     const amount = Number(props.amount);
 
     if (isNaN(amount)) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No amount provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No amount provided',
+      });
     }
 
     if (!!props.currency) {
+      if (!props.network) {
+        throw new Error(
+          JSON.stringify({
+            status: 'ERROR',
+            reason: 'A network needs to be provided',
+          }),
+        );
+      }
+
       const response = await this.getLnUrlChainResponse({
-        ...props,
         account,
         amount,
+        network: props.network,
         currency: props.currency,
       });
 
       return JSON.stringify(response);
     }
 
-    const response = await this.getLnUrlInvoiceResponse();
+    const response = await this.getLnUrlInvoiceResponse(account, amount);
 
     return JSON.stringify(response);
   }

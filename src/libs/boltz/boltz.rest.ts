@@ -22,7 +22,7 @@ import {
 
 @Injectable()
 export class BoltzRestApi {
-  apiUrl;
+  private apiUrl;
 
   constructor(
     private redis: RedisService,

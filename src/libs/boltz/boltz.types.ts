@@ -1,4 +1,5 @@
 import { wallet_account_swap } from '@prisma/client';
+import { Types } from 'boltz-core';
 import { z } from 'zod';
 
 export const swapReverseInfoSchema = z.object({
@@ -77,6 +78,10 @@ export const boltzReverseSwapResponse = z.object({
       version: z.number(),
       output: z.string(),
     }),
+    covenantClaimLeaf: z.object({
+      version: z.number(),
+      output: z.string(),
+    }),
   }),
   lockupAddress: z.string(),
   refundPublicKey: z.string(),
@@ -107,3 +112,12 @@ export const boltzMagicRouteHint = z.object({
 });
 
 export type BoltzMagicRouteHintType = z.infer<typeof boltzMagicRouteHint>;
+
+export type CovenantParams = {
+  claimPublicKey: Buffer;
+  refundPublicKey: Buffer;
+  preimage: Buffer;
+  blindingKey: Buffer;
+  address: string;
+  tree: Types.SwapTree;
+};

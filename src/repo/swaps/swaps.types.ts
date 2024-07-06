@@ -35,14 +35,10 @@ export type BoltzReverseRequestType = {
   to: string;
   preimageHash: string;
   claimPublicKey: string;
-  claimAddress: string;
-  invoiceAmount: 0;
-  onchainAmount: 0;
-  pairHash: string;
+  invoiceAmount: number;
   referralId: string;
   address: string;
-  addressSignature: string;
-  claimCovenant: false;
+  claimCovenant: boolean;
 };
 
 export type AccountSwapRequestType =
@@ -56,7 +52,10 @@ export type AccountSwapRequestType =
   | {
       provider: SwapProvider.BOLTZ;
       type: BoltzSwapType.REVERSE;
-      payload: BoltzReverseRequestType;
+      payload: BoltzReverseRequestType & {
+        preimage: string;
+        privateKey: string;
+      };
     }
   | {
       provider: SwapProvider.SIDESHIFT;

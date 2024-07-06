@@ -15,6 +15,7 @@ import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import {
+  isLnUrlError,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from 'src/libs/lnurl/lnurl.types';
@@ -337,19 +338,16 @@ export class PayService {
             case `${PaymentOptionCode.USDT}-${PaymentOptionNetwork.LIQUID}`: {
               const [user] = money_address.split('@');
 
-              const [result, chainError] = await toWithError(
-                this.lnurlService.getLnUrlChainResponse({
-                  account: user,
-                  amount,
-                  currency: code,
-                  network,
-                }),
-              );
+              const result = await this.lnurlService.getLnUrlChainResponse({
+                account: user,
+                amount,
+                currency: code,
+                network,
+              });
 
-              if (chainError || !result.onchain?.address) {
+              if (isLnUrlError(result) || !result.onchain?.address) {
                 this.logger.error('Error processing payment', {
                   result,
-                  chainError,
                 });
                 throw new Error('Error processing payment');
               }
@@ -363,7 +361,7 @@ export class PayService {
                 }),
               );
 
-              if (chainError || !onchainInfo) {
+              if (onchainError || !onchainInfo) {
                 this.logger.error('Error processing payment', {
                   onchainInfo,
                   onchainError,

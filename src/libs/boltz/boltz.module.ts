@@ -14,6 +14,6 @@ import { TransactionClaimPendingService } from './handlers/transactionClaimPendi
     TransactionClaimPendingService,
     BoltzService,
   ],
-  exports: [BoltzRestApi, BoltzWsService, BoltzService],
+  exports: [BoltzRestApi, BoltzService],
 })
 export class BoltzRestModule {}

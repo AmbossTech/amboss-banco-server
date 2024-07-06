@@ -36,10 +36,13 @@ export class BoltzWsService implements OnApplicationBootstrap {
     this.startSubscription();
   }
 
-  async subscribeToSwap(ids: string[]) {
+  subscribeToSwap(ids: string[]) {
     if (!this.webSocket) {
-      throw new Error('Websocket connection is not active');
+      this.logger.error('Websocket connection is not active');
+      return;
     }
+
+    this.logger.info('Subscribing to new Boltz swaps', { ids });
 
     this.webSocket.send(
       JSON.stringify({
@@ -82,13 +85,9 @@ export class BoltzWsService implements OnApplicationBootstrap {
                     })
                     .filter(Boolean);
 
-                  if (!!swapIds.length) {
-                    this.logger.info('Subscribing to pending swaps...', {
-                      ids: swapIds,
-                    });
+                  if (!swapIds.length) return;
 
-                    this.subscribeToSwap(swapIds);
-                  }
+                  this.subscribeToSwap(swapIds);
                 });
 
                 this.webSocket.on('message', async (rawMsg) => {
@@ -101,8 +100,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
                   await eachSeries(
                     msg.args,
                     async (arg: { id: string; status: string }) => {
-                      const swap = getPendingSwaps.find(
-                        (s) => s.response.payload.id === arg.id,
+                      const swap = await this.swapsRepo.getBoltzSwapByBoltzId(
+                        arg.id,
                       );
 
                       if (!swap) {
@@ -123,11 +122,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
                         }
 
                         case 'swap.expired':
+                        case 'invoice.expired':
                         case 'invoice.failedToPay':
+                        case 'transaction.failed':
+                        case 'transaction.refunded':
+                        case 'transaction.lockupFailed':
                           this.logger.debug('Swap completed unsuccessfully');
                           await this.swapsRepo.markCompleted(swap.id);
                           break;
 
+                        case 'invoice.settled':
                         case 'transaction.claimed':
                           this.logger.debug('Swap successful');
                           await this.swapsRepo.markCompleted(swap.id);
