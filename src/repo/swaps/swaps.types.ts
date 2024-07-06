@@ -52,7 +52,9 @@ export type AccountSwapRequestType =
   | {
       provider: SwapProvider.BOLTZ;
       type: BoltzSwapType.REVERSE;
-      payload: BoltzReverseRequestType;
+      payload: BoltzReverseRequestType & {
+        preimage: string;
+      };
     }
   | {
       provider: SwapProvider.SIDESHIFT;

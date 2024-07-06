@@ -111,7 +111,10 @@ export class BoltzService {
         provider: SwapProvider.BOLTZ,
         type: BoltzSwapType.REVERSE,
 
-        payload: request,
+        payload: {
+          ...request,
+          preimage: preimage.toString('hex'),
+        },
       },
       {
         provider: SwapProvider.BOLTZ,
