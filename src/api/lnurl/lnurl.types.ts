@@ -3,7 +3,12 @@ import {
   BoltzReverseSwapResponseType,
   SwapReverseInfoType,
 } from 'src/libs/boltz/boltz.types';
+import { LnUrlResponseSchemaType } from 'src/libs/lnurl/lnurl.types';
 import { z } from 'zod';
+
+type NoUndefinedField<T> = {
+  [P in keyof T]-?: NoUndefinedField<NonNullable<T[P]>>;
+};
 
 export type CallbackParams = {
   account: string | undefined;
@@ -13,9 +18,9 @@ export type CallbackParams = {
 };
 
 export type CallbackHandlerParams = Omit<
-  CallbackParams,
-  'account' | 'amount' | 'currency'
-> & { account: string; amount: number; currency: string };
+  NoUndefinedField<CallbackParams>,
+  'amount'
+> & { amount: number };
 
 export type AccountCurrency = {
   code: string;
@@ -46,19 +51,11 @@ export const MessageBodySchema = z.object({
 
 export type GetLnUrlResponseAutoType = {
   checkCurrency: AccountCurrency;
-  createPayload: {
-    pr: string;
-    routes: [];
-    onchain: { network: string; address: string; bip21: string };
-  };
+  createPayload: LnUrlResponseSchemaType;
 };
 
 export type GetLnUrlInvoiceAutoType = {
   createSwap: BoltzReverseSwapResponseType;
   checkAmount: number;
-  createPayload: {
-    pr: string;
-    routes: [];
-    onchain?: { network: string; address: string; bip21: string };
-  };
+  createPayload: LnUrlResponseSchemaType;
 };

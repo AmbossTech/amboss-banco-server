@@ -32,8 +32,8 @@ import { RedisService } from '../redis/redis.service';
 import {
   LnUrlInfoSchema,
   LnUrlInfoSchemaType,
+  LnUrlResponseSchemaType,
   LnUrlResultSchema,
-  LnUrlResultSchemaType,
   PaymentOptionCode,
   PaymentOptionNetwork,
 } from './lnurl.types';
@@ -154,7 +154,7 @@ export class LnurlService {
 
   async getLnUrlChainResponse(
     props: CallbackHandlerParams,
-  ): Promise<LnUrlResultSchemaType> {
+  ): Promise<LnUrlResponseSchemaType> {
     const { account, amount } = props;
 
     return auto<GetLnUrlResponseAutoType>({
@@ -162,21 +162,11 @@ export class LnurlService {
         const currencies = await this.getLnUrlCurrencies(account);
 
         if (!props.network) {
-          throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: 'A network needs to be provided',
-            }),
-          );
+          throw new Error('A network needs to be provided');
         }
 
         if (!currencies.length) {
-          throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: 'No currencies are available',
-            }),
-          );
+          throw new Error('No currencies are available');
         }
 
         const foundCurrency = currencies.find((c) => {
@@ -185,10 +175,7 @@ export class LnurlService {
 
         if (!foundCurrency) {
           throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: `Currency ${props.currency} on network ${props.network} is not available`,
-            }),
+            `Currency ${props.currency} on network ${props.network} is not available`,
           );
         }
 
@@ -197,7 +184,7 @@ export class LnurlService {
 
       createPayload: [
         'checkCurrency',
-        async ({ checkCurrency }) => {
+        async ({ checkCurrency }): Promise<LnUrlResponseSchemaType> => {
           const descriptor = this.cryptoService.decryptString(
             checkCurrency.wallet_account.details.local_protected_descriptor,
           );
@@ -232,12 +219,19 @@ export class LnurlService {
       .then((result) => {
         return result.createPayload;
       })
-      .catch((err) => {
-        return err.message;
+      .catch((error) => {
+        this.logger.error('Error getting lnurl onchain response', { error });
+        return {
+          status: 'ERROR',
+          reason: error.message,
+        };
       });
   }
 
-  async getLnUrlInvoiceResponse(account: string, amount: number) {
+  async getLnUrlInvoiceResponse(
+    account: string,
+    amount: number,
+  ): Promise<LnUrlResponseSchemaType> {
     return auto<GetLnUrlInvoiceAutoType>({
       checkAmount: async () => {
         const boltzInfo = await this.boltzService.getReverseSwapInfo();
@@ -246,40 +240,40 @@ export class LnurlService {
 
         if (maximal < amount) {
           throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: `Amount ${amount} greater than maximum of ${maximal}`,
-            }),
+            `Amount ${amount} greater than maximum of ${maximal}`,
           );
         }
 
         if (minimal > amount) {
           throw new Error(
-            JSON.stringify({
-              status: 'ERROR',
-              reason: `Amount ${amount} smaller than minimum of ${minimal}`,
-            }),
+            `Amount ${amount} smaller than minimum of ${minimal}`,
           );
         }
 
         return amount;
       },
+
       createSwap: [
         'checkAmount',
         async ({ checkAmount }) => {
           const accountWallets =
             await this.walletRepo.getWalletByLnAddress(account);
+
           const liquidWalletAccounts =
             accountWallets?.wallet.wallet_account.filter(
               (w) => w.details.type === WalletAccountType.LIQUID,
             );
+
           if (!liquidWalletAccounts?.length) {
             throw new Error(`No wallet available`);
           }
+
           const walletAcc = liquidWalletAccounts[0];
+
           const descriptor = this.cryptoService.decryptString(
             walletAcc.details.local_protected_descriptor,
           );
+
           const address =
             await this.liquidService.getOnchainAddress(descriptor);
 
@@ -290,6 +284,7 @@ export class LnurlService {
           );
         },
       ],
+
       createPayload: [
         'createSwap',
         async ({
@@ -303,46 +298,57 @@ export class LnurlService {
           };
         },
       ],
-    }).then((result) => result.createPayload);
+    })
+      .then((result) => result.createPayload)
+      .catch((error) => {
+        this.logger.error('Error getting lnurl invoice response', { error });
+        return {
+          status: 'ERROR',
+          reason: error.message,
+        };
+      });
   }
 
   async getLnUrlResponse(props: CallbackParams): Promise<string> {
     if (!props.account) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No account provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No account provided',
+      });
     }
 
     const account = props.account.toLowerCase();
 
     if (!props.amount) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No amount provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No amount provided',
+      });
     }
 
     const amount = Number(props.amount);
 
     if (isNaN(amount)) {
-      throw new Error(
-        JSON.stringify({
-          status: 'ERROR',
-          reason: 'No amount provided',
-        }),
-      );
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No amount provided',
+      });
     }
 
     if (!!props.currency) {
+      if (!props.network) {
+        throw new Error(
+          JSON.stringify({
+            status: 'ERROR',
+            reason: 'A network needs to be provided',
+          }),
+        );
+      }
+
       const response = await this.getLnUrlChainResponse({
-        ...props,
         account,
         amount,
+        network: props.network,
         currency: props.currency,
       });
 

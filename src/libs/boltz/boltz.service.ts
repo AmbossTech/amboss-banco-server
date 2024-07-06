@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,9 +12,13 @@ import {
   BoltzSwapType,
   SwapProvider,
 } from 'src/repo/swaps/swaps.types';
+import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import * as ecc from 'tiny-secp256k1';
 
+import { CustomLogger, Logger } from '../logging';
 import { CovenantParams } from './boltz.types';
+
+const ECPair = ECPairFactory(ecc);
 
 @Injectable()
 export class BoltzService {
@@ -24,12 +28,13 @@ export class BoltzService {
     private boltzRest: BoltzRestApi,
     private swapRepo: SwapsRepoService,
     private configService: ConfigService,
+    @Logger('BoltzService') private logger: CustomLogger,
   ) {
     this.covclaimUrl = this.configService.getOrThrow('urls.covclaim');
   }
 
   async createSubmarineSwap(invoice: string, wallet_account_id: string) {
-    const keys = ECPairFactory(ecc).makeRandom();
+    const keys = ECPair.makeRandom();
 
     const request: BoltzSubmarineRequestType = {
       invoice,
@@ -68,7 +73,7 @@ export class BoltzService {
     wallet_account_id: string,
   ) {
     const preimage = randomBytes(32);
-    const keys = ECPairFactory(ecc).makeRandom();
+    const keys = ECPair.makeRandom();
 
     const request: BoltzReverseRequestType = {
       address,
@@ -76,7 +81,7 @@ export class BoltzService {
       to: 'L-BTC',
       claimCovenant: true,
       invoiceAmount: amount,
-      preimageHash: createHash('sha256').update(preimage).digest('hex'),
+      preimageHash: getSHA256Hash(preimage),
       claimPublicKey: keys.publicKey.toString('hex'),
       referralId: 'AMBOSS',
     };
@@ -100,9 +105,7 @@ export class BoltzService {
         provider: SwapProvider.BOLTZ,
         type: BoltzSwapType.REVERSE,
 
-        payload: {
-          ...request,
-        },
+        payload: request,
       },
       {
         provider: SwapProvider.BOLTZ,
@@ -135,6 +138,6 @@ export class BoltzService {
         'Content-Type': 'application/json',
       },
     });
-    console.log({ covRes: await res.text() });
+    this.logger.info('Registered Convenant', { covRes: await res.text() });
   }
 }

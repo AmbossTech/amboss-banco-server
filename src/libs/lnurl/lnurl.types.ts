@@ -32,6 +32,7 @@ export type LnUrlInfoSchemaType = z.infer<typeof LnUrlInfoSchema>;
 
 export const LnUrlResultSchema = z.object({
   pr: z.string(),
+  routes: z.array(z.string()),
   onchain: z
     .object({
       currency: z.string(),
@@ -42,4 +43,19 @@ export const LnUrlResultSchema = z.object({
     .optional(),
 });
 
-export type LnUrlResultSchemaType = z.infer<typeof LnUrlResultSchema>;
+const LnUrlErrorSchema = z.object({
+  status: z.literal('ERROR'),
+  reason: z.string(),
+});
+
+type LnUrlErrorSchemaType = z.infer<typeof LnUrlErrorSchema>;
+
+export const LnUrlResponse = z.union([LnUrlResultSchema, LnUrlErrorSchema]);
+
+export type LnUrlResponseSchemaType = z.infer<typeof LnUrlResponse>;
+
+export const isLnUrlError = (
+  result: unknown,
+): result is LnUrlErrorSchemaType => {
+  return (result as any)['status'] === 'ERROR';
+};
