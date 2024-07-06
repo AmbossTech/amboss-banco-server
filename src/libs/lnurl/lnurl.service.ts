@@ -83,8 +83,8 @@ export class LnurlService {
 
           return {
             callback: `http://${domains[0]}/lnurlp/${account}`,
-            minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal,
-            maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal,
+            minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal * 1000,
+            maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal * 1000,
             metadata: JSON.stringify([
               ['text/plain', `Payment to ${account}`],
               ['text/identifier', `${account}@${domains[0]}`],
