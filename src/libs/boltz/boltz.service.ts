@@ -114,6 +114,7 @@ export class BoltzService {
         payload: {
           ...request,
           preimage: preimage.toString('hex'),
+          privateKey: keys.privateKey?.toString('hex') || '',
         },
       },
       {

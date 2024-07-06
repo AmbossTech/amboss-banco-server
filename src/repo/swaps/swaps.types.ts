@@ -54,6 +54,7 @@ export type AccountSwapRequestType =
       type: BoltzSwapType.REVERSE;
       payload: BoltzReverseRequestType & {
         preimage: string;
+        privateKey: string;
       };
     }
   | {
