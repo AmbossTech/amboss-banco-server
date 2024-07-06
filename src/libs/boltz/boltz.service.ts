@@ -148,6 +148,7 @@ export class BoltzService {
         'Content-Type': 'application/json',
       },
     });
+
     this.logger.info('Registered Convenant', { covRes: await res.text() });
   }
 }

@@ -355,7 +355,11 @@ export class LnurlService {
       return JSON.stringify(response);
     }
 
-    const response = await this.getLnUrlInvoiceResponse(account, amount);
+    // The amount that comes in through LNURL for Lightning is in millisatoshis
+    const response = await this.getLnUrlInvoiceResponse(
+      account,
+      Math.ceil(amount / 1000),
+    );
 
     return JSON.stringify(response);
   }
