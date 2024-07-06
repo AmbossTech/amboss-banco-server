@@ -17,6 +17,7 @@ import * as ecc from 'tiny-secp256k1';
 
 import { CustomLogger, Logger } from '../logging';
 import { CovenantParams } from './boltz.types';
+import { BoltzWsService } from './boltzWs.service';
 
 const ECPair = ECPairFactory(ecc);
 
@@ -26,6 +27,7 @@ export class BoltzService {
 
   constructor(
     private boltzRest: BoltzRestApi,
+    private boltzWs: BoltzWsService,
     private swapRepo: SwapsRepoService,
     private configService: ConfigService,
     @Logger('BoltzService') private logger: CustomLogger,
@@ -45,6 +47,8 @@ export class BoltzService {
     };
 
     const response = await this.boltzRest.createSubmarineSwap(request);
+
+    this.boltzWs.subscribeToSwap([response.id]);
 
     await this.swapRepo.createSwap(
       wallet_account_id,
@@ -87,6 +91,8 @@ export class BoltzService {
     };
 
     const response = await this.boltzRest.createReverseSwap(request);
+
+    this.boltzWs.subscribeToSwap([response.id]);
 
     const covParams = {
       address,

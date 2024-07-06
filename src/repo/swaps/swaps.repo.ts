@@ -70,6 +70,27 @@ export class SwapsRepoService {
     });
   }
 
+  async getBoltzSwapByBoltzId(id: string) {
+    return this.prisma.wallet_account_swap.findFirst({
+      where: {
+        AND: [
+          {
+            response: {
+              path: ['provider'],
+              equals: SwapProvider.BOLTZ,
+            },
+          },
+          {
+            response: {
+              path: ['payload', 'id'],
+              equals: id,
+            },
+          },
+        ],
+      },
+    });
+  }
+
   async createSwap(
     wallet_account_id: string,
     request: AccountSwapRequestType,
