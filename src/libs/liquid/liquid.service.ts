@@ -129,7 +129,8 @@ export class LiquidService {
             'urls.esplora.waterfall',
           );
 
-          const client = new EsploraClient(liquidEsploraUrl, true);
+          const network = Network.mainnet();
+          const client = new EsploraClient(network, liquidEsploraUrl, true);
 
           const start = new Date();
           this.logger.debug('Scan start time', { start: start.toISOString() });
