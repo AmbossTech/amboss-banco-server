@@ -137,6 +137,12 @@ export class BoltzWsService implements OnApplicationBootstrap {
                           await this.swapsRepo.markCompleted(swap.id);
                           break;
 
+                        case 'transaction.mempool':
+                        case 'transaction.confirmed':
+                          this.logger.debug('Creating claim transaction');
+                          await this.tcpService.handleReverse(swap, arg);
+                          break;
+
                         default:
                           this.logger.debug('Unhandled message', { msg });
                           break;
