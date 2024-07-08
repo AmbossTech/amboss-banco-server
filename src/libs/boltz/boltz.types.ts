@@ -120,6 +120,10 @@ export const boltzPartialSigResponse = z.object({
   partialSignature: z.string(),
 });
 
+export const boltzBroadcastTxResponse = z.object({
+  id: z.string(),
+});
+
 export type CovenantParams = {
   claimPublicKey: Buffer;
   refundPublicKey: Buffer;

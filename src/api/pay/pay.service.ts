@@ -8,6 +8,7 @@ import { BoltzService } from 'src/libs/boltz/boltz.service';
 import {
   checkMagicRouteHintInfo,
   decodeBip21Url,
+  DEFAULT_LIQUID_FEE_MSAT,
   findMagicRoutingHint,
 } from 'src/libs/boltz/boltz.utils';
 import { ContactService } from 'src/libs/contact/contact.service';
@@ -144,7 +145,7 @@ export class PayService {
           );
 
           const pset = await this.liquidService.createPset(descriptor, {
-            fee_rate: 100,
+            fee_rate: DEFAULT_LIQUID_FEE_MSAT,
             recipients: [
               {
                 address: info.address,
@@ -185,7 +186,7 @@ export class PayService {
     );
 
     const pset = await this.liquidService.createPset(descriptor, {
-      fee_rate: 100,
+      fee_rate: DEFAULT_LIQUID_FEE_MSAT,
       recipients: [
         {
           address,

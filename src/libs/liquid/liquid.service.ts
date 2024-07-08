@@ -15,7 +15,8 @@ import {
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
-import { EsploraLiquidService } from '../esplora/liquid.service';
+import { BoltzRestApi } from '../boltz/boltz.rest';
+import { DEFAULT_LIQUID_FEE_MSAT } from '../boltz/boltz.utils';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
@@ -31,8 +32,8 @@ const getBlockedAddressKey = (address: string) =>
 export class LiquidService {
   constructor(
     private redis: RedisService,
+    private boltz: BoltzRestApi,
     private config: ConfigService,
-    private esploraLiquid: EsploraLiquidService,
     @Logger('LiquidService') private logger: CustomLogger,
   ) {}
 
@@ -66,7 +67,7 @@ export class LiquidService {
       });
     }
 
-    txBuilder = txBuilder.feeRate(input.fee_rate);
+    txBuilder = txBuilder.feeRate(input.fee_rate || DEFAULT_LIQUID_FEE_MSAT);
 
     const wollet = await this.getUpdatedWallet(descriptor, 'partial');
     return txBuilder.finish(wollet);
@@ -169,43 +170,10 @@ export class LiquidService {
 
     const tx_hex = pset.extractTx().toString();
 
-    const tx_id = await this.esploraLiquid.postTransactionHex(tx_hex);
+    const tx = await this.boltz.broadcastTx(tx_hex);
 
-    return tx_id;
+    return tx.id;
   }
-
-  // async getBalances(descriptor: string): Promise<Map<string, number>> {
-  //   const wollet = await this.getUpdatedWallet(descriptor);
-
-  //   return wollet.balance();
-  // }
-
-  // async getNewAddress(descriptor: string) {
-  //   await this.getBalances(descriptor);
-
-  //   const wollet = await this.getUpdatedWallet(descriptor);
-
-  //   const nextAddress = wollet
-  //     .address()
-  //     .address()
-  //     .toUnconfidential()
-  //     .toString();
-
-  //   console.log(nextAddress);
-
-  //   const addressesToCheck = Array.from(Array(10).keys()).map((i) => {
-  //     return wollet.address(i).address().toUnconfidential().toString();
-  //   });
-  //   console.log(addressesToCheck);
-
-  //   await this.getTransactions(descriptor);
-  // }
-
-  // async getTransactions(descriptor: string) {
-  //   const wollet = await this.getUpdatedWallet(descriptor);
-  //   const txs = wollet.transactions();
-  //   return orderBy(txs, (t) => t.timestamp(), 'desc');
-  // }
 
   async getOnchainAddress(
     descriptor: string,

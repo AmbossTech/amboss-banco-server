@@ -125,11 +125,11 @@ export class LiquidRecipientInput {
 
 @InputType()
 export class PayLiquidAddressInput {
-  @Field({ nullable: true })
-  send_all_lbtc?: boolean;
+  @Field(() => Boolean, { nullable: true })
+  send_all_lbtc?: boolean | null;
 
-  @Field()
-  fee_rate: number;
+  @Field(() => Number, { nullable: true })
+  fee_rate?: number | null;
 
   @Field(() => [LiquidRecipientInput])
   recipients: LiquidRecipientInput[];

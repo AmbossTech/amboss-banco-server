@@ -166,7 +166,7 @@ input PayInput {
 }
 
 input PayLiquidAddressInput {
-  fee_rate: Float!
+  fee_rate: Float
   recipients: [LiquidRecipientInput!]!
   send_all_lbtc: Boolean
 }

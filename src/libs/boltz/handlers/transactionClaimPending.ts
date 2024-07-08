@@ -224,6 +224,6 @@ export class TransactionClaimPendingService {
     claimTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx, 'L-BTC');
+    await this.boltzRest.broadcastTx(claimTx.toHex());
   }
 }

@@ -10,6 +10,7 @@ import { fetch } from 'undici';
 
 import { RedisService } from '../redis/redis.service';
 import {
+  boltzBroadcastTxResponse,
   boltzError,
   boltzMagicRouteHint,
   boltzPartialSigResponse,
@@ -176,15 +177,13 @@ export class BoltzRestApi {
     return boltzPartialSigResponse.parse(body);
   }
 
-  async broadcastTx(tx: Transaction, chain: 'L-BTC') {
+  async broadcastTx(hex: string, chain: 'L-BTC' = 'L-BTC') {
     const result = await fetch(`${this.apiUrl}chain/${chain}/transaction`, {
       method: 'POST',
       headers: {
         'Content-type': 'application/json',
       },
-      body: JSON.stringify({
-        hex: tx.toHex(),
-      }),
+      body: JSON.stringify({ hex }),
     });
 
     const body = await result.json();
@@ -194,5 +193,7 @@ export class BoltzRestApi {
     if (parsedError.success) {
       throw new Error(parsedError.data.error);
     }
+
+    return boltzBroadcastTxResponse.parse(body);
   }
 }

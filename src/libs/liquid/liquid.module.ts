@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 
-import { EsploraServiceModule } from '../esplora/esplora.module';
+import { BoltzRestModule } from '../boltz/boltz.module';
 import { LiquidService } from './liquid.service';
 
 @Module({
-  imports: [EsploraServiceModule],
+  imports: [BoltzRestModule],
   providers: [LiquidService],
   exports: [LiquidService],
 })

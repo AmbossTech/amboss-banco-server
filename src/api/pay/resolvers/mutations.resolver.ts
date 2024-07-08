@@ -8,6 +8,7 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { DEFAULT_LIQUID_FEE_MSAT } from 'src/libs/boltz/boltz.utils';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
@@ -145,7 +146,7 @@ export class PayMutationsResolver {
     const paymentAmount = +swap.depositAmount * 100_000_000;
 
     const { base_64 } = await this.payService.payLiquidAddress(wallet_account, {
-      fee_rate: 100,
+      fee_rate: DEFAULT_LIQUID_FEE_MSAT,
       recipients: [
         {
           address: swap.depositAddress,
