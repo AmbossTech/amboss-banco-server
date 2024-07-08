@@ -78,10 +78,12 @@ export const boltzReverseSwapResponse = z.object({
       version: z.number(),
       output: z.string(),
     }),
-    covenantClaimLeaf: z.object({
-      version: z.number(),
-      output: z.string(),
-    }),
+    covenantClaimLeaf: z
+      .object({
+        version: z.number(),
+        output: z.string(),
+      })
+      .optional(),
   }),
   lockupAddress: z.string(),
   refundPublicKey: z.string(),
@@ -112,6 +114,11 @@ export const boltzMagicRouteHint = z.object({
 });
 
 export type BoltzMagicRouteHintType = z.infer<typeof boltzMagicRouteHint>;
+
+export const boltzPartialSigResponse = z.object({
+  pubNonce: z.string(),
+  partialSignature: z.string(),
+});
 
 export type CovenantParams = {
   claimPublicKey: Buffer;

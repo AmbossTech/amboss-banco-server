@@ -75,6 +75,7 @@ export class BoltzService {
     address: string,
     amount: number,
     wallet_account_id: string,
+    covenant = true,
   ) {
     const preimage = randomBytes(32);
     const keys = ECPair.makeRandom();
@@ -83,7 +84,7 @@ export class BoltzService {
       address,
       from: 'BTC',
       to: 'L-BTC',
-      claimCovenant: true,
+      claimCovenant: covenant,
       invoiceAmount: amount,
       preimageHash: getSHA256Hash(preimage),
       claimPublicKey: keys.publicKey.toString('hex'),
@@ -92,18 +93,17 @@ export class BoltzService {
 
     const response = await this.boltzRest.createReverseSwap(request);
 
-    this.boltzWs.subscribeToSwap([response.id]);
-
-    const covParams = {
-      address,
-      preimage,
-      claimPublicKey: keys.publicKey,
-      blindingKey: Buffer.from(response.blindingKey, 'hex'),
-      refundPublicKey: Buffer.from(response.refundPublicKey, 'hex'),
-      tree: SwapTreeSerializer.deserializeSwapTree(response.swapTree),
-    };
-
-    await this.registerCovenant(covParams);
+    if (covenant) {
+      const covParams = {
+        address,
+        preimage,
+        claimPublicKey: keys.publicKey,
+        blindingKey: Buffer.from(response.blindingKey, 'hex'),
+        refundPublicKey: Buffer.from(response.refundPublicKey, 'hex'),
+        tree: SwapTreeSerializer.deserializeSwapTree(response.swapTree),
+      };
+      await this.registerCovenant(covParams);
+    }
 
     await this.swapRepo.createSwap(
       wallet_account_id,
@@ -123,6 +123,8 @@ export class BoltzService {
         payload: response,
       },
     );
+
+    this.boltzWs.subscribeToSwap([response.id]);
 
     return response;
   }

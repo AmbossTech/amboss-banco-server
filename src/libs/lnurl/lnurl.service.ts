@@ -281,6 +281,7 @@ export class LnurlService {
             address.address().toString(),
             checkAmount,
             walletAcc.id,
+            false,
           );
         },
       ],

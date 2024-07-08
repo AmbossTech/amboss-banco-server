@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Musig } from 'boltz-core';
+import { Transaction } from 'liquidjs-lib';
 import {
   BoltzReverseRequestType,
   BoltzSubmarineRequestType,
@@ -11,6 +12,7 @@ import { RedisService } from '../redis/redis.service';
 import {
   boltzError,
   boltzMagicRouteHint,
+  boltzPartialSigResponse,
   boltzReverseSwapResponse,
   boltzSubmarineSwapClaimResponse,
   boltzSubmarineSwapResponse,
@@ -142,5 +144,55 @@ export class BoltzRestApi {
     }
 
     return boltzSubmarineSwapClaimResponse.parse(body);
+  }
+
+  async getSigReverseSwap(
+    swapId: string,
+    claimTx: Transaction,
+    preimage: Buffer,
+    musig: Musig,
+  ) {
+    const result = await fetch(`${this.apiUrl}swap/reverse/${swapId}/claim`, {
+      method: 'POST',
+      body: JSON.stringify({
+        index: 0,
+        transaction: claimTx.toHex(),
+        preimage: preimage.toString('hex'),
+        pubNonce: Buffer.from(musig.getPublicNonce()).toString('hex'),
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzPartialSigResponse.parse(body);
+  }
+
+  async broadcastTx(tx: Transaction, chain: 'L-BTC') {
+    const result = await fetch(`${this.apiUrl}chain/${chain}/transaction`, {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        hex: tx.toHex(),
+      }),
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      throw new Error(parsedError.data.error);
+    }
   }
 }

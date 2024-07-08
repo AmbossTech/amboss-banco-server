@@ -51,6 +51,7 @@
     "ecpair": "^2.1.0",
     "graphql": "^16.9.0",
     "js-yaml": "^4.1.0",
+    "liquidjs-lib": "^6.0.2-liquid.35",
     "lodash": "^4.17.21",
     "lwk_wasm": "file:lwk_wasm-0.7.0.tgz",
     "nostr-tools": "^2.7.0",
