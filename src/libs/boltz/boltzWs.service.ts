@@ -2,7 +2,7 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { auto, eachSeries, forever } from 'async';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
-import { SwapProvider } from 'src/repo/swaps/swaps.types';
+import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
 import ws from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
@@ -108,6 +108,13 @@ export class BoltzWsService implements OnApplicationBootstrap {
                         throw new Error('Received message for unknown swap');
                       }
 
+                      if (
+                        swap.request.provider !== SwapProvider.BOLTZ ||
+                        swap.response.provider !== SwapProvider.BOLTZ
+                      ) {
+                        return;
+                      }
+
                       switch (arg.status) {
                         // "invoice.set" means Boltz is waiting for an onchain transaction to be sent
                         case 'invoice.set': {
@@ -139,7 +146,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                         case 'transaction.mempool':
                         case 'transaction.confirmed':
-                          this.logger.debug('Creating claim transaction');
+                          this.logger.debug('Creating claim transaction', {
+                            status: arg.status,
+                          });
+                          if (
+                            swap.request.type == BoltzSwapType.REVERSE &&
+                            swap.request.payload.claimCovenant
+                          ) {
+                            this.logger.debug('Ignoring covenant');
+                            return;
+                          }
                           await this.tcpService.handleReverse(swap, arg);
                           break;
 

@@ -93,8 +93,6 @@ export class BoltzService {
 
     const response = await this.boltzRest.createReverseSwap(request);
 
-    this.boltzWs.subscribeToSwap([response.id]);
-
     if (covenant) {
       const covParams = {
         address,
@@ -125,6 +123,8 @@ export class BoltzService {
         payload: response,
       },
     );
+
+    this.boltzWs.subscribeToSwap([response.id]);
 
     return response;
   }
