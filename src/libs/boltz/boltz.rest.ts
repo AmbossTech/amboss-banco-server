@@ -8,6 +8,7 @@ import {
 } from 'src/repo/swaps/swaps.types';
 import { fetch } from 'undici';
 
+import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import {
   boltzBroadcastTxResponse,
@@ -30,6 +31,7 @@ export class BoltzRestApi {
   constructor(
     private redis: RedisService,
     private configService: ConfigService,
+    @Logger('BoltzRestApi') private logger: CustomLogger,
   ) {
     this.apiUrl = configService.getOrThrow('urls.boltz');
   }
@@ -88,6 +90,7 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error creating submarine swap', { parsedError, body });
       throw new Error(parsedError.data.error);
     }
 
@@ -106,6 +109,7 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error creating reverse swap', { parsedError, body });
       throw new Error(parsedError.data.error);
     }
 
@@ -120,6 +124,10 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error getting submarine claim info', {
+        parsedError,
+        body,
+      });
       throw new Error(parsedError.data.error);
     }
 
@@ -141,6 +149,10 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error posting submarine claim info', {
+        parsedError,
+        body,
+      });
       throw new Error(parsedError.data.error);
     }
 
@@ -171,6 +183,10 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error getting reverse swap claim info', {
+        parsedError,
+        body,
+      });
       throw new Error(parsedError.data.error);
     }
 
@@ -191,6 +207,10 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
+      this.logger.error('Error broadcasting transaction', {
+        parsedError,
+        body,
+      });
       throw new Error(parsedError.data.error);
     }
 
