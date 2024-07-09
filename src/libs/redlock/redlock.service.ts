@@ -56,7 +56,7 @@ export class RedlockService {
             error.message ===
             'The operation was unable to achieve a quorum during its retry window.'
           )
-            return;
+            throw new Error(`Resource locked`);
         }
 
         this.logger.error('Redlock Error', { error });
