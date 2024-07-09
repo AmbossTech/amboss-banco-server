@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { FiatModule } from 'src/libs/fiat/fiat.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
+import { RedlockModule } from 'src/libs/redlock/redlock.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
@@ -34,6 +35,7 @@ import {
     LiquidModule,
     FiatModule,
     SideShiftModule,
+    RedlockModule,
   ],
   providers: [
     MainWalletMutationsResolver,

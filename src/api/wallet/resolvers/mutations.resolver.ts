@@ -12,6 +12,7 @@ import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
   SideShiftCoin,
@@ -38,6 +39,7 @@ export class WalletMutationsResolver {
     private walletService: WalletService,
     private sideShiftService: SideShiftService,
     private cryptoService: CryptoService,
+    private redlockService: RedlockService,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -46,31 +48,15 @@ export class WalletMutationsResolver {
     @Args('input') input: RefreshWalletInput,
     @CurrentUser() { user_id }: any,
   ) {
-    const wallet = await this.walletRepo.getAccountWallet(
-      user_id,
-      input.wallet_id,
-    );
-
-    if (!wallet) {
-      throw new GraphQLError('Wallet account not found');
+    try {
+      return await this.refreshWallet(input, user_id);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Resource locked') {
+        throw new GraphQLError(`Wallet scan is already in progress`);
+      }
+      this.logger.warn(`Wallet rescan error`, { error });
+      throw new GraphQLError(`An unknown error has occured`);
     }
-
-    if (!wallet.wallet.wallet_account.length) {
-      return;
-    }
-
-    await each(wallet.wallet.wallet_account, async (w) => {
-      const descriptor = this.cryptoService.decryptString(
-        w.details.local_protected_descriptor,
-      );
-
-      await this.liquidService.getUpdatedWallet(
-        descriptor,
-        input.full_scan ? 'full' : 'partial',
-      );
-    });
-
-    return true;
   }
 
   @ResolveField()
@@ -204,6 +190,38 @@ export class WalletMutationsResolver {
     const tx_id = await this.liquidService.broadcastPset(input.signed_pset);
 
     return { tx_id };
+  }
+
+  private async refreshWallet(input: RefreshWalletInput, user_id: string) {
+    const walletScanKey = `walletScan-${input.wallet_id}`;
+
+    return await this.redlockService.using<boolean>(walletScanKey, async () => {
+      const wallet = await this.walletRepo.getAccountWallet(
+        user_id,
+        input.wallet_id,
+      );
+
+      if (!wallet) {
+        throw new GraphQLError('Wallet account not found');
+      }
+
+      if (!wallet.wallet.wallet_account.length) {
+        return true;
+      }
+
+      await each(wallet.wallet.wallet_account, async (w) => {
+        const descriptor = this.cryptoService.decryptString(
+          w.details.local_protected_descriptor,
+        );
+
+        await this.liquidService.getUpdatedWallet(
+          descriptor,
+          input.full_scan ? 'full' : 'partial',
+        );
+      });
+
+      return true;
+    });
   }
 }
 
