@@ -12,6 +12,7 @@ import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
   SideShiftCoin,
@@ -38,6 +39,7 @@ export class WalletMutationsResolver {
     private walletService: WalletService,
     private sideShiftService: SideShiftService,
     private cryptoService: CryptoService,
+    private redlockService: RedlockService,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -46,31 +48,37 @@ export class WalletMutationsResolver {
     @Args('input') input: RefreshWalletInput,
     @CurrentUser() { user_id }: any,
   ) {
-    const wallet = await this.walletRepo.getAccountWallet(
-      user_id,
-      input.wallet_id,
-    );
+    const walletScanKey = `walletScan-${input.wallet_id}`;
 
-    if (!wallet) {
-      throw new GraphQLError('Wallet account not found');
-    }
-
-    if (!wallet.wallet.wallet_account.length) {
-      return;
-    }
-
-    await each(wallet.wallet.wallet_account, async (w) => {
-      const descriptor = this.cryptoService.decryptString(
-        w.details.local_protected_descriptor,
+    return this.redlockService.using<boolean>(walletScanKey, async () => {
+      const wallet = await this.walletRepo.getAccountWallet(
+        user_id,
+        input.wallet_id,
       );
 
-      await this.liquidService.getUpdatedWallet(
-        descriptor,
-        input.full_scan ? 'full' : 'partial',
-      );
+      if (!wallet) {
+        throw new GraphQLError('Wallet account not found');
+      }
+
+      if (!wallet.wallet.wallet_account.length) {
+        return true;
+      }
+
+      await each(wallet.wallet.wallet_account, async (w) => {
+        const descriptor = this.cryptoService.decryptString(
+          w.details.local_protected_descriptor,
+        );
+
+        await this.liquidService.getUpdatedWallet(
+          descriptor,
+          input.full_scan ? 'full' : 'partial',
+        );
+      });
+
+      await new Promise((r) => setTimeout(r, 5_000));
+
+      return true;
     });
-
-    return true;
   }
 
   @ResolveField()
