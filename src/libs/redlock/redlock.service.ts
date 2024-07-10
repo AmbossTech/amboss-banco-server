@@ -38,16 +38,22 @@ export class RedlockService {
     });
   }
 
-  async using<T>(key: string, methodToCall: () => Promise<T>) {
+  async using<T>(key: string, methodToCall: () => Promise<T>): Promise<T> {
     const finalKey = `redlockService-${key}`;
-    await this.redlock
-      .using([finalKey], 10000, async (signal: RedlockAbortSignal) => {
-        await methodToCall();
+    return this.redlock
+      .using(
+        [finalKey],
+        10000,
+        async (signal: RedlockAbortSignal): Promise<T> => {
+          const response = await methodToCall();
 
-        if (signal.aborted) {
-          throw signal.error;
-        }
-      })
+          if (signal.aborted) {
+            throw signal.error;
+          }
+
+          return response;
+        },
+      )
       .catch((error) => {
         if (error instanceof ExecutionError) {
           // Fix for this bug https://github.com/mike-marcacci/node-redlock/issues/168
@@ -60,6 +66,8 @@ export class RedlockService {
         }
 
         this.logger.error('Redlock Error', { error });
+
+        throw new Error(`An unknown error occured`);
       });
   }
 }

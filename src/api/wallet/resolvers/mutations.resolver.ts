@@ -47,7 +47,7 @@ export class WalletMutationsResolver {
   async refresh_wallet(
     @Args('input') input: RefreshWalletInput,
     @CurrentUser() { user_id }: any,
-  ) {
+  ): Promise<boolean> {
     try {
       return await this.refreshWallet(input, user_id);
     } catch (error) {
@@ -192,10 +192,13 @@ export class WalletMutationsResolver {
     return { tx_id };
   }
 
-  private async refreshWallet(input: RefreshWalletInput, user_id: string) {
+  private async refreshWallet(
+    input: RefreshWalletInput,
+    user_id: string,
+  ): Promise<boolean> {
     const walletScanKey = `walletScan-${input.wallet_id}`;
 
-    return await this.redlockService.using<boolean>(walletScanKey, async () => {
+    return this.redlockService.using<boolean>(walletScanKey, async () => {
       const wallet = await this.walletRepo.getAccountWallet(
         user_id,
         input.wallet_id,
