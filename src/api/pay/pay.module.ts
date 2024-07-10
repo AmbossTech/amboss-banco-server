@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
-import { ContactServiceModule } from 'src/libs/contact/contact.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { LnurlModule } from 'src/libs/lnurl/lnurl.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
@@ -24,7 +23,6 @@ import {
     WalletRepoModule,
     BoltzRestModule,
     LiquidModule,
-    ContactServiceModule,
     SideShiftModule,
   ],
   providers: [

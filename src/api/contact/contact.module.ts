@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
 import { ContactServiceModule } from 'src/libs/contact/contact.module';
 import { LnurlModule } from 'src/libs/lnurl/lnurl.module';
 import { ContactRepoModule } from 'src/repo/contact/contact.module';
@@ -16,7 +15,6 @@ import {
 
 @Module({
   imports: [
-    BoltzRestModule,
     ContactServiceModule,
     ContactRepoModule,
     WalletRepoModule,

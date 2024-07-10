@@ -3,7 +3,12 @@ import {
   BoltzReverseSwapResponseType,
   SwapReverseInfoType,
 } from 'src/libs/boltz/boltz.types';
-import { LnUrlResponseSchemaType } from 'src/libs/lnurl/lnurl.types';
+import {
+  LnUrlInfoSchemaType,
+  LnUrlResponseSchemaType,
+  PaymentOptionCode,
+  PaymentOptionNetwork,
+} from 'src/libs/lnurl/lnurl.types';
 import { z } from 'zod';
 
 type NoUndefinedField<T> = {
@@ -23,10 +28,10 @@ export type CallbackHandlerParams = Omit<
 > & { amount: number };
 
 export type AccountCurrency = {
-  code: string;
   name: string;
-  network: string;
   symbol: string;
+  code: PaymentOptionCode;
+  network: PaymentOptionNetwork;
   wallet_account: wallet_account;
   asset_id: string;
   conversion_decimals: number;
@@ -35,7 +40,7 @@ export type AccountCurrency = {
 export type GetLnurlAutoType = {
   getBoltzInfo: SwapReverseInfoType;
   getAccountCurrencies: AccountCurrency[];
-  buildResponse: any;
+  buildResponse: LnUrlInfoSchemaType;
 };
 
 export const LightningAddressPubkeyResponseSchema = z.object({

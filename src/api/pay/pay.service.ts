@@ -11,9 +11,10 @@ import {
   DEFAULT_LIQUID_FEE_MSAT,
   findMagicRoutingHint,
 } from 'src/libs/boltz/boltz.utils';
-import { ContactService } from 'src/libs/contact/contact.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
+import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
+import { LnUrlLocalService } from 'src/libs/lnurl/handlers/local.service';
 import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import {
   isLnUrlError,
@@ -41,8 +42,9 @@ export class PayService {
     private boltzService: BoltzService,
     private lnurlService: LnurlService,
     private liquidService: LiquidService,
-    private contactService: ContactService,
+    private localLnurl: LnUrlLocalService,
     private cryptoService: CryptoService,
+    private isomorphicLnurl: LnUrlIsomorphicService,
     @Logger('PayService') private logger: CustomLogger,
   ) {}
 
@@ -212,7 +214,7 @@ export class PayService {
         PayLightningAddressAuto['getLnAddressInfo']
       > => {
         const [info, error] = await toWithError(
-          this.contactService.getCurrencies(money_address),
+          this.isomorphicLnurl.getCurrencies(money_address),
         );
 
         if (error || !info) {
@@ -309,11 +311,11 @@ export class PayService {
 
           switch (uniqueId) {
             case `${PaymentOptionCode.LIGHTNING}-${PaymentOptionNetwork.BITCOIN}`: {
-              const url = new URL(getLnAddressInfo.info.callback);
-              url.searchParams.set('amount', amount * 1000 + '');
-
               const [addressResult, addressError] = await toWithError(
-                this.lnurlService.getAddressInvoice(url.toString()),
+                this.lnurlService.getAddressInvoice(
+                  getLnAddressInfo.info.callback,
+                  amount,
+                ),
               );
 
               if (addressError || !addressResult.pr) {
@@ -339,7 +341,7 @@ export class PayService {
             case `${PaymentOptionCode.USDT}-${PaymentOptionNetwork.LIQUID}`: {
               const [user] = money_address.split('@');
 
-              const result = await this.lnurlService.getLnUrlChainResponse({
+              const result = await this.localLnurl.getChainResponse({
                 account: user,
                 amount,
                 currency: code,
