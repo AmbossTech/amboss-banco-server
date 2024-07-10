@@ -18,6 +18,9 @@ registerEnumType(PaymentOptionNetwork, { name: 'PaymentOptionNetwork' });
 export class CreateContact {
   @Field()
   id: string;
+
+  @Field()
+  money_address: string;
 }
 
 @ObjectType()
