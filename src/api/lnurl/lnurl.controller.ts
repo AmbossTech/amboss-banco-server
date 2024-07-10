@@ -8,7 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { Public } from 'src/auth/auth.decorators';
-import { LnurlService } from 'src/libs/lnurl/lnurl.service';
+import { LnUrlLocalService } from 'src/libs/lnurl/handlers/local.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 
 import { CallbackParams } from './lnurl.types';
@@ -57,7 +57,7 @@ import { CallbackParams } from './lnurl.types';
 
 @Controller('lnurlp')
 export class LnUrlController {
-  constructor(private lnUrlService: LnurlService) {}
+  constructor(private localLnUrl: LnUrlLocalService) {}
 
   @Public()
   @Get(':account')
@@ -67,7 +67,7 @@ export class LnUrlController {
     @Query()
     query: Omit<CallbackParams, 'account'>,
   ): Promise<string> {
-    return this.lnUrlService.getLnUrlResponse({
+    return this.localLnUrl.getResponse({
       account: params.account,
       ...query,
     });
@@ -89,7 +89,7 @@ export class LnUrlController {
 @Controller('.well-known')
 export class WellKnownController {
   constructor(
-    private lnUrlService: LnurlService,
+    private localLnUrl: LnUrlLocalService,
     private walletRepo: WalletRepoService,
   ) {}
 
@@ -124,7 +124,7 @@ export class WellKnownController {
 
     const account = params.account.toLowerCase();
 
-    const info = await this.lnUrlService.getLnUrlInfo(account);
+    const info = await this.localLnUrl.getInfo(account);
 
     return JSON.stringify(info);
   }

@@ -11,7 +11,7 @@ import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { ConfigSchemaType } from 'src/libs/config/validation';
 import { ContactService } from 'src/libs/contact/contact.service';
-import { LnurlService } from 'src/libs/lnurl/lnurl.service';
+import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
 import { LnUrlCurrencySchemaType } from 'src/libs/lnurl/lnurl.types';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { ContactRepoService } from 'src/repo/contact/contact.repo';
@@ -100,15 +100,14 @@ export class ContactMessageResolver {
 @Resolver(WalletContact)
 export class WalletContactResolver {
   constructor(
-    private lnurlService: LnurlService,
     private contactsRepo: ContactRepoService,
-    private contactService: ContactService,
+    private isomorphicLnurl: LnUrlIsomorphicService,
   ) {}
 
   @ResolveField()
   async encryption_pubkey(@Parent() parent: WalletContactParent) {
     if (!parent.money_address) return null;
-    return this.lnurlService.getAddressPublicKey(parent.money_address);
+    return this.isomorphicLnurl.getPubkey(parent.money_address);
   }
 
   @ResolveField()
@@ -122,7 +121,7 @@ export class WalletContactResolver {
     @Parent() { money_address }: WalletContactParent,
   ): Promise<LnUrlCurrencyType[] | null> {
     if (!money_address) return null;
-    const info = await this.contactService.getCurrencies(money_address);
+    const info = await this.isomorphicLnurl.getCurrencies(money_address);
     return info?.paymentOptions || null;
   }
 }

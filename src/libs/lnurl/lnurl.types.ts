@@ -22,6 +22,7 @@ export type LnUrlCurrencySchemaType = z.infer<typeof LnUrlCurrency>;
 
 export const LnUrlInfoSchema = z.object({
   callback: z.string(),
+  metadata: z.string(),
   maxSendable: z.number(),
   minSendable: z.number(),
   tag: z.literal('payRequest'),
