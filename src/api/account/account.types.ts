@@ -12,6 +12,30 @@ export class UserSwapInfo {
 }
 
 @ObjectType()
+export class ReferralCode {
+  @Field()
+  id: string;
+
+  @Field()
+  code: string;
+
+  @Field()
+  is_available: boolean;
+
+  @Field()
+  current_uses: number;
+
+  @Field()
+  max_allowed_uses: number;
+}
+
+@ObjectType()
+export class AmbossInfo {
+  @Field(() => [ReferralCode], { nullable: true })
+  referral_codes?: ReferralCode[];
+}
+
+@ObjectType()
 export class User {
   @Field()
   id: string;
@@ -24,6 +48,9 @@ export class User {
 
   @Field(() => UserSwapInfo)
   swap_info: UserSwapInfo;
+
+  @Field(() => AmbossInfo)
+  amboss: AmbossInfo;
 }
 
 @ObjectType()

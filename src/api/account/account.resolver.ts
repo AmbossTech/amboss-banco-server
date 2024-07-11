@@ -12,6 +12,7 @@ import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
+import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
@@ -21,8 +22,10 @@ import { AccountRepo } from 'src/repo/account/account.repo';
 
 import { AccountService } from './account.service';
 import {
+  AmbossInfo,
   LoginInput,
   NewAccount,
+  ReferralCode,
   RefreshToken,
   SignUpInput,
   User,
@@ -62,6 +65,31 @@ export class UserResolver {
   @ResolveField()
   async swap_info() {
     return {};
+  }
+
+  @ResolveField()
+  amboss() {
+    return {};
+  }
+}
+
+@Resolver(AmbossInfo)
+export class AmbossInfoResolver {
+  constructor(
+    private ambossService: AmbossService,
+    private accountRepo: AccountRepo,
+  ) {}
+
+  @ResolveField()
+  async referral_codes(
+    @CurrentUser() { user_id }: any,
+  ): Promise<ReferralCode[] | void> {
+    const account = await this.accountRepo.findOneById(user_id);
+    if (!account) {
+      return;
+    }
+
+    return this.ambossService.getReferralCodes(account.email);
   }
 }
 
