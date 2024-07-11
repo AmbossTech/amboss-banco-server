@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { auto } from 'async';
 import {
   AccountCurrency,
-  CallbackHandlerParams,
-  CallbackParams,
+  CallbackLocalHandlerParams,
+  CallbackLocalParams,
   GetLnurlAutoType,
   GetLnUrlInvoiceAutoType,
   GetLnUrlResponseAutoType,
@@ -38,59 +38,52 @@ export class LnUrlLocalService {
     @Logger('LnUrlLocalService') private logger: CustomLogger,
   ) {}
 
-  async getResponse(props: CallbackParams): Promise<string> {
+  async getResponse(
+    props: CallbackLocalParams,
+  ): Promise<LnUrlResponseSchemaType> {
     if (!props.account) {
-      return JSON.stringify({
+      return {
         status: 'ERROR',
         reason: 'No account provided',
-      });
+      };
     }
 
     const account = props.account.toLowerCase();
 
     if (!props.amount) {
-      return JSON.stringify({
+      return {
         status: 'ERROR',
         reason: 'No amount provided',
-      });
+      };
     }
 
     const amount = Number(props.amount);
 
     if (isNaN(amount)) {
-      return JSON.stringify({
+      return {
         status: 'ERROR',
         reason: 'No amount provided',
-      });
+      };
     }
 
     if (!!props.currency) {
       if (!props.network) {
-        throw new Error(
-          JSON.stringify({
-            status: 'ERROR',
-            reason: 'A network needs to be provided',
-          }),
-        );
+        return {
+          status: 'ERROR',
+          reason: 'A network needs to be provided',
+        };
       }
 
-      const response = await this.getChainResponse({
+      return this.getChainResponse({
         account,
         amount,
         network: props.network,
         currency: props.currency,
       });
-
-      return JSON.stringify(response);
     }
 
     // The amount that comes in through LNURL for Lightning is in millisatoshis
-    const response = await this.getInvoiceResponse(
-      account,
-      Math.ceil(amount / 1000),
-    );
-
-    return JSON.stringify(response);
+    return this.getInvoiceResponse(account, Math.ceil(amount / 1000));
   }
 
   async getInfo(account: string) {
@@ -193,16 +186,17 @@ export class LnUrlLocalService {
     return currencies;
   }
 
-  async getChainResponse(
-    props: CallbackHandlerParams,
-  ): Promise<LnUrlResponseSchemaType> {
-    const { account, amount } = props;
-
+  async getChainResponse({
+    account,
+    amount,
+    network,
+    currency,
+  }: CallbackLocalHandlerParams): Promise<LnUrlResponseSchemaType> {
     return auto<GetLnUrlResponseAutoType>({
       checkCurrency: async () => {
         const currencies = await this.getCurrencies(account);
 
-        if (!props.network) {
+        if (!network) {
           throw new Error('A network needs to be provided');
         }
 
@@ -211,12 +205,12 @@ export class LnUrlLocalService {
         }
 
         const foundCurrency = currencies.find((c) => {
-          return c.code === props.currency && c.network === props.network;
+          return c.code === currency && c.network === network;
         });
 
         if (!foundCurrency) {
           throw new Error(
-            `Currency ${props.currency} on network ${props.network} is not available`,
+            `Currency ${currency} on network ${network} is not available`,
           );
         }
 
@@ -248,8 +242,8 @@ export class LnUrlLocalService {
             pr: '',
             routes: [],
             onchain: {
-              currency: props.currency,
-              network: props.network,
+              currency,
+              network,
               address,
               bip21,
             },

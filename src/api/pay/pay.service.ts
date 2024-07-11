@@ -14,8 +14,6 @@ import {
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
-import { LnUrlLocalService } from 'src/libs/lnurl/handlers/local.service';
-import { LnurlService } from 'src/libs/lnurl/lnurl.service';
 import {
   isLnUrlError,
   PaymentOptionCode,
@@ -40,9 +38,7 @@ export class PayService {
     private swapRepo: SwapsRepoService,
     private boltzRest: BoltzRestApi,
     private boltzService: BoltzService,
-    private lnurlService: LnurlService,
     private liquidService: LiquidService,
-    private localLnurl: LnUrlLocalService,
     private cryptoService: CryptoService,
     private isomorphicLnurl: LnUrlIsomorphicService,
     @Logger('PayService') private logger: CustomLogger,
@@ -293,16 +289,13 @@ export class PayService {
       ],
 
       pay: [
-        'getLnAddressInfo',
         'getPaymentOption',
         'amountCheck',
         async ({
-          getLnAddressInfo,
           getPaymentOption,
-        }: Pick<
-          PayLightningAddressAuto,
-          'getLnAddressInfo' | 'getPaymentOption'
-        >): Promise<PayLightningAddressAuto['pay']> => {
+        }: Pick<PayLightningAddressAuto, 'getPaymentOption'>): Promise<
+          PayLightningAddressAuto['pay']
+        > => {
           const { code, network } = getPaymentOption;
 
           const uniqueId = `${code}-${network}`;
@@ -312,13 +305,20 @@ export class PayService {
           switch (uniqueId) {
             case `${PaymentOptionCode.LIGHTNING}-${PaymentOptionNetwork.BITCOIN}`: {
               const [addressResult, addressError] = await toWithError(
-                this.lnurlService.getAddressInvoice(
-                  getLnAddressInfo.info.callback,
-                  amount,
-                ),
+                this.isomorphicLnurl.getInvoiceResponse(money_address, amount),
               );
 
-              if (addressError || !addressResult.pr) {
+              if (
+                addressError ||
+                !addressResult ||
+                isLnUrlError(addressResult) ||
+                !addressResult.pr
+              ) {
+                this.logger.error('Error processing payment', {
+                  addressResult,
+                  addressError,
+                });
+
                 throw new Error('Unable to process Lightning payment');
               }
 
@@ -339,18 +339,23 @@ export class PayService {
 
             case `${PaymentOptionCode.BTC}-${PaymentOptionNetwork.LIQUID}`:
             case `${PaymentOptionCode.USDT}-${PaymentOptionNetwork.LIQUID}`: {
-              const [user] = money_address.split('@');
+              const [result, error] = await toWithError(
+                this.isomorphicLnurl.getChainResponse(money_address, {
+                  amount,
+                  currency: code,
+                  network,
+                }),
+              );
 
-              const result = await this.localLnurl.getChainResponse({
-                account: user,
-                amount,
-                currency: code,
-                network,
-              });
-
-              if (isLnUrlError(result) || !result.onchain?.address) {
+              if (
+                error ||
+                !result ||
+                isLnUrlError(result) ||
+                !result.onchain?.address
+              ) {
                 this.logger.error('Error processing payment', {
                   result,
+                  error,
                 });
                 throw new Error('Error processing payment');
               }

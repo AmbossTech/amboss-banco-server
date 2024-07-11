@@ -15,15 +15,22 @@ type NoUndefinedField<T> = {
   [P in keyof T]-?: NoUndefinedField<NonNullable<T[P]>>;
 };
 
-export type CallbackParams = {
-  account: string | undefined;
+type BaseCallbackParams = {
   amount: string | undefined;
   currency: string | undefined;
   network: string | undefined;
 };
 
-export type CallbackHandlerParams = Omit<
-  NoUndefinedField<CallbackParams>,
+export type CallbackRemoteParams = {
+  callbackUrl: string;
+} & BaseCallbackParams;
+
+export type CallbackLocalParams = {
+  account: string | undefined;
+} & BaseCallbackParams;
+
+export type CallbackLocalHandlerParams = Omit<
+  NoUndefinedField<CallbackLocalParams>,
   'amount'
 > & { amount: number };
 

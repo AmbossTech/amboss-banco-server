@@ -34,21 +34,89 @@ export class LnUrlIsomorphicService {
     @Logger('LnUrlIsomorphicService') private logger: CustomLogger,
   ) {}
 
-  private async isomorphic<T>(
-    domain: string,
-    localFn: () => Promise<T>,
-    remoteFn: () => Promise<T>,
-  ) {
+  private isLocal(domain: string): boolean {
     const domains =
       this.config.getOrThrow<ConfigSchemaType['server']['domains']>(
         'server.domains',
       );
 
-    if (domains.includes(domain)) {
+    return domains.includes(domain);
+  }
+
+  private async isomorphic<T>(
+    domain: string,
+    localFn: () => Promise<T>,
+    remoteFn: () => Promise<T>,
+  ) {
+    if (this.isLocal(domain)) {
       return localFn();
     } else {
       return remoteFn();
     }
+  }
+
+  async getChainResponse(
+    money_address: string,
+    {
+      amount,
+      network,
+      currency,
+    }: {
+      amount: number;
+      network: string;
+      currency: string;
+    },
+  ) {
+    const [user, domain] = money_address.split('@');
+
+    const lnUrlData = await this.isomorphic(
+      domain,
+      async () => {
+        return this.localLnurl.getChainResponse({
+          account: user,
+          amount,
+          network,
+          currency,
+        });
+      },
+      async () => {
+        const [info, error] = await toWithError(this.getInfo(money_address));
+
+        if (error || !info) return null;
+
+        return this.remoteLnurl.getChainResponse({
+          callbackUrl: info.callback,
+          amount,
+          currency,
+          network,
+        });
+      },
+    );
+
+    return lnUrlData;
+  }
+
+  async getInvoiceResponse(money_address: string, amount: number) {
+    const [user, domain] = money_address.split('@');
+
+    const lnUrlData = await this.isomorphic(
+      domain,
+      async () => {
+        return this.localLnurl.getInvoiceResponse(user, amount);
+      },
+      async () => {
+        const [info, error] = await toWithError(this.getInfo(money_address));
+
+        if (error || !info) return null;
+
+        return this.remoteLnurl.getInvoiceResponse({
+          callbackUrl: info.callback,
+          amount,
+        });
+      },
+    );
+
+    return lnUrlData;
   }
 
   async getInfo(money_address: string) {

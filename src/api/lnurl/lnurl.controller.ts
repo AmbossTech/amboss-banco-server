@@ -11,7 +11,7 @@ import { Public } from 'src/auth/auth.decorators';
 import { LnUrlLocalService } from 'src/libs/lnurl/handlers/local.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 
-import { CallbackParams } from './lnurl.types';
+import { CallbackLocalParams } from './lnurl.types';
 
 // @Controller('message')
 // export class MessageController {
@@ -65,12 +65,13 @@ export class LnUrlController {
   async lnurlGet(
     @Param() params: { account: string },
     @Query()
-    query: Omit<CallbackParams, 'account'>,
+    query: Omit<CallbackLocalParams, 'account'>,
   ): Promise<string> {
-    return this.localLnUrl.getResponse({
+    const response = await this.localLnUrl.getResponse({
       account: params.account,
       ...query,
     });
+    return JSON.stringify(response);
   }
 
   // @Public()

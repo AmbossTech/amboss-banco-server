@@ -1,21 +1,93 @@
 import { Injectable } from '@nestjs/common';
-import { LightningAddressPubkeyResponseSchema } from 'src/api/lnurl/lnurl.types';
+import {
+  CallbackRemoteParams,
+  LightningAddressPubkeyResponseSchema,
+} from 'src/api/lnurl/lnurl.types';
+import { CustomLogger, Logger } from 'src/libs/logging';
 import {
   lightningAddressToPubkeyUrl,
   lightningAddressToUrl,
 } from 'src/utils/lnurl';
 import { fetch } from 'undici';
 
-import { LnUrlInfoSchema, LnUrlInfoSchemaType } from '../lnurl.types';
+import {
+  LnUrlInfoSchema,
+  LnUrlInfoSchemaType,
+  LnUrlResponseSchemaType,
+  LnUrlResultSchema,
+} from '../lnurl.types';
 
 @Injectable()
 export class LnUrlRemoteService {
+  constructor(@Logger('LnUrlRemoteService') private logger: CustomLogger) {}
+
+  async getChainResponse({
+    callbackUrl,
+    amount,
+    network,
+    currency,
+  }: {
+    callbackUrl: string;
+    amount: number;
+    currency: string;
+    network: string;
+  }): Promise<LnUrlResponseSchemaType> {
+    return this.getResponse({
+      callbackUrl,
+      amount: amount + '',
+      currency,
+      network,
+    });
+  }
+
+  async getInvoiceResponse({
+    callbackUrl,
+    amount,
+  }: {
+    callbackUrl: string;
+    amount: number;
+  }): Promise<LnUrlResponseSchemaType> {
+    return this.getResponse({
+      callbackUrl,
+      amount: amount + '',
+      currency: undefined,
+      network: undefined,
+    });
+  }
+
+  async getResponse({
+    callbackUrl,
+    amount,
+    currency,
+    network,
+  }: CallbackRemoteParams): Promise<LnUrlResponseSchemaType> {
+    if (!amount) {
+      throw new Error('No amount provided');
+    }
+
+    const url = new URL(callbackUrl);
+
+    url.searchParams.set('amount', amount + '');
+
+    if (currency) url.searchParams.set('currency', currency + '');
+    if (network) url.searchParams.set('network', network + '');
+
+    const urlString = url.toString();
+
+    this.logger.debug('Getting address response', { url: urlString });
+
+    const info = await fetch(urlString);
+    const data = await info.json();
+
+    return LnUrlResultSchema.parse(data);
+  }
+
   async getInfo(money_address: string): Promise<LnUrlInfoSchemaType> {
     const url = lightningAddressToUrl(money_address);
 
     const fetchInfo = await fetch(url);
 
-    const data = fetchInfo.json();
+    const data = await fetchInfo.json();
 
     const parsed = LnUrlInfoSchema.parse(data);
 

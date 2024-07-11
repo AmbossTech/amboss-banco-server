@@ -122,6 +122,7 @@ export class WalletContactResolver {
   ): Promise<LnUrlCurrencyType[] | null> {
     if (!money_address) return null;
     const info = await this.isomorphicLnurl.getCurrencies(money_address);
+
     return info?.paymentOptions || null;
   }
 }
