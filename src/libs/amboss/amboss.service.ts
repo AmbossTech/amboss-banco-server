@@ -9,6 +9,7 @@ import { AmbossReferralCode, ambossReferralCodeSchema } from './amboss.types';
 export class AmbossService {
   private baseUrl?: string;
   private secret?: string;
+  private hasAmbossAccess: boolean;
 
   constructor(
     private config: ConfigService,
@@ -16,18 +17,22 @@ export class AmbossService {
   ) {
     this.baseUrl = this.config.getOrThrow('amboss.url');
     this.secret = this.config.getOrThrow('amboss.secret');
+    this.hasAmbossAccess = !!this.baseUrl && !!this.secret;
   }
 
-  async getReferralCodes(email: string): Promise<AmbossReferralCode[]> {
+  async getReferralCodes(email: string): Promise<AmbossReferralCode[] | void> {
+    if (!this.hasAmbossAccess) {
+      return;
+    }
     const response = await this.get(`referral?email=${email}`);
-
     const parsed = z.array(ambossReferralCodeSchema).safeParse(response);
+
     if (parsed.error) {
       this.logger.error(`Invalid response for referral codes`, {
         response,
         email,
       });
-      return [];
+      return;
     }
 
     return parsed.data;
