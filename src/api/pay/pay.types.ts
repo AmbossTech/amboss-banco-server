@@ -54,6 +54,32 @@ export class SwapQuote {
   rate: string;
 }
 
+@InputType()
+export class LnUrlInfoInput {
+  @Field()
+  address: string;
+}
+
+@ObjectType()
+export class LnUrlInfo {
+  @Field()
+  callback: string;
+
+  @Field()
+  min_sendable: string;
+
+  @Field()
+  min_sendable_sats: string;
+
+  @Field({ nullable: true })
+  max_sendable?: string;
+
+  @Field({ nullable: true })
+  max_sendable_sats?: string;
+
+  @Field()
+  metadata: string;
+}
 @ObjectType()
 export class PayMutations {
   @Field()
@@ -73,6 +99,9 @@ export class PayMutations {
 export class PayQueries {
   @Field()
   network_swap_quote: SwapQuote;
+
+  @Field()
+  lnurl_info: LnUrlInfo;
 }
 
 @InputType()

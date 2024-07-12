@@ -138,6 +138,19 @@ type LnUrlCurrency {
   variable_fee_percentage: String!
 }
 
+type LnUrlInfo {
+  callback: String!
+  max_sendable: String
+  max_sendable_sats: String
+  metadata: String!
+  min_sendable: String!
+  min_sendable_sats: String!
+}
+
+input LnUrlInfoInput {
+  address: String!
+}
+
 input LoginInput {
   email: String!
   master_password_hash: String!
@@ -200,6 +213,7 @@ input PayNetworkSwapInput {
 }
 
 type PayQueries {
+  lnurl_info(input: LnUrlInfoInput!): LnUrlInfo!
   network_swap_quote(input: SwapQuoteInput!): SwapQuote!
 }
 

@@ -12,6 +12,7 @@ import {
   PayMutationsResolver,
 } from './resolvers/mutations.resolver';
 import {
+  LnUrlInfoResolver,
   MainPayQueriesResolver,
   PayQueriesResolver,
 } from './resolvers/queries.resolver';
@@ -31,6 +32,7 @@ import {
     PayMutationsResolver,
     MainPayQueriesResolver,
     PayQueriesResolver,
+    LnUrlInfoResolver,
   ],
 })
 export class PayModule {}
