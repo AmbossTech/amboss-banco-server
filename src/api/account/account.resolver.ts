@@ -99,9 +99,8 @@ export class AmbossInfoResolver {
     @CurrentUser() { user_id }: any,
   ): Promise<ReferralCode[] | void> {
     const account = await this.accountRepo.findOneById(user_id);
-    if (!account) {
-      return;
-    }
+
+    if (!account) return [];
 
     return this.ambossService.getReferralCodes(account.email);
   }
