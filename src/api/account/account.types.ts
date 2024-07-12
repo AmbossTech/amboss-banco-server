@@ -31,8 +31,14 @@ export class ReferralCode {
 
 @ObjectType()
 export class AmbossInfo {
-  @Field(() => [ReferralCode], { nullable: true })
-  referral_codes?: ReferralCode[];
+  @Field()
+  id: string;
+
+  @Field()
+  active: boolean;
+
+  @Field(() => [ReferralCode])
+  referral_codes: ReferralCode[];
 }
 
 @ObjectType()

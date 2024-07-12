@@ -78,7 +78,21 @@ export class AmbossInfoResolver {
   constructor(
     private ambossService: AmbossService,
     private accountRepo: AccountRepo,
+    private config: ConfigService,
   ) {}
+
+  @ResolveField()
+  id(@CurrentUser() { user_id }: any) {
+    return user_id;
+  }
+
+  @ResolveField()
+  active() {
+    const baseUrl = this.config.get('amboss.url');
+    const secret = this.config.get('amboss.secret');
+
+    return !!baseUrl && !!secret;
+  }
 
   @ResolveField()
   async referral_codes(

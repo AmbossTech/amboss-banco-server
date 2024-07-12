@@ -15,16 +15,16 @@ export class AmbossService {
     private config: ConfigService,
     @Logger(AmbossService.name) private logger: CustomLogger,
   ) {
-    this.baseUrl = this.config.getOrThrow('amboss.url');
-    this.secret = this.config.getOrThrow('amboss.secret');
+    this.baseUrl = this.config.get('amboss.url');
+    this.secret = this.config.get('amboss.secret');
     this.hasAmbossAccess = !!this.baseUrl && !!this.secret;
   }
 
-  async getReferralCodes(email: string): Promise<AmbossReferralCode[] | void> {
-    if (!this.hasAmbossAccess) {
-      return;
-    }
+  async getReferralCodes(email: string): Promise<AmbossReferralCode[]> {
+    if (!this.hasAmbossAccess) return [];
+
     const response = await this.get(`referral?email=${email}`);
+
     const parsed = z.array(ambossReferralCodeSchema).safeParse(response);
 
     if (parsed.error) {
@@ -32,7 +32,7 @@ export class AmbossService {
         response,
         email,
       });
-      return;
+      return [];
     }
 
     return parsed.data;

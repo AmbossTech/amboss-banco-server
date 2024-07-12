@@ -3,7 +3,9 @@
 # ------------------------------------------------------
 
 type AmbossInfo {
-  referral_codes: [ReferralCode!]
+  active: Boolean!
+  id: String!
+  referral_codes: [ReferralCode!]!
 }
 
 type BroadcastLiquidTransaction {
