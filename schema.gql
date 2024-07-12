@@ -145,6 +145,7 @@ type LnUrlInfo {
   metadata: String!
   min_sendable: String!
   min_sendable_sats: String!
+  payment_options: [LnUrlCurrency!]
 }
 
 input LnUrlInfoInput {

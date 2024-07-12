@@ -103,6 +103,13 @@ export class LnUrlInfoResolver {
   max_sendable_sats(@Parent() { maxSendable }: LnUrlInfoSchemaType) {
     return Math.round(maxSendable / 1000);
   }
+
+  @ResolveField()
+  payment_options(@Parent() { currencies }: LnUrlInfoSchemaType) {
+    if (!currencies) return;
+
+    return currencies;
+  }
 }
 
 @Resolver()

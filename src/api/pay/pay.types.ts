@@ -8,6 +8,7 @@ import {
 
 import {
   LnUrlCurrenciesAndInfo,
+  LnUrlCurrency,
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
@@ -79,6 +80,9 @@ export class LnUrlInfo {
 
   @Field()
   metadata: string;
+
+  @Field(() => [LnUrlCurrency], { nullable: true })
+  payment_options?: LnUrlCurrency[];
 }
 @ObjectType()
 export class PayMutations {
