@@ -3,7 +3,6 @@
 # ------------------------------------------------------
 
 type AmbossInfo {
-  active: Boolean!
   id: String!
   referral_codes: [ReferralCode!]!
 }
@@ -340,7 +339,7 @@ input SwapQuoteInput {
 }
 
 type User {
-  amboss: AmbossInfo!
+  amboss: AmbossInfo
   default_wallet_id: String
   email: String!
   id: String!

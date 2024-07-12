@@ -49,7 +49,10 @@ export class UserSwapInfoResolver {
 
 @Resolver(User)
 export class UserResolver {
-  constructor(private accountRepo: AccountRepo) {}
+  constructor(
+    private accountRepo: AccountRepo,
+    private config: ConfigService,
+  ) {}
 
   @ResolveField()
   async default_wallet_id(
@@ -69,6 +72,10 @@ export class UserResolver {
 
   @ResolveField()
   amboss() {
+    const ambossConfig = this.config.get('amboss');
+
+    if (!ambossConfig) return;
+
     return {};
   }
 }
@@ -78,17 +85,11 @@ export class AmbossInfoResolver {
   constructor(
     private ambossService: AmbossService,
     private accountRepo: AccountRepo,
-    private config: ConfigService,
   ) {}
 
   @ResolveField()
   id(@CurrentUser() { user_id }: any) {
     return user_id;
-  }
-
-  @ResolveField()
-  active() {
-    return !!this.config.get('amboss');
   }
 
   @ResolveField()

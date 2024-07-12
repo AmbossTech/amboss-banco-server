@@ -34,9 +34,6 @@ export class AmbossInfo {
   @Field()
   id: string;
 
-  @Field()
-  active: boolean;
-
   @Field(() => [ReferralCode])
   referral_codes: ReferralCode[];
 }
@@ -55,7 +52,7 @@ export class User {
   @Field(() => UserSwapInfo)
   swap_info: UserSwapInfo;
 
-  @Field(() => AmbossInfo)
+  @Field(() => AmbossInfo, { nullable: true })
   amboss: AmbossInfo;
 }
 
