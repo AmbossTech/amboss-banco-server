@@ -64,9 +64,6 @@ export class LnUrlInfoInput {
 @ObjectType()
 export class LnUrlInfo {
   @Field()
-  callback: string;
-
-  @Field()
   min_sendable: string;
 
   @Field()
@@ -77,9 +74,6 @@ export class LnUrlInfo {
 
   @Field({ nullable: true })
   max_sendable_sats?: string;
-
-  @Field()
-  metadata: string;
 
   @Field(() => [LnUrlCurrency], { nullable: true })
   payment_options?: LnUrlCurrency[];

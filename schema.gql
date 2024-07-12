@@ -139,10 +139,8 @@ type LnUrlCurrency {
 }
 
 type LnUrlInfo {
-  callback: String!
   max_sendable: String
   max_sendable_sats: String
-  metadata: String!
   min_sendable: String!
   min_sendable_sats: String!
   payment_options: [LnUrlCurrency!]
