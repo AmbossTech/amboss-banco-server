@@ -48,4 +48,10 @@ export const ConfigSchema = z.object({
       affiliateId: z.string(),
     })
     .optional(),
+  amboss: z
+    .object({
+      url: z.string(),
+      secret: z.string(),
+    })
+    .optional(),
 });

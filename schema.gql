@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AmbossInfo {
+  id: String!
+  referral_codes: [ReferralCode!]!
+}
+
 type BroadcastLiquidTransaction {
   tx_id: String!
 }
@@ -231,6 +236,14 @@ input ReceiveSwapInput {
   wallet_account_id: String!
 }
 
+type ReferralCode {
+  code: String!
+  current_uses: Float!
+  id: String!
+  is_available: Boolean!
+  max_allowed_uses: Float!
+}
+
 type RefreshToken {
   access_token: String!
   id: String!
@@ -326,6 +339,7 @@ input SwapQuoteInput {
 }
 
 type User {
+  amboss: AmbossInfo
   default_wallet_id: String
   email: String!
   id: String!
