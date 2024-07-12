@@ -88,10 +88,7 @@ export class AmbossInfoResolver {
 
   @ResolveField()
   active() {
-    const baseUrl = this.config.get('amboss.url');
-    const secret = this.config.get('amboss.secret');
-
-    return !!baseUrl && !!secret;
+    return !!this.config.get('amboss');
   }
 
   @ResolveField()
