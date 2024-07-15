@@ -23,6 +23,7 @@ import { AccountRepo } from 'src/repo/account/account.repo';
 import { AccountService } from './account.service';
 import {
   AmbossInfo,
+  ChangePasswordInput,
   LoginInput,
   NewAccount,
   ReferralCode,
@@ -322,5 +323,40 @@ export class AccountResolver {
       access_token: accessToken,
       refresh_token: refreshToken,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async changePassword(
+    @CurrentUser() { user_id }: any,
+    @Args('input') input: ChangePasswordInput,
+  ) {
+    const account = await this.accountRepo.findOneById(user_id);
+
+    if (!account) {
+      throw new GraphQLError('Invalid email or password.');
+    }
+
+    const {
+      current_master_password_hash,
+      new_master_password_hash,
+      new_protected_symmetric_key,
+      new_password_hint,
+    } = input;
+
+    const verified = await this.cryptoService.argon2Verify(
+      account.master_password_hash,
+      current_master_password_hash,
+    );
+
+    if (!verified) {
+      throw new GraphQLError('Invalid password.');
+    }
+
+    await this.accountRepo.updateCredentials(
+      user_id,
+      new_master_password_hash,
+      new_protected_symmetric_key,
+      new_password_hint,
+    );
   }
 }

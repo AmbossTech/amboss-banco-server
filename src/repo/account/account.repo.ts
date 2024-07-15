@@ -46,4 +46,20 @@ export class AccountRepo {
       },
     });
   }
+
+  async updateCredentials(
+    account_id: string,
+    master_password_hash: string,
+    protected_symmetric_key: string,
+    password_hint?: string,
+  ) {
+    return this.prisma.account.update({
+      where: { id: account_id },
+      data: {
+        master_password_hash,
+        protected_symmetric_key,
+        password_hint,
+      },
+    });
+  }
 }

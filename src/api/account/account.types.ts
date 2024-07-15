@@ -130,3 +130,18 @@ export class SignUpInput {
   @Field(() => CreateWalletInput, { nullable: true })
   wallet: CreateWalletInput | null;
 }
+
+@InputType()
+export class ChangePasswordInput {
+  @Field()
+  current_master_password_hash: string;
+
+  @Field()
+  new_master_password_hash: string;
+
+  @Field()
+  new_protected_symmetric_key: string;
+
+  @Field({ nullable: true })
+  new_password_hint?: string;
+}
