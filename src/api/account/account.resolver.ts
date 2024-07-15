@@ -358,5 +358,7 @@ export class AccountResolver {
       new_protected_symmetric_key,
       new_password_hint,
     );
+
+    return true;
   }
 }
