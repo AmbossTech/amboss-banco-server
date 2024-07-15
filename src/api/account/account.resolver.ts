@@ -8,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { account } from '@prisma/client';
 import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
@@ -16,6 +17,7 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
@@ -116,6 +118,7 @@ export class AccountResolver {
     private accountService: AccountService,
     private walletService: WalletService,
     private ambossService: AmbossService,
+    private redlockService: RedlockService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -244,16 +247,27 @@ export class AccountResolver {
       throw new GraphQLError(`A referral code is needed for sign up`);
     }
 
-    const { available } = await this.ambossService.getReferralCodeAvailable(
+    const newAccount = await this.redlockService.using<account>(
       input.referral_code,
+      async () => {
+        if (!input.referral_code)
+          throw new GraphQLError(`No referral code supplied`);
+
+        const { available } = await this.ambossService.getReferralCodeAvailable(
+          input.referral_code,
+        );
+        if (!available) {
+          throw new GraphQLError(`This referral code is not available`);
+        }
+
+        const account = await this.accountService.signUp(input);
+
+        await this.ambossService.useRefferalCode(input.referral_code);
+
+        return account;
+      },
+      'Please try again later',
     );
-    if (!available) {
-      throw new GraphQLError(`This referral code is not available`);
-    }
-
-    const newAccount = await this.accountService.signUp(input);
-
-    await this.ambossService.useRefferalCode(input.referral_code);
 
     const { accessToken, refreshToken } = await this.authService.getTokens(
       newAccount.id,

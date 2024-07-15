@@ -38,7 +38,11 @@ export class RedlockService {
     });
   }
 
-  async using<T>(key: string, methodToCall: () => Promise<T>): Promise<T> {
+  async using<T>(
+    key: string,
+    methodToCall: () => Promise<T>,
+    errorMsg?: string,
+  ): Promise<T> {
     const finalKey = `redlockService-${key}`;
     return this.redlock
       .using(
@@ -61,13 +65,13 @@ export class RedlockService {
           if (
             error.message ===
             'The operation was unable to achieve a quorum during its retry window.'
-          )
-            throw new Error(`Resource locked`);
+          ) {
+            const errMsg = !!errorMsg ? errorMsg : `Resource locked`;
+            throw new Error(errMsg);
+          }
         }
 
-        this.logger.error('Redlock Error', { error });
-
-        throw new Error(`An unknown error occured`);
+        throw error;
       });
   }
 }
