@@ -115,6 +115,7 @@ export class AccountResolver {
     private cryptoService: CryptoService,
     private accountService: AccountService,
     private walletService: WalletService,
+    private ambossService: AmbossService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -239,7 +240,20 @@ export class AccountResolver {
     @Args('input') input: SignUpInput,
     @Context() { res }: { res: Response },
   ) {
+    if (!input.referral_code) {
+      throw new GraphQLError(`A referral code is needed for sign up`);
+    }
+
+    const { available } = await this.ambossService.getReferralCodeAvailable(
+      input.referral_code,
+    );
+    if (!available) {
+      throw new GraphQLError(`This referral code is not available`);
+    }
+
     const newAccount = await this.accountService.signUp(input);
+
+    await this.ambossService.useRefferalCode(input.referral_code);
 
     const { accessToken, refreshToken } = await this.authService.getTokens(
       newAccount.id,

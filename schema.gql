@@ -282,6 +282,7 @@ input SignUpInput {
   master_password_hash: String!
   password_hint: String
   protected_symmetric_key: String!
+  referral_code: String
   secp256k1_key_pair: Secp256k1KeyPairInput!
   wallet: CreateWalletInput
 }

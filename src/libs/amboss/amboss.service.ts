@@ -3,7 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 
 import { CustomLogger, Logger } from '../logging';
-import { AmbossReferralCode, ambossReferralCodeSchema } from './amboss.types';
+import {
+  AmbossReferralCode,
+  AmbossReferralCodeAvailable,
+  ambossReferralCodeAvailableSchema,
+  ambossReferralCodeSchema,
+  AmbossUseReferralCode,
+  ambossUseReferralCodeSchema,
+} from './amboss.types';
 
 @Injectable()
 export class AmbossService {
@@ -38,6 +45,45 @@ export class AmbossService {
     return parsed.data;
   }
 
+  async getReferralCodeAvailable(
+    code: string,
+  ): Promise<AmbossReferralCodeAvailable> {
+    if (!this.hasAmbossAccess) return { available: false };
+
+    const response = await this.get(`referral/${code}/available`);
+
+    const parsed = ambossReferralCodeAvailableSchema.safeParse(response);
+
+    if (parsed.error) {
+      this.logger.error(`Invalid response for referral code available`, {
+        response,
+        code,
+      });
+      return { available: false };
+    }
+
+    return parsed.data;
+  }
+
+  async useRefferalCode(code: string): Promise<AmbossUseReferralCode> {
+    console.log('hasAmbossAccess', this.hasAmbossAccess);
+    if (!this.hasAmbossAccess) return { success: false };
+
+    const response = await this.post(`referral/${code}/use`);
+
+    const parsed = ambossUseReferralCodeSchema.safeParse(response);
+
+    if (parsed.error) {
+      this.logger.error(`Invalid response for use referral code`, {
+        response,
+        code,
+      });
+      return { success: false };
+    }
+
+    return parsed.data;
+  }
+
   private async get(endpoint: string) {
     if (!this.baseUrl || !this.secret) {
       throw new Error(`Amboss service is not available`);
@@ -50,17 +96,18 @@ export class AmbossService {
     return response.json();
   }
 
-  private async post(endpoint: string, body: any) {
+  private async post(endpoint: string, body?: any) {
     if (!this.baseUrl || !this.secret) {
       throw new Error(`Amboss service is not available`);
     }
 
-    const response = await fetch(`${this.baseUrl}/${endpoint}`, {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'POST',
       headers: {
         'content-type': 'application/json',
         'amboss-banco-secret': this.secret,
       },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     return response.json();
