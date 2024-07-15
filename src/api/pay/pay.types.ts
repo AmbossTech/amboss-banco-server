@@ -58,26 +58,18 @@ export class SwapQuote {
 @InputType()
 export class LnUrlInfoInput {
   @Field()
-  address: string;
+  money_address: string;
 }
 
 @ObjectType()
 export class LnUrlInfo {
   @Field()
-  min_sendable: string;
+  id: string;
 
-  @Field()
-  min_sendable_sats: string;
-
-  @Field({ nullable: true })
-  max_sendable?: string;
-
-  @Field({ nullable: true })
-  max_sendable_sats?: string;
-
-  @Field(() => [LnUrlCurrency], { nullable: true })
-  payment_options?: LnUrlCurrency[];
+  @Field(() => [LnUrlCurrency])
+  payment_options: LnUrlCurrency[];
 }
+
 @ObjectType()
 export class PayMutations {
   @Field()

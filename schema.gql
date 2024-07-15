@@ -139,15 +139,12 @@ type LnUrlCurrency {
 }
 
 type LnUrlInfo {
-  max_sendable: String
-  max_sendable_sats: String
-  min_sendable: String!
-  min_sendable_sats: String!
-  payment_options: [LnUrlCurrency!]
+  id: String!
+  payment_options: [LnUrlCurrency!]!
 }
 
 input LnUrlInfoInput {
-  address: String!
+  money_address: String!
 }
 
 input LoginInput {

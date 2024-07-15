@@ -7,9 +7,9 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
+import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
-import { LnUrlInfoSchemaType } from 'src/libs/lnurl/lnurl.types';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
@@ -17,6 +17,7 @@ import {
   SideShiftNetwork,
   SideShiftQuote,
 } from 'src/libs/sideshift/sideshift.types';
+import { v5 } from 'uuid';
 
 import {
   LnUrlInfo,
@@ -71,11 +72,16 @@ export class PayQueriesResolver {
 
   @ResolveField()
   async lnurl_info(
-    @Args('input') { address }: LnUrlInfoInput,
-  ): Promise<LnUrlInfoSchemaType> {
-    const info = await this.lnurlService.getInfo(address);
+    @Args('input') { money_address }: LnUrlInfoInput,
+  ): Promise<LnUrlCurrenciesAndInfo> {
+    if (!money_address) {
+      throw new GraphQLError('No address provided');
+    }
+
+    const info = await this.lnurlService.getCurrencies(money_address);
+
     if (!info) {
-      throw new GraphQLError(`Failed to get info`);
+      throw new GraphQLError('Unable to get info for address');
     }
 
     return info;
@@ -85,30 +91,13 @@ export class PayQueriesResolver {
 @Resolver(LnUrlInfo)
 export class LnUrlInfoResolver {
   @ResolveField()
-  min_sendable(@Parent() { minSendable }: LnUrlInfoSchemaType) {
-    return minSendable;
+  id(@Parent() info: LnUrlCurrenciesAndInfo) {
+    return v5(JSON.stringify(info), v5.URL);
   }
 
   @ResolveField()
-  min_sendable_sats(@Parent() { minSendable }: LnUrlInfoSchemaType) {
-    return Math.round(minSendable / 1000);
-  }
-
-  @ResolveField()
-  max_sendable(@Parent() { maxSendable }: LnUrlInfoSchemaType) {
-    return maxSendable;
-  }
-
-  @ResolveField()
-  max_sendable_sats(@Parent() { maxSendable }: LnUrlInfoSchemaType) {
-    return Math.round(maxSendable / 1000);
-  }
-
-  @ResolveField()
-  payment_options(@Parent() { currencies }: LnUrlInfoSchemaType) {
-    if (!currencies) return;
-
-    return currencies;
+  payment_options(@Parent() { paymentOptions }: LnUrlCurrenciesAndInfo) {
+    return paymentOptions;
   }
 }
 
