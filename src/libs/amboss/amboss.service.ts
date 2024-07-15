@@ -66,7 +66,6 @@ export class AmbossService {
   }
 
   async useRefferalCode(code: string): Promise<AmbossUseReferralCode> {
-    console.log('hasAmbossAccess', this.hasAmbossAccess);
     if (!this.hasAmbossAccess) return { success: false };
 
     const response = await this.post(`referral/${code}/use`);
