@@ -4,6 +4,8 @@ import { z } from 'zod';
 
 import { CustomLogger, Logger } from '../logging';
 import {
+  AmbossCanSignup,
+  ambossCanSignupSchema,
   AmbossReferralCode,
   AmbossReferralCodeAvailable,
   ambossReferralCodeAvailableSchema,
@@ -78,6 +80,32 @@ export class AmbossService {
         code,
       });
       return { success: false };
+    }
+
+    return parsed.data;
+  }
+
+  async canSignup(
+    email: string,
+    referralCode?: string,
+  ): Promise<AmbossCanSignup> {
+    if (!this.hasAmbossAccess) return { can_signup: false };
+
+    const referralCodeParam = referralCode
+      ? `&referral-code=${referralCode}`
+      : ``;
+    const response = await this.get(
+      `account/can-signup?email=${email}${referralCodeParam}`,
+    );
+
+    const parsed = ambossCanSignupSchema.safeParse(response);
+
+    if (parsed.error) {
+      this.logger.error(`Invalid response for can signup`, {
+        response,
+        email,
+      });
+      return { can_signup: false };
     }
 
     return parsed.data;

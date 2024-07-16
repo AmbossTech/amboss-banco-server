@@ -22,3 +22,10 @@ export type AmbossReferralCodeAvailable = z.infer<
 export const ambossUseReferralCodeSchema = z.object({ success: z.boolean() });
 
 export type AmbossUseReferralCode = z.infer<typeof ambossUseReferralCodeSchema>;
+
+export const ambossCanSignupSchema = z.object({
+  can_signup: z.boolean(),
+  using_referral_code: z.boolean().optional(),
+});
+
+export type AmbossCanSignup = z.infer<typeof ambossCanSignupSchema>;
