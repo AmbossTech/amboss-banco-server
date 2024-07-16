@@ -1,5 +1,15 @@
-import { Args, Context, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Context,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { GraphQLError } from 'graphql';
+import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
@@ -7,14 +17,22 @@ import {
   SideShiftNetwork,
   SideShiftQuote,
 } from 'src/libs/sideshift/sideshift.types';
+import { v5 } from 'uuid';
 
-import { PayQueries, SwapQuote, SwapQuoteInput } from '../pay.types';
+import {
+  LnUrlInfo,
+  LnUrlInfoInput,
+  PayQueries,
+  SwapQuote,
+  SwapQuoteInput,
+} from '../pay.types';
 
 @Resolver(PayQueries)
 export class PayQueriesResolver {
   constructor(
     private sideShiftService: SideShiftService,
     private redisService: RedisService,
+    private lnurlService: LnUrlIsomorphicService,
   ) {}
 
   @ResolveField()
@@ -50,6 +68,36 @@ export class PayQueriesResolver {
       deposit_amount: quote.depositAmount,
       settle_amount: quote.settleAmount,
     };
+  }
+
+  @ResolveField()
+  async lnurl_info(
+    @Args('input') { money_address }: LnUrlInfoInput,
+  ): Promise<LnUrlCurrenciesAndInfo> {
+    if (!money_address) {
+      throw new GraphQLError('No address provided');
+    }
+
+    const info = await this.lnurlService.getCurrencies(money_address);
+
+    if (!info) {
+      throw new GraphQLError('Unable to get info for address');
+    }
+
+    return info;
+  }
+}
+
+@Resolver(LnUrlInfo)
+export class LnUrlInfoResolver {
+  @ResolveField()
+  id(@Parent() info: LnUrlCurrenciesAndInfo) {
+    return v5(JSON.stringify(info), v5.URL);
+  }
+
+  @ResolveField()
+  payment_options(@Parent() { paymentOptions }: LnUrlCurrenciesAndInfo) {
+    return paymentOptions;
   }
 }
 
