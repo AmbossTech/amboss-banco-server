@@ -8,6 +8,7 @@ import {
 
 import {
   LnUrlCurrenciesAndInfo,
+  LnUrlCurrency,
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
@@ -54,6 +55,21 @@ export class SwapQuote {
   rate: string;
 }
 
+@InputType()
+export class LnUrlInfoInput {
+  @Field()
+  money_address: string;
+}
+
+@ObjectType()
+export class LnUrlInfo {
+  @Field()
+  id: string;
+
+  @Field(() => [LnUrlCurrency])
+  payment_options: LnUrlCurrency[];
+}
+
 @ObjectType()
 export class PayMutations {
   @Field()
@@ -73,6 +89,9 @@ export class PayMutations {
 export class PayQueries {
   @Field()
   network_swap_quote: SwapQuote;
+
+  @Field()
+  lnurl_info: LnUrlInfo;
 }
 
 @InputType()

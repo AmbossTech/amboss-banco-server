@@ -195,10 +195,18 @@ export class LnUrlIsomorphicService {
 
     if (error || !lnUrlInfo) return null;
 
+    const currencies = lnUrlInfo.currencies || [];
+
     const paymentOptions = await auto<GetCurrenciesAuto>({
       getLightningCurrency: async (): Promise<
         GetCurrenciesAuto['getLightningCurrency']
       > => {
+        const hasLiquid = currencies.some(
+          (c) => c.network === PaymentOptionNetwork.LIQUID,
+        );
+
+        if (hasLiquid) return [];
+
         const { minSendable, maxSendable } = lnUrlInfo;
 
         if (!minSendable || !maxSendable) return [];
@@ -245,8 +253,6 @@ export class LnUrlIsomorphicService {
       getOtherCurrencies: async (): Promise<
         GetCurrenciesAuto['getOtherCurrencies']
       > => {
-        const currencies = lnUrlInfo.currencies || [];
-
         if (!currencies.length) return [];
 
         const mapped = currencies.map((c) => {

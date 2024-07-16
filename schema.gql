@@ -145,6 +145,15 @@ type LnUrlCurrency {
   variable_fee_percentage: String!
 }
 
+type LnUrlInfo {
+  id: String!
+  payment_options: [LnUrlCurrency!]!
+}
+
+input LnUrlInfoInput {
+  money_address: String!
+}
+
 input LoginInput {
   email: String!
   master_password_hash: String!
@@ -208,6 +217,7 @@ input PayNetworkSwapInput {
 }
 
 type PayQueries {
+  lnurl_info(input: LnUrlInfoInput!): LnUrlInfo!
   network_swap_quote(input: SwapQuoteInput!): SwapQuote!
 }
 
