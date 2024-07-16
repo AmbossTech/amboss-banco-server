@@ -34,7 +34,9 @@ export class AmbossService {
 
     const response = await this.get(`referral?email=${email}`);
 
-    const parsed = z.array(ambossReferralCodeSchema).safeParse(response);
+    const parsed = z
+      .array(ambossReferralCodeSchema.passthrough())
+      .safeParse(response);
 
     if (parsed.error) {
       this.logger.error(`Invalid response for referral codes`, {
@@ -54,7 +56,9 @@ export class AmbossService {
 
     const response = await this.get(`referral/${code}/available`);
 
-    const parsed = ambossReferralCodeAvailableSchema.safeParse(response);
+    const parsed = ambossReferralCodeAvailableSchema
+      .passthrough()
+      .safeParse(response);
 
     if (parsed.error) {
       this.logger.error(`Invalid response for referral code available`, {
@@ -75,7 +79,9 @@ export class AmbossService {
 
     const response = await this.post(`referral/${code}/use?email=${email}`);
 
-    const parsed = ambossUseReferralCodeSchema.safeParse(response);
+    const parsed = ambossUseReferralCodeSchema
+      .passthrough()
+      .safeParse(response);
 
     if (parsed.error) {
       this.logger.error(`Invalid response for use referral code`, {
@@ -101,7 +107,7 @@ export class AmbossService {
       `account/can-signup?email=${email}${referralCodeParam}`,
     );
 
-    const parsed = ambossCanSignupSchema.safeParse(response);
+    const parsed = ambossCanSignupSchema.passthrough().safeParse(response);
 
     if (parsed.error) {
       this.logger.error(`Invalid response for can signup`, {
