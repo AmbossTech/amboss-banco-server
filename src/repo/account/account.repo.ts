@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 
-import { NewAccountType } from './account.types';
+import { ChangePasswordType, NewAccountType } from './account.types';
 
 @Injectable()
 export class AccountRepo {
@@ -47,12 +47,12 @@ export class AccountRepo {
     });
   }
 
-  async updateCredentials(
-    account_id: string,
-    master_password_hash: string,
-    protected_symmetric_key: string,
-    password_hint?: string,
-  ) {
+  async updateCredentials({
+    account_id,
+    master_password_hash,
+    protected_symmetric_key,
+    password_hint,
+  }: ChangePasswordType) {
     return this.prisma.account.update({
       where: { id: account_id },
       data: {

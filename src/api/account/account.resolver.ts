@@ -4,6 +4,7 @@ import {
   Args,
   Context,
   Mutation,
+  Parent,
   Query,
   ResolveField,
   Resolver,
@@ -26,6 +27,8 @@ import {
   ChangePasswordInput,
   LoginInput,
   NewAccount,
+  PasswordMutations,
+  PasswordParentType,
   ReferralCode,
   RefreshToken,
   SignUpInput,
@@ -185,29 +188,6 @@ export class AccountResolver {
   }
 
   @Mutation(() => Boolean)
-  async checkPassword(
-    @Args('password') password: string,
-    @CurrentUser() { user_id }: any,
-  ) {
-    const account = await this.accountRepo.findOneById(user_id);
-
-    if (!account) {
-      throw new GraphQLError('Error validating account.');
-    }
-
-    const verified = await this.cryptoService.argon2Verify(
-      account.master_password_hash,
-      password,
-    );
-
-    if (!verified) {
-      throw new GraphQLError('Invalid password.');
-    }
-
-    return true;
-  }
-
-  @Mutation(() => Boolean)
   async logout(
     @CurrentUser() { user_id }: any,
     @Context() { res }: { res: Response },
@@ -325,24 +305,38 @@ export class AccountResolver {
     };
   }
 
-  @Mutation(() => Boolean)
-  async changePassword(
-    @CurrentUser() { user_id }: any,
-    @Args('input') input: ChangePasswordInput,
-  ) {
+  @Public()
+  @Mutation(() => PasswordMutations)
+  async password(@CurrentUser() { user_id }: any): Promise<PasswordParentType> {
     const account = await this.accountRepo.findOneById(user_id);
-
     if (!account) {
-      throw new GraphQLError('Invalid email or password.');
+      throw new GraphQLError(`Account not found`);
     }
 
-    const {
+    return {
+      account,
+    };
+  }
+}
+
+@Resolver(PasswordMutations)
+export class PasswordMutationsResolver {
+  constructor(
+    private cryptoService: CryptoService,
+    private accountRepo: AccountRepo,
+  ) {}
+
+  @ResolveField()
+  async change(
+    @Args('input')
+    {
       current_master_password_hash,
       new_master_password_hash,
       new_protected_symmetric_key,
       new_password_hint,
-    } = input;
-
+    }: ChangePasswordInput,
+    @Parent() { account }: PasswordParentType,
+  ) {
     const verified = await this.cryptoService.argon2Verify(
       account.master_password_hash,
       current_master_password_hash,
@@ -352,12 +346,29 @@ export class AccountResolver {
       throw new GraphQLError('Invalid password.');
     }
 
-    await this.accountRepo.updateCredentials(
-      user_id,
-      new_master_password_hash,
-      new_protected_symmetric_key,
-      new_password_hint,
+    await this.accountRepo.updateCredentials({
+      account_id: account.id,
+      master_password_hash: new_master_password_hash,
+      protected_symmetric_key: new_protected_symmetric_key,
+      password_hint: new_password_hint,
+    });
+
+    return true;
+  }
+
+  @ResolveField()
+  async check(
+    @Args('password') password: string,
+    @Parent() { account }: PasswordParentType,
+  ) {
+    const verified = await this.cryptoService.argon2Verify(
+      account.master_password_hash,
+      password,
     );
+
+    if (!verified) {
+      throw new GraphQLError('Invalid password.');
+    }
 
     return true;
   }

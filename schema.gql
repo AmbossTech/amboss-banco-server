@@ -166,11 +166,10 @@ type MoneyAddress {
 }
 
 type Mutation {
-  changePassword(input: ChangePasswordInput!): Boolean!
-  checkPassword(password: String!): Boolean!
   contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
+  password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
@@ -181,6 +180,11 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+type PasswordMutations {
+  change(input: ChangePasswordInput!): Boolean!
+  check(password: String!): Boolean!
 }
 
 input PayInput {

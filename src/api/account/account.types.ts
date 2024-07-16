@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { account } from '@prisma/client';
 
 import { CreateWalletInput } from '../wallet/wallet.types';
 
@@ -145,3 +146,16 @@ export class ChangePasswordInput {
   @Field({ nullable: true })
   new_password_hint?: string;
 }
+
+@ObjectType()
+export class PasswordMutations {
+  @Field()
+  check: boolean;
+
+  @Field()
+  change: boolean;
+}
+
+export type PasswordParentType = {
+  account: account;
+};

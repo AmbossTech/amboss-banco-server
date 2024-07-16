@@ -8,6 +8,7 @@ import { AccountRepoModule } from 'src/repo/account/account.module';
 import {
   AccountResolver,
   AmbossInfoResolver,
+  PasswordMutationsResolver,
   UserResolver,
   UserSwapInfoResolver,
 } from './account.resolver';
@@ -27,6 +28,7 @@ import { AccountService } from './account.service';
     UserResolver,
     UserSwapInfoResolver,
     AmbossInfoResolver,
+    PasswordMutationsResolver,
   ],
 })
 export class AccountModule {}
