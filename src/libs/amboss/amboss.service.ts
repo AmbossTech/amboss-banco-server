@@ -67,10 +67,13 @@ export class AmbossService {
     return parsed.data;
   }
 
-  async useRefferalCode(code: string): Promise<AmbossUseReferralCode> {
+  async useRefferalCode(
+    code: string,
+    email: string,
+  ): Promise<AmbossUseReferralCode> {
     if (!this.hasAmbossAccess) return { success: false };
 
-    const response = await this.post(`referral/${code}/use`);
+    const response = await this.post(`referral/${code}/use?email=${email}`);
 
     const parsed = ambossUseReferralCodeSchema.safeParse(response);
 

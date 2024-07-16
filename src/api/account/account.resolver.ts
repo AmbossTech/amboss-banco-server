@@ -355,7 +355,7 @@ export class AccountResolver {
       async () => {
         const account = await this.accountService.signUp(input);
 
-        await this.ambossService.useRefferalCode(referralCode);
+        await this.ambossService.useRefferalCode(referralCode, input.email);
 
         return account;
       },
