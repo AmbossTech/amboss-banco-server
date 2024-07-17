@@ -4,10 +4,12 @@ import {
   Args,
   Context,
   Mutation,
+  Parent,
   Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { account } from '@prisma/client';
 import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
@@ -16,6 +18,7 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
@@ -71,35 +74,28 @@ export class UserResolver {
   }
 
   @ResolveField()
-  amboss() {
+  amboss(@Parent() account: account) {
     const ambossConfig = this.config.get('amboss');
 
     if (!ambossConfig) return;
 
-    return {};
+    return account;
   }
 }
 
 @Resolver(AmbossInfo)
 export class AmbossInfoResolver {
-  constructor(
-    private ambossService: AmbossService,
-    private accountRepo: AccountRepo,
-  ) {}
+  constructor(private ambossService: AmbossService) {}
 
   @ResolveField()
-  id(@CurrentUser() { user_id }: any) {
-    return user_id;
+  id(@Parent() account: account) {
+    return account.id;
   }
 
   @ResolveField()
   async referral_codes(
-    @CurrentUser() { user_id }: any,
+    @Parent() account: account,
   ): Promise<ReferralCode[] | void> {
-    const account = await this.accountRepo.findOneById(user_id);
-
-    if (!account) return [];
-
     return this.ambossService.getReferralCodes(account.email);
   }
 }
@@ -115,6 +111,8 @@ export class AccountResolver {
     private cryptoService: CryptoService,
     private accountService: AccountService,
     private walletService: WalletService,
+    private ambossService: AmbossService,
+    private redlockService: RedlockService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -239,7 +237,38 @@ export class AccountResolver {
     @Args('input') input: SignUpInput,
     @Context() { res }: { res: Response },
   ) {
-    const newAccount = await this.accountService.signUp(input);
+    let newAccount: account | undefined;
+
+    if (input.referral_code) {
+      // Needed for type safety for some reason
+      const referralCode = input.referral_code;
+
+      newAccount = await this.redlockService.using<account>(
+        referralCode,
+        async () => {
+          const { can_signup } = await this.ambossService.canSignup(
+            input.email,
+            referralCode,
+          );
+          if (!can_signup) {
+            throw new GraphQLError(`Invalid referral code`);
+          }
+
+          const account = await this.accountService.signUp(input);
+
+          await this.ambossService.useRefferalCode(referralCode, input.email);
+
+          return account;
+        },
+        'Please try again later',
+      );
+    } else {
+      const { can_signup } = await this.ambossService.canSignup(input.email);
+      if (!can_signup) {
+        throw new GraphQLError(`You are not subscribed`);
+      }
+      newAccount = await this.accountService.signUp(input);
+    }
 
     const { accessToken, refreshToken } = await this.authService.getTokens(
       newAccount.id,
