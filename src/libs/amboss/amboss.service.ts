@@ -7,8 +7,6 @@ import {
   AmbossCanSignup,
   ambossCanSignupSchema,
   AmbossReferralCode,
-  AmbossReferralCodeAvailable,
-  ambossReferralCodeAvailableSchema,
   ambossReferralCodeSchema,
   AmbossUseReferralCode,
   ambossUseReferralCodeSchema,
@@ -44,28 +42,6 @@ export class AmbossService {
         email,
       });
       return [];
-    }
-
-    return parsed.data;
-  }
-
-  async getReferralCodeAvailable(
-    code: string,
-  ): Promise<AmbossReferralCodeAvailable> {
-    if (!this.hasAmbossAccess) return { available: false };
-
-    const response = await this.get(`referral/${code}/available`);
-
-    const parsed = ambossReferralCodeAvailableSchema
-      .passthrough()
-      .safeParse(response);
-
-    if (parsed.error) {
-      this.logger.error(`Invalid response for referral code available`, {
-        response,
-        code,
-      });
-      return { available: false };
     }
 
     return parsed.data;

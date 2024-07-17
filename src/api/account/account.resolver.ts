@@ -243,23 +243,36 @@ export class AccountResolver {
     @Args('input') input: SignUpInput,
     @Context() { res }: { res: Response },
   ) {
-    const { can_signup, using_referral_code } =
-      await this.ambossService.canSignup(input.email, input.referral_code);
-
-    if (!can_signup && input.referral_code) {
-      throw new GraphQLError(`Invalid referral code`);
-    } else if (!can_signup) {
-      throw new GraphQLError(`You are not subscribed`);
-    }
-
     let newAccount: account | undefined;
 
-    if (using_referral_code && input.referral_code) {
-      newAccount = await this.createAccountWithReferralCode(
-        input.referral_code,
-        input,
+    if (input.referral_code) {
+      // Needed for type safety for some reason
+      const referralCode = input.referral_code;
+
+      newAccount = await this.redlockService.using<account>(
+        referralCode,
+        async () => {
+          const { can_signup } = await this.ambossService.canSignup(
+            input.email,
+            referralCode,
+          );
+          if (!can_signup) {
+            throw new GraphQLError(`Invalid referral code`);
+          }
+
+          const account = await this.accountService.signUp(input);
+
+          await this.ambossService.useRefferalCode(referralCode, input.email);
+
+          return account;
+        },
+        'Please try again later',
       );
     } else {
+      const { can_signup } = await this.ambossService.canSignup(input.email);
+      if (!can_signup) {
+        throw new GraphQLError(`You are not subscribed`);
+      }
       newAccount = await this.accountService.signUp(input);
     }
 
@@ -344,22 +357,5 @@ export class AccountResolver {
       access_token: accessToken,
       refresh_token: refreshToken,
     };
-  }
-
-  private async createAccountWithReferralCode(
-    referralCode: string,
-    input: SignUpInput,
-  ) {
-    return this.redlockService.using<account>(
-      referralCode,
-      async () => {
-        const account = await this.accountService.signUp(input);
-
-        await this.ambossService.useRefferalCode(referralCode, input.email);
-
-        return account;
-      },
-      'Please try again later',
-    );
   }
 }

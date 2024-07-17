@@ -11,14 +11,6 @@ export const ambossReferralCodeSchema = z.object({
 
 export type AmbossReferralCode = z.infer<typeof ambossReferralCodeSchema>;
 
-export const ambossReferralCodeAvailableSchema = z.object({
-  available: z.boolean(),
-});
-
-export type AmbossReferralCodeAvailable = z.infer<
-  typeof ambossReferralCodeAvailableSchema
->;
-
 export const ambossUseReferralCodeSchema = z.object({ success: z.boolean() });
 
 export type AmbossUseReferralCode = z.infer<typeof ambossUseReferralCodeSchema>;
