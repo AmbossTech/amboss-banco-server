@@ -4,6 +4,7 @@ import {
   Args,
   Context,
   Mutation,
+  Parent,
   Query,
   ResolveField,
   Resolver,
@@ -73,35 +74,28 @@ export class UserResolver {
   }
 
   @ResolveField()
-  amboss() {
+  amboss(@Parent() account: account) {
     const ambossConfig = this.config.get('amboss');
 
     if (!ambossConfig) return;
 
-    return {};
+    return account;
   }
 }
 
 @Resolver(AmbossInfo)
 export class AmbossInfoResolver {
-  constructor(
-    private ambossService: AmbossService,
-    private accountRepo: AccountRepo,
-  ) {}
+  constructor(private ambossService: AmbossService) {}
 
   @ResolveField()
-  id(@CurrentUser() { user_id }: any) {
-    return user_id;
+  id(@Parent() account: account) {
+    return account.id;
   }
 
   @ResolveField()
   async referral_codes(
-    @CurrentUser() { user_id }: any,
+    @Parent() account: account,
   ): Promise<ReferralCode[] | void> {
-    const account = await this.accountRepo.findOneById(user_id);
-
-    if (!account) return [];
-
     return this.ambossService.getReferralCodes(account.email);
   }
 }

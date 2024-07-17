@@ -2,11 +2,12 @@ import z from 'zod';
 
 export const ambossReferralCodeSchema = z.object({
   id: z.string(),
-  email: z.string(),
   code: z.string(),
   current_uses: z.number(),
   max_allowed_uses: z.number(),
   is_available: z.boolean(),
+  created_by_email: z.string(),
+  used_by_emails: z.array(z.string()),
 });
 
 export type AmbossReferralCode = z.infer<typeof ambossReferralCodeSchema>;
