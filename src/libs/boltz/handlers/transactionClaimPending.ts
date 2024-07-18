@@ -25,6 +25,10 @@ export class TransactionClaimPendingService {
       throw new Error('Received message for unknown swap');
     }
 
+    if (request.payload.from === BoltzChain['L-BTC']) {
+      return this.liquidHandler.handleSubmarineSwap(swap);
+    }
+
     return this.bitcoinHandler.handleSubmarineSwap(swap);
   }
 

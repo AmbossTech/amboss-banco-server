@@ -28,7 +28,7 @@ export enum SideShiftSwapType {
 }
 
 export type BoltzSubmarineRequestType = {
-  from: string;
+  from: BoltzChain;
   to: string;
   invoice: string;
   //   preimageHash: string;

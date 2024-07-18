@@ -44,7 +44,7 @@ export class BoltzService {
 
     const request: BoltzSubmarineRequestType = {
       invoice,
-      from: 'L-BTC',
+      from: BoltzChain['L-BTC'],
       to: 'BTC',
       refundPublicKey: keys.publicKey.toString('hex'),
       referralId: 'AMBOSS',
