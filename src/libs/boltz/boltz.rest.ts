@@ -269,7 +269,7 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
-      this.logger.error('Error getting reverse swap claim info', {
+      this.logger.error('Error getting chain swap claim info', {
         parsedError,
         body,
       });

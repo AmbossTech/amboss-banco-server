@@ -145,6 +145,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
                           break;
 
                         case 'transaction.mempool':
+                        case 'transaction.server.mempool':
+                        case 'transaction.server.confirmed':
                         case 'transaction.confirmed':
                           this.logger.debug('Creating claim transaction', {
                             status: arg.status,
@@ -163,6 +165,11 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                           if (swap.request.type == BoltzSwapType.REVERSE) {
                             await this.tcpService.handleReverse(swap, arg);
+                            break;
+                          }
+
+                          if (swap.request.type == BoltzSwapType.CHAIN) {
+                            await this.tcpService.handleChain(swap, arg);
                             break;
                           }
                           break;

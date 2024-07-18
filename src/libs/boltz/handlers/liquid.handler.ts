@@ -418,8 +418,11 @@ export class BoltzPendingLiquidHandler
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const transaction = targetFee(2, (fee) =>
-      constructClaimTransaction(
+    const transaction = targetFee(0.1, (fee) => {
+      if (!responsePayload.claimDetails.blindingKey) {
+        throw new Error(`Cannot create claim tx without blinding key`);
+      }
+      return constructClaimTransaction(
         [
           {
             ...swapOutput,
@@ -439,8 +442,8 @@ export class BoltzPendingLiquidHandler
         false,
         this.network,
         address.fromConfidential(destinationAddress).blindingKey,
-      ),
-    );
+      );
+    });
 
     return { musig, transaction, swapOutput, boltzPublicKey };
   }

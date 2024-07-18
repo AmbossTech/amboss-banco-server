@@ -153,15 +153,16 @@ export const boltzChainSwapResponse = z.object({
         output: z.string(),
       }),
     }),
-    lockupAddress: z.string(),
     serverPublicKey: z.string(),
-    timeoutBlockHeight: z.number(),
     amount: z.number(),
-    blindingKey: z.string(),
-    refundAddress: z.string(),
-    bip21: z.string(),
+    lockupAddress: z.string(),
+    timeoutBlockHeight: z.number(),
+    blindingKey: z.string().optional(),
+    refundAddress: z.string().optional(),
+    bip21: z.string().optional(),
   }),
   lockupDetails: z.object({
+    blindingKey: z.string().optional(),
     swapTree: z.object({
       claimLeaf: z.object({
         version: z.number(),
@@ -176,8 +177,7 @@ export const boltzChainSwapResponse = z.object({
     serverPublicKey: z.string(),
     timeoutBlockHeight: z.number(),
     amount: z.number(),
-    blindingKey: z.string(),
-    refundAddress: z.string(),
+    refundAddress: z.string().optional(),
     bip21: z.string(),
   }),
 });
