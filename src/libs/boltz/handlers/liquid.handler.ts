@@ -169,8 +169,11 @@ export class BoltzPendingLiquidHandler
     }
     // Create a claim transaction to be signed cooperatively via a key path spend
 
-    const claimTx = targetFee(0.01, (fee) =>
-      constructClaimTransaction(
+    const claimTx = targetFee(0.01, (fee) => {
+      if (!responsePayload.blindingKey) {
+        throw new Error(`Cannot create claim tx without blinding key`);
+      }
+      return constructClaimTransaction(
         [
           {
             ...swapOutput,
@@ -187,8 +190,8 @@ export class BoltzPendingLiquidHandler
         false,
         this.network,
         address.fromConfidential(destinationAddress).blindingKey,
-      ),
-    );
+      );
+    });
 
     // Get the partial signature from Boltz
     const boltzSig = await this.boltzRest.getSigReverseSwap(

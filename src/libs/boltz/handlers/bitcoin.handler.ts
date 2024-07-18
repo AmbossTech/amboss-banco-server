@@ -211,7 +211,7 @@ export class BoltzPendingBitcoinHandler
     claimTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
+    await this.boltzRest.broadcastTx(claimTx.toHex(), 'BTC');
 
     return;
   }

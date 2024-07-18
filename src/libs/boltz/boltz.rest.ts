@@ -296,6 +296,7 @@ export class BoltzRestApi {
       this.logger.error('Error broadcasting transaction', {
         parsedError,
         body,
+        chain,
       });
       throw new Error(parsedError.data.error);
     }

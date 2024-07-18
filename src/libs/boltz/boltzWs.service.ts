@@ -156,7 +156,15 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             this.logger.debug('Ignoring covenant');
                             return;
                           }
-                          await this.tcpService.handleReverse(swap, arg);
+                          if (swap.request.type == BoltzSwapType.SUBMARINE) {
+                            await this.tcpService.handleSubmarine(swap);
+                            break;
+                          }
+
+                          if (swap.request.type == BoltzSwapType.REVERSE) {
+                            await this.tcpService.handleReverse(swap, arg);
+                            break;
+                          }
                           break;
 
                         default:

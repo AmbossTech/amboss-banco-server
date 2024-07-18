@@ -97,7 +97,7 @@ export class BoltzService {
 
     const response = await this.boltzRest.createReverseSwap(request);
 
-    if (covenant) {
+    if (covenant && response.blindingKey) {
       const covParams = {
         address,
         preimage,
@@ -108,6 +108,8 @@ export class BoltzService {
       };
       await this.registerCovenant(covParams);
     }
+
+    this.boltzWs.subscribeToSwap([response.id]);
 
     await this.swapRepo.createSwap(
       wallet_account_id,

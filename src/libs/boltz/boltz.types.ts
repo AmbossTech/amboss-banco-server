@@ -89,7 +89,7 @@ export const boltzReverseSwapResponse = z.object({
   refundPublicKey: z.string(),
   timeoutBlockHeight: z.number(),
   onchainAmount: z.number(),
-  blindingKey: z.string(),
+  blindingKey: z.string().optional(),
 });
 
 export type BoltzReverseSwapResponseType = z.infer<

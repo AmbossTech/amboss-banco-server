@@ -140,7 +140,7 @@ export type AccountSwapResponseType =
         refundPublicKey: string;
         timeoutBlockHeight: number;
         onchainAmount: number;
-        blindingKey: string;
+        blindingKey?: string;
       };
     }
   | {
