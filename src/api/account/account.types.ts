@@ -129,4 +129,7 @@ export class SignUpInput {
 
   @Field(() => CreateWalletInput, { nullable: true })
   wallet: CreateWalletInput | null;
+
+  @Field({ nullable: true })
+  referral_code?: string;
 }
