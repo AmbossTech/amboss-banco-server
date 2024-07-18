@@ -2,11 +2,15 @@ import { randomBytes } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import zkpInit from '@vulpemventures/secp256k1-zkp';
 import { SwapTreeSerializer } from 'boltz-core';
+import { init } from 'boltz-core/dist/lib/liquid';
 import { ECPairFactory } from 'ecpair';
 import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import {
+  BoltzChain,
+  BoltzChainSwapRequestType,
   BoltzReverseRequestType,
   BoltzSubmarineRequestType,
   BoltzSwapType,
@@ -82,8 +86,8 @@ export class BoltzService {
 
     const request: BoltzReverseRequestType = {
       address,
-      from: 'BTC',
-      to: 'L-BTC',
+      from: BoltzChain.BTC,
+      to: BoltzChain['L-BTC'],
       claimCovenant: covenant,
       invoiceAmount: amount,
       preimageHash: getSHA256Hash(preimage),
@@ -120,6 +124,60 @@ export class BoltzService {
       {
         provider: SwapProvider.BOLTZ,
         type: BoltzSwapType.REVERSE,
+        payload: response,
+      },
+    );
+
+    return response;
+  }
+
+  async createChainSwap(
+    address: string,
+    amount: number,
+    wallet_account_id: string,
+    direction: { from: BoltzChain; to: BoltzChain },
+  ) {
+    const { from, to } = direction;
+    if (from == to) {
+      throw new Error(`You cannot send and receive to the same chain`);
+    }
+
+    const zkp = await zkpInit();
+    init(zkp);
+
+    // Create a random preimage for the swap; has to have a length of 32 bytes
+    const preimage = randomBytes(32);
+    const claimKeys = ECPairFactory(ecc).makeRandom();
+    const refundKeys = ECPairFactory(ecc).makeRandom();
+
+    const request: BoltzChainSwapRequestType = {
+      userLockAmount: amount,
+      claimAddress: address,
+      from,
+      to,
+      preimageHash: getSHA256Hash(preimage),
+      claimPublicKey: claimKeys.publicKey.toString('hex'),
+      refundPublicKey: refundKeys.publicKey.toString('hex'),
+      referralId: 'AMBOSS',
+    };
+
+    const response = await this.boltzRest.createChainSwap(request);
+
+    await this.swapRepo.createSwap(
+      wallet_account_id,
+      {
+        provider: SwapProvider.BOLTZ,
+        type: BoltzSwapType.CHAIN,
+        payload: {
+          ...request,
+          preimage: preimage.toString('hex'),
+          claimPrivateKey: claimKeys.privateKey?.toString('hex') || '',
+          refundPrivateKey: refundKeys.privateKey?.toString('hex') || '',
+        },
+      },
+      {
+        provider: SwapProvider.BOLTZ,
+        type: BoltzSwapType.CHAIN,
         payload: response,
       },
     );

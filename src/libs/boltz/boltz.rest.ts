@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Transaction as BitcoinTransaction } from 'bitcoinjs-lib';
 import { Musig } from 'boltz-core';
-import { Transaction } from 'liquidjs-lib';
+import { Transaction as LiquidTransaction } from 'liquidjs-lib';
 import {
+  BoltzChainSwapRequestType,
   BoltzReverseRequestType,
   BoltzSubmarineRequestType,
 } from 'src/repo/swaps/swaps.types';
@@ -12,6 +14,8 @@ import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import {
   boltzBroadcastTxResponse,
+  boltzChainSwapClaimResponse,
+  boltzChainSwapResponse,
   boltzError,
   boltzMagicRouteHint,
   boltzPartialSigResponse,
@@ -134,6 +138,28 @@ export class BoltzRestApi {
     return boltzSubmarineSwapClaimResponse.parse(body);
   }
 
+  async createChainSwap(request: BoltzChainSwapRequestType) {
+    const result = await fetch(`${this.apiUrl}swap/chain`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error creating chain swap', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzChainSwapResponse.parse(body);
+  }
+
   async postSubmarineClaimInfo(id: string, musig: Musig) {
     const result = await fetch(`${this.apiUrl}swap/submarine/${id}/claim`, {
       headers: { 'content-type': 'application/json' },
@@ -161,7 +187,7 @@ export class BoltzRestApi {
 
   async getSigReverseSwap(
     swapId: string,
-    claimTx: Transaction,
+    claimTx: LiquidTransaction | BitcoinTransaction,
     preimage: Buffer,
     musig: Musig,
   ) {
@@ -193,7 +219,67 @@ export class BoltzRestApi {
     return boltzPartialSigResponse.parse(body);
   }
 
-  async broadcastTx(hex: string, chain: 'L-BTC' = 'L-BTC') {
+  async getChainClaimInfo(id: string) {
+    const result = await fetch(`${this.apiUrl}swap/chain/${id}/claim`);
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error getting chain claim info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzChainSwapClaimResponse.parse(body);
+  }
+
+  async getSigChainSwap(
+    swapId: string,
+    preimage: Buffer,
+    partialSig: Uint8Array,
+    musig: Musig,
+    claimTransaction: BitcoinTransaction | LiquidTransaction,
+    claimPubNonce: Buffer,
+  ) {
+    const result = await fetch(`${this.apiUrl}swap/chain/${swapId}/claim`, {
+      method: 'POST',
+      body: JSON.stringify({
+        preimage: preimage.toString('hex'),
+        signature: {
+          partialSignature: Buffer.from(partialSig).toString('hex'),
+          pubNonce: Buffer.from(musig.getPublicNonce()).toString('hex'),
+        },
+        toSign: {
+          index: 0,
+          transaction: claimTransaction.toHex(),
+          pubNonce: claimPubNonce.toString('hex'),
+        },
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error getting reverse swap claim info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzPartialSigResponse.parse(body);
+  }
+
+  async broadcastTx(hex: string, chain: 'BTC' | 'L-BTC') {
     const result = await fetch(`${this.apiUrl}chain/${chain}/transaction`, {
       method: 'POST',
       headers: {

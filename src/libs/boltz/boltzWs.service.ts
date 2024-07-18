@@ -124,7 +124,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                         // Create a partial signature to allow Boltz to do a key path spend to claim the mainchain coins
                         case 'transaction.claim.pending': {
-                          await this.tcpService.handle(swap);
+                          await this.tcpService.handleSubmarine(swap);
                           break;
                         }
 

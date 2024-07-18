@@ -108,6 +108,12 @@ export const boltzSubmarineSwapClaimResponse = z.object({
   transactionHash: z.string(),
 });
 
+export const boltzChainSwapClaimResponse = z.object({
+  pubNonce: z.string(),
+  publicKey: z.string(),
+  transactionHash: z.string(),
+});
+
 export const boltzMagicRouteHint = z.object({
   bip21: z.string(),
   signature: z.string(),
@@ -132,3 +138,48 @@ export type CovenantParams = {
   address: string;
   tree: Types.SwapTree;
 };
+
+export const boltzChainSwapResponse = z.object({
+  id: z.string(),
+  referralId: z.string(),
+  claimDetails: z.object({
+    swapTree: z.object({
+      claimLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+      refundLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+    }),
+    lockupAddress: z.string(),
+    serverPublicKey: z.string(),
+    timeoutBlockHeight: z.number(),
+    amount: z.number(),
+    blindingKey: z.string(),
+    refundAddress: z.string(),
+    bip21: z.string(),
+  }),
+  lockupDetails: z.object({
+    swapTree: z.object({
+      claimLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+      refundLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+    }),
+    lockupAddress: z.string(),
+    serverPublicKey: z.string(),
+    timeoutBlockHeight: z.number(),
+    amount: z.number(),
+    blindingKey: z.string(),
+    refundAddress: z.string(),
+    bip21: z.string(),
+  }),
+});
+
+export type BoltzChainSwapResponse = z.infer<typeof boltzChainSwapResponse>;
