@@ -77,6 +77,8 @@ export const sideShiftVariableSwapOutput = z.object({
   averageShiftSeconds: z.string(),
   settleCoinNetworkFee: z.string(),
   networkFeeUsd: z.string(),
+  depositAmount: z.string().optional(),
+  settleAmount: z.string().optional(),
 });
 
 export type SideShiftVariableSwap = z.infer<typeof sideShiftVariableSwapOutput>;
@@ -95,7 +97,7 @@ export const sideShiftFixedSwapOutput = z.object({
   type: z.string(),
   quoteId: z.string(),
   depositAmount: z.string(),
-  settleAmount: z.string(),
+  settleAmount: z.string().optional(),
   expiresAt: z.string(),
   status: z.string(),
   averageShiftSeconds: z.string(),
