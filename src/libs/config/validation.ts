@@ -29,6 +29,7 @@ export const ConfigSchema = z.object({
       liquid: z.string(),
       waterfall: z.string(),
     }),
+    mempool: z.string(),
   }),
   fiat: z
     .object({

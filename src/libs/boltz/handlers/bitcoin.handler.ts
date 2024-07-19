@@ -15,6 +15,7 @@ import { TaprootUtils as LiquidTaprootUtils } from 'boltz-core/dist/lib/liquid';
 import { randomBytes } from 'crypto';
 import ECPairFactory, { ECPairInterface } from 'ecpair';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { MempoolService } from 'src/libs/mempool/mempool.service';
 import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { toWithError } from 'src/utils/async';
 import * as ecc from 'tiny-secp256k1';
@@ -31,6 +32,7 @@ export class BoltzPendingBitcoinHandler
 
   constructor(
     private boltzRest: BoltzRestApi,
+    private mempoolService: MempoolService,
     @Logger(BoltzPendingBitcoinHandler.name) private logger: CustomLogger,
   ) {}
 
@@ -155,10 +157,11 @@ export class BoltzPendingBitcoinHandler
       this.logger.error('No swap output found in lockup transaction');
       return;
     }
-    // Create a claim transaction to be signed cooperatively via a key path spend
 
-    // TODO: get bitcoin fee
-    const claimTx = targetFee(8, (fee) =>
+    const { halfHourFee } = await this.mempoolService.getRecommendedFees();
+
+    // Create a claim transaction to be signed cooperatively via a key path spend
+    const claimTx = targetFee(halfHourFee, (fee) =>
       constructClaimTransaction(
         [
           {
@@ -394,9 +397,10 @@ export class BoltzPendingBitcoinHandler
       throw 'No swap output found in lockup transaction';
     }
 
+    const { halfHourFee } = await this.mempoolService.getRecommendedFees();
+
     // Create a claim transaction to be signed cooperatively via a key path spend
-    // TODO: get fee estimation
-    const claimTx = targetFee(8, (fee) =>
+    const claimTx = targetFee(halfHourFee, (fee) =>
       constructClaimTransaction(
         [
           {
