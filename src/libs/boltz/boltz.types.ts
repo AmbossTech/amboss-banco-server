@@ -39,53 +39,6 @@ export const swapSubmarineInfoSchema = z.object({
 
 export type SwapSubmarineInfoType = z.infer<typeof swapSubmarineInfoSchema>;
 
-export const swapChainInfoSchema = z.object({
-  BTC: z.object({
-    'L-BTC': z.object({
-      hash: z.string(),
-      rate: z.number(),
-      limits: z.object({
-        maximal: z.number(),
-        minimal: z.number(),
-        maximalZeroConf: z.number(),
-      }),
-      fees: z.object({
-        percentage: z.number(),
-        minerFees: z.object({
-          server: z.number(),
-          user: z.object({
-            claim: z.number(),
-            lockup: z.number(),
-          }),
-        }),
-      }),
-    }),
-  }),
-  'L-BTC': z.object({
-    BTC: z.object({
-      hash: z.string(),
-      rate: z.number(),
-      limits: z.object({
-        maximal: z.number(),
-        minimal: z.number(),
-        maximalZeroConf: z.number(),
-      }),
-      fees: z.object({
-        percentage: z.number(),
-        minerFees: z.object({
-          server: z.number(),
-          user: z.object({
-            claim: z.number(),
-            lockup: z.number(),
-          }),
-        }),
-      }),
-    }),
-  }),
-});
-
-export type SwapChainInfoType = z.infer<typeof swapChainInfoSchema>;
-
 export const boltzError = z.object({ error: z.string() });
 
 export const boltzSubmarineSwapResponse = z.object({
