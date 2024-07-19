@@ -5,6 +5,7 @@ import {
   AccountCurrency,
   CallbackLocalHandlerParams,
   CallbackLocalParams,
+  GetBitcoinOnchainAutoType,
   GetLnurlAutoType,
   GetLnUrlInvoiceAutoType,
   GetLnUrlResponseAutoType,
@@ -14,6 +15,7 @@ import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { BoltzChain } from 'src/repo/swaps/swaps.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import {
   LiquidWalletAssets,
@@ -66,7 +68,7 @@ export class LnUrlLocalService {
       };
     }
 
-    if (!!props.currency) {
+    if (!!props.currency && props.network === PaymentOptionNetwork.LIQUID) {
       if (!props.network) {
         return {
           status: 'ERROR',
@@ -80,6 +82,11 @@ export class LnUrlLocalService {
         network: props.network,
         currency: props.currency,
       });
+    } else if (
+      props.currency === 'BTC' &&
+      props.network === PaymentOptionNetwork.BITCOIN
+    ) {
+      return this.getBitcoinOnchainResponse(account, amount);
     }
 
     // The amount that comes in through LNURL for Lightning is in millisatoshis
@@ -175,6 +182,22 @@ export class LnUrlLocalService {
       wallet_account: hasLiquidAccount,
       asset_id: liquidAssetIds.mainnet.tether,
       conversion_decimals: 0,
+      // multiplier: 1000,
+      // decimals: 8,
+      // convertible: {
+      //   min: 1,
+      //   max: 100000000,
+      // },
+    });
+
+    currencies.push({
+      code: PaymentOptionCode.BTC,
+      name: LiquidWalletAssets.BTC.name,
+      network: PaymentOptionNetwork.BITCOIN,
+      symbol: LiquidWalletAssets.BTC.symbol,
+      wallet_account: hasLiquidAccount,
+      conversion_decimals: 0,
+      asset_id: liquidAssetIds.mainnet.bitcoin,
       // multiplier: 1000,
       // decimals: 8,
       // convertible: {
@@ -331,6 +354,94 @@ export class LnUrlLocalService {
           return {
             pr: createSwap.invoice,
             routes: [],
+          };
+        },
+      ],
+    })
+      .then((result) => result.createPayload)
+      .catch((error) => {
+        this.logger.error('Error getting lnurl invoice response', { error });
+        return {
+          status: 'ERROR',
+          reason: error.message,
+        };
+      });
+  }
+
+  async getBitcoinOnchainResponse(
+    account: string,
+    amount: number,
+  ): Promise<LnUrlResponseSchemaType> {
+    return auto<GetBitcoinOnchainAutoType>({
+      checkAmount: async () => {
+        const boltzInfo = await this.boltzService.getReverseSwapInfo();
+
+        const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+
+        if (maximal < amount) {
+          throw new Error(
+            `Amount ${amount} greater than maximum of ${maximal}`,
+          );
+        }
+
+        if (minimal > amount) {
+          throw new Error(
+            `Amount ${amount} smaller than minimum of ${minimal}`,
+          );
+        }
+
+        return amount;
+      },
+
+      createSwap: [
+        'checkAmount',
+        async ({ checkAmount }) => {
+          const accountWallets =
+            await this.walletRepo.getWalletByLnAddress(account);
+
+          const liquidWalletAccounts =
+            accountWallets?.wallet.wallet_account.filter(
+              (w) => w.details.type === WalletAccountType.LIQUID,
+            );
+
+          if (!liquidWalletAccounts?.length) {
+            throw new Error(`No wallet available`);
+          }
+
+          const walletAcc = liquidWalletAccounts[0];
+
+          const descriptor = this.cryptoService.decryptString(
+            walletAcc.details.local_protected_descriptor,
+          );
+
+          const address =
+            await this.liquidService.getOnchainAddress(descriptor);
+
+          return this.boltzService.createChainSwap(
+            address.address().toString(),
+            checkAmount,
+            walletAcc.id,
+            { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
+          );
+        },
+      ],
+
+      createPayload: [
+        'createSwap',
+        async ({
+          createSwap,
+        }: Pick<GetBitcoinOnchainAutoType, 'createSwap'>): Promise<
+          GetBitcoinOnchainAutoType['createPayload']
+        > => {
+          return {
+            pr: '',
+            routes: [],
+            onchain: {
+              currency: PaymentOptionCode.BTC,
+              network: PaymentOptionNetwork.BITCOIN,
+              address: createSwap.lockupDetails.lockupAddress,
+              bip21: createSwap.lockupDetails.bip21,
+            },
           };
         },
       ],

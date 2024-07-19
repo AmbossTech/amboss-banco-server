@@ -20,7 +20,7 @@ import { toWithError } from 'src/utils/async';
 import * as ecc from 'tiny-secp256k1';
 
 import { BoltzRestApi } from '../boltz.rest';
-import { BoltzChainSwapResponse } from '../boltz.types';
+import { BoltzChainSwapResponseType } from '../boltz.types';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
 export class BoltzPendingBitcoinHandler
@@ -307,7 +307,7 @@ export class BoltzPendingBitcoinHandler
     refundKeys,
     responsePayload,
   }: {
-    responsePayload: BoltzChainSwapResponse;
+    responsePayload: BoltzChainSwapResponseType;
     refundKeys: ECPairInterface;
     preimage: Buffer;
     claimPubNonce: Buffer;
@@ -365,7 +365,7 @@ export class BoltzPendingBitcoinHandler
     preimage,
     responsePayload,
   }: {
-    responsePayload: BoltzChainSwapResponse;
+    responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
     lockupTransactionHex: string;

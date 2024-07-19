@@ -7,6 +7,7 @@ import {
   Musig,
   OutputType,
   SwapTreeSerializer,
+  TaprootUtils as BitcoinTaprootUtils,
   targetFee,
 } from 'boltz-core';
 import {
@@ -23,7 +24,7 @@ import { toWithError } from 'src/utils/async';
 import * as ecc from 'tiny-secp256k1';
 
 import { BoltzRestApi } from '../boltz.rest';
-import { BoltzChainSwapResponse } from '../boltz.types';
+import { BoltzChainSwapResponseType } from '../boltz.types';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
 @Injectable()
@@ -329,7 +330,7 @@ export class BoltzPendingLiquidHandler
     refundKeys,
     responsePayload,
   }: {
-    responsePayload: BoltzChainSwapResponse;
+    responsePayload: BoltzChainSwapResponseType;
     refundKeys: ECPairInterface;
     preimage: Buffer;
     claimPubNonce: Buffer;
@@ -349,7 +350,7 @@ export class BoltzPendingLiquidHandler
       boltzPublicKey,
       refundKeys.publicKey,
     ]);
-    TaprootUtils.tweakMusig(
+    BitcoinTaprootUtils.tweakMusig(
       musig,
       SwapTreeSerializer.deserializeSwapTree(
         responsePayload.lockupDetails.swapTree,
@@ -387,7 +388,7 @@ export class BoltzPendingLiquidHandler
     preimage,
     responsePayload,
   }: {
-    responsePayload: BoltzChainSwapResponse;
+    responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
     lockupTransactionHex: string;

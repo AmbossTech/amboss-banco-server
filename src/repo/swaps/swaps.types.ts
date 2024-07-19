@@ -1,4 +1,4 @@
-import { BoltzChainSwapResponse } from 'src/libs/boltz/boltz.types';
+import { BoltzChainSwapResponseType } from 'src/libs/boltz/boltz.types';
 import {
   SideShiftFixedSwap,
   SideShiftFixedSwapInput,
@@ -146,7 +146,7 @@ export type AccountSwapResponseType =
   | {
       provider: SwapProvider.BOLTZ;
       type: BoltzSwapType.CHAIN;
-      payload: BoltzChainSwapResponse;
+      payload: BoltzChainSwapResponseType;
     }
   | {
       provider: SwapProvider.SIDESHIFT;

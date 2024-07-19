@@ -148,9 +148,6 @@ export class BoltzWsService implements OnApplicationBootstrap {
                         case 'transaction.server.mempool':
                         case 'transaction.server.confirmed':
                         case 'transaction.confirmed':
-                          this.logger.debug('Creating claim transaction', {
-                            status: arg.status,
-                          });
                           if (
                             swap.request.type == BoltzSwapType.REVERSE &&
                             swap.request.payload.claimCovenant
@@ -168,10 +165,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             break;
                           }
 
+                          const isClaimable =
+                            arg.status === 'transaction.server.mempool' ||
+                            arg.status === 'transaction.server.confirmed';
                           if (
                             swap.request.type == BoltzSwapType.CHAIN &&
-                            arg.status === 'transaction.server.mempool'
+                            isClaimable
                           ) {
+                            this.logger.debug('Creating claim transaction', {
+                              status: arg.status,
+                            });
                             await this.tcpService.handleChain(swap, arg);
                             break;
                           }
