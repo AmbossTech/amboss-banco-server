@@ -42,14 +42,14 @@ export class LnUrlRemoteService {
 
   async getInvoiceResponse({
     callbackUrl,
-    amount,
+    amount_sats,
   }: {
     callbackUrl: string;
-    amount: number;
+    amount_sats: number;
   }): Promise<LnUrlResponseSchemaType> {
     return this.getResponse({
       callbackUrl,
-      amount: amount + '',
+      amount: amount_sats * 1000 + '', // LNURL uses millisatoshis
       currency: undefined,
       network: undefined,
     });
