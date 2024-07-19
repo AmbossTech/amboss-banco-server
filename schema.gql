@@ -354,6 +354,7 @@ type User {
   default_wallet_id: String
   email: String!
   id: String!
+  protected_symmetric_key: String!
   swap_info: UserSwapInfo!
 }
 
