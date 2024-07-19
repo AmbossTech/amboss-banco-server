@@ -246,17 +246,17 @@ export class AccountResolver {
       newAccount = await this.redlockService.using<account>(
         referralCode,
         async () => {
-          const { can_signup } = await this.ambossService.canSignup(
-            input.email,
-            referralCode,
-          );
+          const { can_signup, using_referral_code } =
+            await this.ambossService.canSignup(input.email, referralCode);
           if (!can_signup) {
             throw new GraphQLError(`Invalid referral code`);
           }
 
           const account = await this.accountService.signUp(input);
 
-          await this.ambossService.useRefferalCode(referralCode, input.email);
+          if (using_referral_code) {
+            await this.ambossService.useRefferalCode(referralCode, input.email);
+          }
 
           return account;
         },
