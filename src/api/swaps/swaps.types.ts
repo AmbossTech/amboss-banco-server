@@ -4,6 +4,18 @@ import { Field, ObjectType } from '@nestjs/graphql';
 export class SimpleSwap {
   @Field()
   id: string;
+
+  @Field()
+  created_at: string;
+
+  @Field()
+  provider: string;
+
+  @Field()
+  from: string;
+
+  @Field()
+  to: string;
 }
 
 @ObjectType()

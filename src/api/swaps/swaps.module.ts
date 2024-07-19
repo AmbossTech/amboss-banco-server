@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 
-import { WalletSwapsResolver } from './swaps.resolver';
+import { SimpleSwapResolver, WalletSwapsResolver } from './swaps.resolver';
 
 @Module({
   imports: [SwapsRepoModule],
-  providers: [WalletSwapsResolver],
+  providers: [WalletSwapsResolver, SimpleSwapResolver],
 })
 export class SwapsModule {}

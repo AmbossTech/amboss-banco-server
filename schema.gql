@@ -298,7 +298,11 @@ input SignUpInput {
 }
 
 type SimpleSwap {
+  created_at: String!
+  from: String!
   id: String!
+  provider: String!
+  to: String!
 }
 
 type SimpleWallet {
