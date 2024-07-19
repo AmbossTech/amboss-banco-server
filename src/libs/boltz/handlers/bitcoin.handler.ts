@@ -40,7 +40,7 @@ export class BoltzPendingBitcoinHandler
 
   async handleChain(swap: wallet_account_swap, arg: any) {
     this.logger.debug(`Handling chain swap`, {
-      arg: { ...arg, transaction: { hex: arg.transaction.hex.slice(0, 40) } },
+      swap: swap.id,
     });
     const { response, request } = swap;
 

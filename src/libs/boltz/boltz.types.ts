@@ -206,7 +206,6 @@ export const boltzChainSwapResponse = z.object({
     timeoutBlockHeight: z.number(),
     blindingKey: z.string().optional(),
     refundAddress: z.string().optional(),
-    bip21: z.string().optional(),
   }),
   lockupDetails: z.object({
     blindingKey: z.string().optional(),
