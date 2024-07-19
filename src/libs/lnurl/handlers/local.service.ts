@@ -281,7 +281,7 @@ export class LnUrlLocalService {
 
   async getInvoiceResponse(
     account: string,
-    amount: number,
+    amount_sats: number,
   ): Promise<LnUrlResponseSchemaType> {
     return auto<GetLnUrlInvoiceAutoType>({
       checkAmount: async () => {
@@ -289,19 +289,19 @@ export class LnUrlLocalService {
 
         const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
 
-        if (maximal < amount) {
+        if (maximal < amount_sats) {
           throw new Error(
-            `Amount ${amount} greater than maximum of ${maximal}`,
+            `Amount ${amount_sats} greater than maximum of ${maximal}`,
           );
         }
 
-        if (minimal > amount) {
+        if (minimal > amount_sats) {
           throw new Error(
-            `Amount ${amount} smaller than minimum of ${minimal}`,
+            `Amount ${amount_sats} smaller than minimum of ${minimal}`,
           );
         }
 
-        return amount;
+        return amount_sats;
       },
 
       createSwap: [
