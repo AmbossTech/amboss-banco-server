@@ -46,6 +46,9 @@ export class User {
   @Field()
   email: string;
 
+  @Field()
+  protected_symmetric_key: string;
+
   @Field(() => String, { nullable: true })
   default_wallet_id: string | null;
 
