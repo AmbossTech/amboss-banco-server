@@ -237,38 +237,40 @@ export class AccountResolver {
     @Args('input') input: SignUpInput,
     @Context() { res }: { res: Response },
   ) {
-    let newAccount: account | undefined;
+    // let newAccount: account | undefined;
 
-    if (input.referral_code) {
-      // Needed for type safety for some reason
-      const referralCode = input.referral_code;
+    // if (input.referral_code) {
+    // // Needed for type safety for some reason
+    //   const referralCode = input.referral_code;
 
-      newAccount = await this.redlockService.using<account>(
-        referralCode,
-        async () => {
-          const { can_signup } = await this.ambossService.canSignup(
-            input.email,
-            referralCode,
-          );
-          if (!can_signup) {
-            throw new GraphQLError(`Invalid referral code`);
-          }
+    //   newAccount = await this.redlockService.using<account>(
+    //     referralCode,
+    //     async () => {
+    //       const { can_signup } = await this.ambossService.canSignup(
+    //         input.email,
+    //         referralCode,
+    //       );
+    //       if (!can_signup) {
+    //         throw new GraphQLError(`Invalid referral code`);
+    //       }
 
-          const account = await this.accountService.signUp(input);
+    //       const account = await this.accountService.signUp(input);
 
-          await this.ambossService.useRefferalCode(referralCode, input.email);
+    //       await this.ambossService.useRefferalCode(referralCode, input.email);
 
-          return account;
-        },
-        'Please try again later',
-      );
-    } else {
-      const { can_signup } = await this.ambossService.canSignup(input.email);
-      if (!can_signup) {
-        throw new GraphQLError(`You are not subscribed`);
-      }
-      newAccount = await this.accountService.signUp(input);
-    }
+    //       return account;
+    //     },
+    //     'Please try again later',
+    //   );
+    // } else {
+    //   const { can_signup } = await this.ambossService.canSignup(input.email);
+    //   if (!can_signup) {
+    //     throw new GraphQLError(`You are not subscribed`);
+    //   }
+    //   newAccount = await this.accountService.signUp(input);
+    // }
+
+    const newAccount = await this.accountService.signUp(input);
 
     const { accessToken, refreshToken } = await this.authService.getTokens(
       newAccount.id,
