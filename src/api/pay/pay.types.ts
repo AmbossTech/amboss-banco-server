@@ -82,6 +82,9 @@ export class PayMutations {
   liquid_address: CreateLiquidTransaction;
 
   @Field()
+  bitcoin_address: CreateLiquidTransaction;
+
+  @Field()
   network_swap: CreateLiquidTransaction;
 }
 
@@ -143,6 +146,15 @@ export class LiquidRecipientInput {
 }
 
 @InputType()
+export class BitcoinRecipientInput {
+  @Field()
+  address: string;
+
+  @Field()
+  amount: string;
+}
+
+@InputType()
 export class PayLiquidAddressInput {
   @Field(() => Boolean, { nullable: true })
   send_all_lbtc?: boolean | null;
@@ -173,6 +185,18 @@ export class SwapQuoteInput {
 
   @Field(() => SideShiftNetwork)
   settle_network: SideShiftNetwork;
+}
+
+@InputType()
+export class PayBitcoinAddressInput {
+  @Field(() => Boolean, { nullable: true })
+  send_all_lbtc?: boolean | null;
+
+  @Field(() => Number, { nullable: true })
+  fee_rate?: number | null;
+
+  @Field(() => BitcoinRecipientInput)
+  recipient: BitcoinRecipientInput;
 }
 
 export type PayLnAddressPayload = {

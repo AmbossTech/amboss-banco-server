@@ -168,7 +168,10 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             break;
                           }
 
-                          if (swap.request.type == BoltzSwapType.CHAIN) {
+                          if (
+                            swap.request.type == BoltzSwapType.CHAIN &&
+                            arg.status === 'transaction.server.mempool'
+                          ) {
                             await this.tcpService.handleChain(swap, arg);
                             break;
                           }

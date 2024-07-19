@@ -1,4 +1,3 @@
-import { OnModuleInit } from '@nestjs/common';
 import { wallet_account_swap } from '@prisma/client';
 import zkpInit, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import { address, crypto, networks, Transaction } from 'bitcoinjs-lib';
@@ -12,6 +11,7 @@ import {
   TaprootUtils,
   targetFee,
 } from 'boltz-core';
+import { TaprootUtils as LiquidTaprootUtils } from 'boltz-core/dist/lib/liquid';
 import { randomBytes } from 'crypto';
 import ECPairFactory, { ECPairInterface } from 'ecpair';
 import { CustomLogger, Logger } from 'src/libs/logging';
@@ -24,7 +24,7 @@ import { BoltzChainSwapResponse } from '../boltz.types';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
 export class BoltzPendingBitcoinHandler
-  implements BoltzPendingTransactionInterface, OnModuleInit
+  implements BoltzPendingTransactionInterface
 {
   private network = networks.bitcoin;
   private zkp: Secp256k1ZKP;
@@ -110,7 +110,7 @@ export class BoltzPendingBitcoinHandler
     ];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'L-BTC');
+    await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'BTC');
   }
 
   async handleReverseSwap(swap: wallet_account_swap, arg: any) {
@@ -158,7 +158,7 @@ export class BoltzPendingBitcoinHandler
     // Create a claim transaction to be signed cooperatively via a key path spend
 
     // TODO: get bitcoin fee
-    const claimTx = targetFee(2, (fee) =>
+    const claimTx = targetFee(8, (fee) =>
       constructClaimTransaction(
         [
           {
@@ -211,7 +211,7 @@ export class BoltzPendingBitcoinHandler
     claimTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx.toHex(), 'BTC');
+    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
 
     return;
   }
@@ -327,7 +327,7 @@ export class BoltzPendingBitcoinHandler
       boltzPublicKey,
       refundKeys.publicKey,
     ]);
-    TaprootUtils.tweakMusig(
+    LiquidTaprootUtils.tweakMusig(
       musig,
       SwapTreeSerializer.deserializeSwapTree(
         responsePayload.lockupDetails.swapTree,
@@ -387,7 +387,6 @@ export class BoltzPendingBitcoinHandler
         responsePayload.claimDetails.swapTree,
       ).tree,
     );
-
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(lockupTransactionHex);
     const swapOutput = detectSwap(tweakedKey, lockupTx);
@@ -397,7 +396,7 @@ export class BoltzPendingBitcoinHandler
 
     // Create a claim transaction to be signed cooperatively via a key path spend
     // TODO: get fee estimation
-    const claimTx = targetFee(2, (fee) =>
+    const claimTx = targetFee(8, (fee) =>
       constructClaimTransaction(
         [
           {

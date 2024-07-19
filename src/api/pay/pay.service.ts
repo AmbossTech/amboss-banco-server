@@ -21,11 +21,12 @@ import {
 } from 'src/libs/lnurl/lnurl.types';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
-import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
+import { BoltzChain, BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { toWithError } from 'src/utils/async';
 import { getLiquidAssetId } from 'src/utils/crypto/crypto';
 
 import {
+  PayBitcoinAddressInput,
   PayLightningAddressAuto,
   PayLiquidAddressInput,
   PayLnAddressPayload,
@@ -386,5 +387,38 @@ export class PayService {
         },
       ],
     }).then((results) => results.pay);
+  }
+
+  async payBitcoinAddress(
+    wallet_account: wallet_account,
+    input: PayBitcoinAddressInput,
+  ) {
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
+    );
+
+    const swap = await this.boltzService.createChainSwap(
+      input.recipient.address,
+      +input.recipient.amount,
+      wallet_account.id,
+      {
+        from: BoltzChain['L-BTC'],
+        to: BoltzChain.BTC,
+      },
+    );
+
+    const { address, amount, asset } = decodeBip21Url(swap.lockupDetails.bip21);
+
+    const pset = await this.liquidService.createPset(descriptor, {
+      recipients: [
+        {
+          address,
+          amount: (amount * 100_000_000).toString(),
+          asset_id: asset,
+        },
+      ],
+    });
+
+    return { base_64: pset.toString() };
   }
 }
