@@ -234,79 +234,83 @@ export class AccountResolver {
   @Public()
   @Mutation(() => NewAccount)
   async signUp(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Args('input') input: SignUpInput,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Context() { res }: { res: Response },
   ) {
-    let newAccount: account | undefined;
+    throw new GraphQLError('Sign ups are temporarily disabled.');
 
-    if (input.referral_code) {
-      // Needed for type safety for some reason
-      const referralCode = input.referral_code;
+    // let newAccount: account | undefined;
 
-      newAccount = await this.redlockService.using<account>(
-        referralCode,
-        async () => {
-          const { can_signup, using_referral_code } =
-            await this.ambossService.canSignup(input.email, referralCode);
-          if (!can_signup) {
-            throw new GraphQLError(`Invalid referral code`);
-          }
+    // if (input.referral_code) {
+    //   // Needed for type safety for some reason
+    //   const referralCode = input.referral_code;
 
-          const account = await this.accountService.signUp(input);
+    //   newAccount = await this.redlockService.using<account>(
+    //     referralCode,
+    //     async () => {
+    //       const { can_signup, using_referral_code } =
+    //         await this.ambossService.canSignup(input.email, referralCode);
+    //       if (!can_signup) {
+    //         throw new GraphQLError(`Invalid referral code`);
+    //       }
 
-          if (using_referral_code) {
-            await this.ambossService.useRefferalCode(referralCode, input.email);
-          }
+    //       const account = await this.accountService.signUp(input);
 
-          return account;
-        },
-        'Please try again later',
-      );
-    } else {
-      const { can_signup } = await this.ambossService.canSignup(input.email);
-      if (!can_signup) {
-        throw new GraphQLError(`You are not subscribed`);
-      }
-      newAccount = await this.accountService.signUp(input);
-    }
+    //       if (using_referral_code) {
+    //         await this.ambossService.useRefferalCode(referralCode, input.email);
+    //       }
 
-    const { accessToken, refreshToken } = await this.authService.getTokens(
-      newAccount.id,
-    );
+    //       return account;
+    //     },
+    //     'Please try again later',
+    //   );
+    // } else {
+    //   const { can_signup } = await this.ambossService.canSignup(input.email);
+    //   if (!can_signup) {
+    //     throw new GraphQLError(`You are not subscribed`);
+    //   }
+    //   newAccount = await this.accountService.signUp(input);
+    // }
 
-    const hashedRefreshToken =
-      await this.cryptoService.argon2Hash(refreshToken);
+    // const { accessToken, refreshToken } = await this.authService.getTokens(
+    //   newAccount.id,
+    // );
 
-    await this.accountRepo.updateRefreshToken(
-      newAccount.id,
-      hashedRefreshToken,
-    );
+    // const hashedRefreshToken =
+    //   await this.cryptoService.argon2Hash(refreshToken);
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-    };
+    // await this.accountRepo.updateRefreshToken(
+    //   newAccount.id,
+    //   hashedRefreshToken,
+    // );
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
-    });
+    // const cookieOptions: CookieOptions = {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: true,
+    //   domain: this.domain,
+    // };
 
-    if (!!input.wallet) {
-      await this.walletService.createWallet(newAccount.id, input.wallet);
-    }
+    // res.cookie('amboss_banco_refresh_token', refreshToken, {
+    //   ...cookieOptions,
+    //   maxAge: 1000 * 60 * 60 * 24 * 7,
+    // });
+    // res.cookie('amboss_banco_access_token', accessToken, {
+    //   ...cookieOptions,
+    //   maxAge: 1000 * 60 * 10,
+    // });
 
-    return {
-      id: newAccount.id,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+    // if (!!input.wallet) {
+    //   await this.walletService.createWallet(newAccount.id, input.wallet);
+    // }
+
+    // return {
+    //   id: newAccount.id,
+    //   access_token: accessToken,
+    //   refresh_token: refreshToken,
+    // };
   }
 
   @SkipAccessCheck()
