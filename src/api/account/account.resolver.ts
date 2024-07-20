@@ -9,6 +9,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { account } from '@prisma/client';
 import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
@@ -17,6 +18,7 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
@@ -75,35 +77,28 @@ export class UserResolver {
   }
 
   @ResolveField()
-  amboss() {
+  amboss(@Parent() account: account) {
     const ambossConfig = this.config.get('amboss');
 
     if (!ambossConfig) return;
 
-    return {};
+    return account;
   }
 }
 
 @Resolver(AmbossInfo)
 export class AmbossInfoResolver {
-  constructor(
-    private ambossService: AmbossService,
-    private accountRepo: AccountRepo,
-  ) {}
+  constructor(private ambossService: AmbossService) {}
 
   @ResolveField()
-  id(@CurrentUser() { user_id }: any) {
-    return user_id;
+  id(@Parent() account: account) {
+    return account.id;
   }
 
   @ResolveField()
   async referral_codes(
-    @CurrentUser() { user_id }: any,
+    @Parent() account: account,
   ): Promise<ReferralCode[] | void> {
-    const account = await this.accountRepo.findOneById(user_id);
-
-    if (!account) return [];
-
     return this.ambossService.getReferralCodes(account.email);
   }
 }
@@ -119,6 +114,8 @@ export class AccountResolver {
     private cryptoService: CryptoService,
     private accountService: AccountService,
     private walletService: WalletService,
+    private ambossService: AmbossService,
+    private redlockService: RedlockService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -217,48 +214,83 @@ export class AccountResolver {
   @Public()
   @Mutation(() => NewAccount)
   async signUp(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Args('input') input: SignUpInput,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Context() { res }: { res: Response },
   ) {
-    const newAccount = await this.accountService.signUp(input);
+    throw new GraphQLError('Sign ups are temporarily disabled.');
 
-    const { accessToken, refreshToken } = await this.authService.getTokens(
-      newAccount.id,
-    );
+    // let newAccount: account | undefined;
 
-    const hashedRefreshToken =
-      await this.cryptoService.argon2Hash(refreshToken);
+    // if (input.referral_code) {
+    //   // Needed for type safety for some reason
+    //   const referralCode = input.referral_code;
 
-    await this.accountRepo.updateRefreshToken(
-      newAccount.id,
-      hashedRefreshToken,
-    );
+    //   newAccount = await this.redlockService.using<account>(
+    //     referralCode,
+    //     async () => {
+    //       const { can_signup, using_referral_code } =
+    //         await this.ambossService.canSignup(input.email, referralCode);
+    //       if (!can_signup) {
+    //         throw new GraphQLError(`Invalid referral code`);
+    //       }
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain,
-    };
+    //       const account = await this.accountService.signUp(input);
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
-    });
+    //       if (using_referral_code) {
+    //         await this.ambossService.useRefferalCode(referralCode, input.email);
+    //       }
 
-    if (!!input.wallet) {
-      await this.walletService.createWallet(newAccount.id, input.wallet);
-    }
+    //       return account;
+    //     },
+    //     'Please try again later',
+    //   );
+    // } else {
+    //   const { can_signup } = await this.ambossService.canSignup(input.email);
+    //   if (!can_signup) {
+    //     throw new GraphQLError(`You are not subscribed`);
+    //   }
+    //   newAccount = await this.accountService.signUp(input);
+    // }
 
-    return {
-      id: newAccount.id,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+    // const { accessToken, refreshToken } = await this.authService.getTokens(
+    //   newAccount.id,
+    // );
+
+    // const hashedRefreshToken =
+    //   await this.cryptoService.argon2Hash(refreshToken);
+
+    // await this.accountRepo.updateRefreshToken(
+    //   newAccount.id,
+    //   hashedRefreshToken,
+    // );
+
+    // const cookieOptions: CookieOptions = {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: true,
+    //   domain: this.domain,
+    // };
+
+    // res.cookie('amboss_banco_refresh_token', refreshToken, {
+    //   ...cookieOptions,
+    //   maxAge: 1000 * 60 * 60 * 24 * 7,
+    // });
+    // res.cookie('amboss_banco_access_token', accessToken, {
+    //   ...cookieOptions,
+    //   maxAge: 1000 * 60 * 10,
+    // });
+
+    // if (!!input.wallet) {
+    //   await this.walletService.createWallet(newAccount.id, input.wallet);
+    // }
+
+    // return {
+    //   id: newAccount.id,
+    //   access_token: accessToken,
+    //   refresh_token: refreshToken,
+    // };
   }
 
   @SkipAccessCheck()

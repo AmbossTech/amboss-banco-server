@@ -47,6 +47,9 @@ export class User {
   @Field()
   email: string;
 
+  @Field()
+  protected_symmetric_key: string;
+
   @Field(() => String, { nullable: true })
   default_wallet_id: string | null;
 
@@ -130,6 +133,9 @@ export class SignUpInput {
 
   @Field(() => CreateWalletInput, { nullable: true })
   wallet: CreateWalletInput | null;
+
+  @Field({ nullable: true })
+  referral_code?: string;
 }
 
 @InputType()

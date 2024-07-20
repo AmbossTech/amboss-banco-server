@@ -96,13 +96,13 @@ export class LnUrlIsomorphicService {
     return lnUrlData;
   }
 
-  async getInvoiceResponse(money_address: string, amount: number) {
+  async getInvoiceResponse(money_address: string, amount_sats: number) {
     const [user, domain] = money_address.split('@');
 
     const lnUrlData = await this.isomorphic(
       domain,
       async () => {
-        return this.localLnurl.getInvoiceResponse(user, amount);
+        return this.localLnurl.getInvoiceResponse(user, amount_sats);
       },
       async () => {
         const [info, error] = await toWithError(this.getInfo(money_address));
@@ -111,7 +111,7 @@ export class LnUrlIsomorphicService {
 
         return this.remoteLnurl.getInvoiceResponse({
           callbackUrl: info.callback,
-          amount,
+          amount_sats,
         });
       },
     );
