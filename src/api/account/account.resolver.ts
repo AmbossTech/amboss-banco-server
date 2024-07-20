@@ -234,83 +234,79 @@ export class AccountResolver {
   @Public()
   @Mutation(() => NewAccount)
   async signUp(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Args('input') input: SignUpInput,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     @Context() { res }: { res: Response },
   ) {
-    throw new GraphQLError('Sign ups are temporarily disabled.');
+    let newAccount: account | undefined;
 
-    // let newAccount: account | undefined;
+    if (input.referral_code) {
+      // Needed for type safety for some reason
+      const referralCode = input.referral_code;
 
-    // if (input.referral_code) {
-    //   // Needed for type safety for some reason
-    //   const referralCode = input.referral_code;
+      newAccount = await this.redlockService.using<account>(
+        referralCode,
+        async () => {
+          const { can_signup, using_referral_code } =
+            await this.ambossService.canSignup(input.email, referralCode);
+          if (!can_signup) {
+            throw new GraphQLError(`Invalid referral code`);
+          }
 
-    //   newAccount = await this.redlockService.using<account>(
-    //     referralCode,
-    //     async () => {
-    //       const { can_signup, using_referral_code } =
-    //         await this.ambossService.canSignup(input.email, referralCode);
-    //       if (!can_signup) {
-    //         throw new GraphQLError(`Invalid referral code`);
-    //       }
+          const account = await this.accountService.signUp(input);
 
-    //       const account = await this.accountService.signUp(input);
+          if (using_referral_code) {
+            await this.ambossService.useRefferalCode(referralCode, input.email);
+          }
 
-    //       if (using_referral_code) {
-    //         await this.ambossService.useRefferalCode(referralCode, input.email);
-    //       }
+          return account;
+        },
+        'Please try again later',
+      );
+    } else {
+      const { can_signup } = await this.ambossService.canSignup(input.email);
+      if (!can_signup) {
+        throw new GraphQLError(`You are not subscribed`);
+      }
+      newAccount = await this.accountService.signUp(input);
+    }
 
-    //       return account;
-    //     },
-    //     'Please try again later',
-    //   );
-    // } else {
-    //   const { can_signup } = await this.ambossService.canSignup(input.email);
-    //   if (!can_signup) {
-    //     throw new GraphQLError(`You are not subscribed`);
-    //   }
-    //   newAccount = await this.accountService.signUp(input);
-    // }
+    const { accessToken, refreshToken } = await this.authService.getTokens(
+      newAccount.id,
+    );
 
-    // const { accessToken, refreshToken } = await this.authService.getTokens(
-    //   newAccount.id,
-    // );
+    const hashedRefreshToken =
+      await this.cryptoService.argon2Hash(refreshToken);
 
-    // const hashedRefreshToken =
-    //   await this.cryptoService.argon2Hash(refreshToken);
+    await this.accountRepo.updateRefreshToken(
+      newAccount.id,
+      hashedRefreshToken,
+    );
 
-    // await this.accountRepo.updateRefreshToken(
-    //   newAccount.id,
-    //   hashedRefreshToken,
-    // );
+    const cookieOptions: CookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: true,
+      domain: this.domain,
+    };
 
-    // const cookieOptions: CookieOptions = {
-    //   httpOnly: true,
-    //   secure: true,
-    //   sameSite: true,
-    //   domain: this.domain,
-    // };
+    res.cookie('amboss_banco_refresh_token', refreshToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+    res.cookie('amboss_banco_access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 10,
+    });
 
-    // res.cookie('amboss_banco_refresh_token', refreshToken, {
-    //   ...cookieOptions,
-    //   maxAge: 1000 * 60 * 60 * 24 * 7,
-    // });
-    // res.cookie('amboss_banco_access_token', accessToken, {
-    //   ...cookieOptions,
-    //   maxAge: 1000 * 60 * 10,
-    // });
+    if (!!input.wallet) {
+      await this.walletService.createWallet(newAccount.id, input.wallet);
+    }
 
-    // if (!!input.wallet) {
-    //   await this.walletService.createWallet(newAccount.id, input.wallet);
-    // }
-
-    // return {
-    //   id: newAccount.id,
-    //   access_token: accessToken,
-    //   refresh_token: refreshToken,
-    // };
+    return {
+      id: newAccount.id,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 
   @SkipAccessCheck()
