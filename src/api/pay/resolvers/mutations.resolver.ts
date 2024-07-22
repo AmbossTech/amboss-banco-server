@@ -22,7 +22,6 @@ import { isUUID } from 'src/utils/string';
 
 import { PayService } from '../pay.service';
 import {
-  PayBitcoinAddressInput,
   PayInput,
   PayLiquidAddressInput,
   PayLnAddressInput,
@@ -30,6 +29,8 @@ import {
   PayMutations,
   PayNetworkSwapInput,
   PayParentType,
+  PaySwapAddressInput,
+  PaySwapNetwork,
   SwapQuote,
 } from '../pay.types';
 
@@ -104,18 +105,25 @@ export class PayMutationsResolver {
   }
 
   @ResolveField()
-  async bitcoin_address(
-    @Args('input') input: PayBitcoinAddressInput,
+  async swap_address(
+    @Args('input') input: PaySwapAddressInput,
     @Parent() parent: PayParentType,
   ) {
     if (parent.wallet_account.details.type !== WalletAccountType.LIQUID) {
       throw new GraphQLError('Invalid wallet account id');
     }
 
-    const { base_64 } = await this.payService.payBitcoinAddress(
-      parent.wallet_account,
-      input,
-    );
+    let base_64: string;
+
+    switch (input.network) {
+      case PaySwapNetwork.BITCOIN:
+        base_64 = (
+          await this.payService.payBitcoinAddress(parent.wallet_account, input)
+        ).base_64;
+        break;
+      default:
+        throw new GraphQLError(`Unable to send`);
+    }
 
     return { base_64, wallet_account: parent.wallet_account };
   }
