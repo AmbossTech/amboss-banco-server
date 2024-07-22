@@ -134,7 +134,9 @@ export class AccountResolver {
     @Args('input') input: LoginInput,
     @Context() { res }: { res: Response },
   ) {
-    const account = await this.accountRepo.findOne(input.email);
+    const normalizedEmail = input.email.trim().toLowerCase();
+
+    const account = await this.accountRepo.findOne(normalizedEmail);
 
     if (!account) {
       throw new GraphQLError('Invalid email or password.');
@@ -239,23 +241,31 @@ export class AccountResolver {
   ) {
     let newAccount: account | undefined;
 
-    if (input.referral_code) {
-      // Needed for type safety for some reason
-      const referralCode = input.referral_code;
+    const { email, referral_code } = input;
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (referral_code) {
       newAccount = await this.redlockService.using<account>(
-        referralCode,
+        referral_code,
         async () => {
           const { can_signup, using_referral_code } =
-            await this.ambossService.canSignup(input.email, referralCode);
+            await this.ambossService.canSignup(normalizedEmail, referral_code);
+
           if (!can_signup) {
             throw new GraphQLError(`Invalid referral code`);
           }
 
-          const account = await this.accountService.signUp(input);
+          const account = await this.accountService.signUp({
+            ...input,
+            email: normalizedEmail,
+          });
 
           if (using_referral_code) {
-            await this.ambossService.useRefferalCode(referralCode, input.email);
+            await this.ambossService.useRefferalCode(
+              referral_code,
+              normalizedEmail,
+            );
           }
 
           return account;
@@ -263,11 +273,17 @@ export class AccountResolver {
         'Please try again later',
       );
     } else {
-      const { can_signup } = await this.ambossService.canSignup(input.email);
+      const { can_signup } =
+        await this.ambossService.canSignup(normalizedEmail);
+
       if (!can_signup) {
         throw new GraphQLError(`You are not subscribed`);
       }
-      newAccount = await this.accountService.signUp(input);
+
+      newAccount = await this.accountService.signUp({
+        ...input,
+        email: normalizedEmail,
+      });
     }
 
     const { accessToken, refreshToken } = await this.authService.getTokens(
