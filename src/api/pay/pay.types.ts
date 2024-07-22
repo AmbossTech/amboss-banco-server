@@ -1,4 +1,9 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
 import {
@@ -12,6 +17,12 @@ import {
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
+
+export enum PaySwapNetwork {
+  BITCOIN = 'BITCOIN',
+}
+
+registerEnumType(PaySwapNetwork, { name: 'PaySwapNetwork' });
 
 @ObjectType()
 export class CreateLiquidTransaction {
@@ -82,7 +93,7 @@ export class PayMutations {
   liquid_address: CreateLiquidTransaction;
 
   @Field()
-  bitcoin_address: CreateLiquidTransaction;
+  swap_address: CreateLiquidTransaction;
 
   @Field()
   network_swap: CreateLiquidTransaction;
@@ -146,7 +157,7 @@ export class LiquidRecipientInput {
 }
 
 @InputType()
-export class BitcoinRecipientInput {
+export class SwapRecipientInput {
   @Field()
   address: string;
 
@@ -188,15 +199,18 @@ export class SwapQuoteInput {
 }
 
 @InputType()
-export class PayBitcoinAddressInput {
+export class PaySwapAddressInput {
+  @Field(() => PaySwapNetwork)
+  network: PaySwapNetwork;
+
   @Field(() => Boolean, { nullable: true })
   send_all_lbtc?: boolean | null;
 
   @Field(() => Number, { nullable: true })
   fee_rate?: number | null;
 
-  @Field(() => BitcoinRecipientInput)
-  recipient: BitcoinRecipientInput;
+  @Field(() => SwapRecipientInput)
+  recipient: SwapRecipientInput;
 }
 
 export type PayLnAddressPayload = {
@@ -231,6 +245,13 @@ export type ProcessInvoiceAuto = {
     | { address: string; amount: number; asset: string }
     | undefined;
   constructTransaction: { base_64: string };
+};
+
+export type PayBitcoinAddressInput = {
+  recipient: {
+    address: string;
+    amount: string;
+  };
 };
 
 // export type PayOnchainAddressAutoType = {};

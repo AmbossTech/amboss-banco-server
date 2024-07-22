@@ -7,11 +7,6 @@ type AmbossInfo {
   referral_codes: [ReferralCode!]!
 }
 
-input BitcoinRecipientInput {
-  address: String!
-  amount: String!
-}
-
 type BroadcastLiquidTransaction {
   tx_id: String!
 }
@@ -180,12 +175,6 @@ type NewAccount {
   refresh_token: String!
 }
 
-input PayBitcoinAddressInput {
-  fee_rate: Float
-  recipient: BitcoinRecipientInput!
-  send_all_lbtc: Boolean
-}
-
 input PayInput {
   account_id: String
   wallet_id: String
@@ -208,11 +197,11 @@ input PayLnInvoiceInput {
 }
 
 type PayMutations {
-  bitcoin_address(input: PayBitcoinAddressInput!): CreateLiquidTransaction!
   lightning_invoice(input: PayLnInvoiceInput!): CreateLiquidTransaction!
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
   network_swap(input: PayNetworkSwapInput!): CreateLiquidTransaction!
+  swap_address(input: PaySwapAddressInput!): CreateLiquidTransaction!
 }
 
 input PayNetworkSwapInput {
@@ -223,6 +212,17 @@ input PayNetworkSwapInput {
 type PayQueries {
   lnurl_info(input: LnUrlInfoInput!): LnUrlInfo!
   network_swap_quote(input: SwapQuoteInput!): SwapQuote!
+}
+
+input PaySwapAddressInput {
+  fee_rate: Float
+  network: PaySwapNetwork!
+  recipient: SwapRecipientInput!
+  send_all_lbtc: Boolean
+}
+
+enum PaySwapNetwork {
+  BITCOIN
 }
 
 enum PaymentOptionCode {
@@ -359,6 +359,11 @@ input SwapQuoteInput {
   settle_amount: String!
   settle_coin: SwapCoin!
   settle_network: SwapNetwork!
+}
+
+input SwapRecipientInput {
+  address: String!
+  amount: String!
 }
 
 type User {
