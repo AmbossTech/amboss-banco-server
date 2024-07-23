@@ -349,7 +349,6 @@ export class AccountResolver {
     };
   }
 
-  @Public()
   @Mutation(() => PasswordMutations)
   async password(@CurrentUser() { user_id }: any): Promise<PasswordParentType> {
     const account = await this.accountRepo.findOneById(user_id);
