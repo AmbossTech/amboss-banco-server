@@ -22,7 +22,12 @@ export enum PaySwapNetwork {
   BITCOIN = 'BITCOIN',
 }
 
+export enum PaySwapCurrency {
+  BTC = 'BTC',
+}
+
 registerEnumType(PaySwapNetwork, { name: 'PaySwapNetwork' });
+registerEnumType(PaySwapCurrency, { name: 'PaySwapCurrency' });
 
 @ObjectType()
 export class CreateLiquidTransaction {
@@ -202,6 +207,9 @@ export class SwapQuoteInput {
 export class PaySwapAddressInput {
   @Field(() => PaySwapNetwork)
   network: PaySwapNetwork;
+
+  @Field(() => PaySwapCurrency)
+  currency: PaySwapCurrency;
 
   @Field(() => Boolean, { nullable: true })
   send_all_lbtc?: boolean | null;

@@ -8,7 +8,7 @@ export class MempoolService {
   private baseUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.baseUrl = this.configService.getOrThrow('urls.mempool');
+    this.baseUrl = this.configService.getOrThrow('urls.esplora.bitcoin');
   }
 
   async getRecommendedFees() {

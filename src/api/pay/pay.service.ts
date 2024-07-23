@@ -393,10 +393,6 @@ export class PayService {
     wallet_account: wallet_account,
     input: PayBitcoinAddressInput,
   ) {
-    const descriptor = this.cryptoService.decryptString(
-      wallet_account.details.local_protected_descriptor,
-    );
-
     const swap = await this.boltzService.createChainSwap(
       input.recipient.address,
       +input.recipient.amount,
@@ -409,6 +405,9 @@ export class PayService {
 
     const { address, amount, asset } = decodeBip21Url(swap.lockupDetails.bip21);
 
+    const descriptor = this.cryptoService.decryptString(
+      wallet_account.details.local_protected_descriptor,
+    );
     const pset = await this.liquidService.createPset(descriptor, {
       recipients: [
         {

@@ -20,6 +20,7 @@ import { WalletAccountType } from 'src/repo/wallet/wallet.types';
 import { toWithError } from 'src/utils/async';
 import { isUUID } from 'src/utils/string';
 
+import { isCurrencyCompatible } from '../pay.helpers';
 import { PayService } from '../pay.service';
 import {
   PayInput,
@@ -109,6 +110,10 @@ export class PayMutationsResolver {
     @Args('input') input: PaySwapAddressInput,
     @Parent() parent: PayParentType,
   ) {
+    if (!isCurrencyCompatible(input.network, input.currency)) {
+      throw new GraphQLError(`Invalid currency on network`);
+    }
+
     if (parent.wallet_account.details.type !== WalletAccountType.LIQUID) {
       throw new GraphQLError('Invalid wallet account id');
     }
