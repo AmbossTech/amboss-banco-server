@@ -20,6 +20,7 @@ import { lightningAddressToUrl } from 'src/utils/lnurl';
 import { fetch } from 'undici';
 import { v5 } from 'uuid';
 
+import { checkPayloadLimit } from './contact.helpers';
 import {
   ContactMessage,
   ContactMutations,
@@ -172,6 +173,8 @@ export class ContactMutationsResolver {
     @Args('input') input: SendMessageInput,
     @CurrentUser() { user_id }: any,
   ) {
+    checkPayloadLimit([input.sender_payload, input.receiver_payload]);
+
     if (!input.sender_payload && !input.receiver_payload) {
       throw new GraphQLError('No message provided');
     }
