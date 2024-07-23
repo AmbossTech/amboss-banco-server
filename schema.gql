@@ -215,10 +215,15 @@ type PayQueries {
 }
 
 input PaySwapAddressInput {
+  currency: PaySwapCurrency!
   fee_rate: Float
   network: PaySwapNetwork!
   recipient: SwapRecipientInput!
   send_all_lbtc: Boolean
+}
+
+enum PaySwapCurrency {
+  BTC
 }
 
 enum PaySwapNetwork {

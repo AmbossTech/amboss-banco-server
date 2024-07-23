@@ -26,10 +26,10 @@ export const ConfigSchema = z.object({
     boltz: z.string(),
     covclaim: z.string(),
     esplora: z.object({
+      bitcoin: z.string(),
       liquid: z.string(),
       waterfall: z.string(),
     }),
-    mempool: z.string(),
   }),
   fiat: z
     .object({

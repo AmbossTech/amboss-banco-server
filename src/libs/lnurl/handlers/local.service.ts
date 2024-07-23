@@ -190,22 +190,6 @@ export class LnUrlLocalService {
       // },
     });
 
-    currencies.push({
-      code: PaymentOptionCode.BTC,
-      name: LiquidWalletAssets.BTC.name,
-      network: PaymentOptionNetwork.BITCOIN,
-      symbol: LiquidWalletAssets.BTC.symbol,
-      wallet_account: hasLiquidAccount,
-      conversion_decimals: 0,
-      asset_id: liquidAssetIds.mainnet.bitcoin,
-      // multiplier: 1000,
-      // decimals: 8,
-      // convertible: {
-      //   min: 1,
-      //   max: 100000000,
-      // },
-    });
-
     return currencies;
   }
 
