@@ -389,9 +389,13 @@ export class PasswordMutationsResolver {
       throw new GraphQLError('Invalid password.');
     }
 
+    const passwordHash = await this.cryptoService.argon2Hash(
+      new_master_password_hash,
+    );
+
     await this.accountRepo.updateCredentials({
       account_id: account.id,
-      master_password_hash: new_master_password_hash,
+      master_password_hash: passwordHash,
       protected_symmetric_key: new_protected_symmetric_key,
       password_hint: new_password_hint,
     });
