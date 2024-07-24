@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { ApiModule } from './api/api.module';
 import { HealthController } from './api/health/health.controller';
@@ -16,6 +17,23 @@ import { RedisModule } from './libs/redis/redis.module';
   imports: [
     // API
     ApiModule,
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1_000,
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 10_000,
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
 
     // Auth
     AuthModule,
