@@ -68,29 +68,37 @@ export class LnUrlLocalService {
       };
     }
 
-    if (!!props.currency && props.network === PaymentOptionNetwork.LIQUID) {
-      if (!props.network) {
-        return {
-          status: 'ERROR',
-          reason: 'A network needs to be provided',
-        };
-      }
-
-      return this.getChainResponse({
-        account,
-        amount,
-        network: props.network,
-        currency: props.currency,
-      });
-    } else if (
-      props.currency === 'BTC' &&
-      props.network === PaymentOptionNetwork.BITCOIN
-    ) {
-      return this.getBitcoinOnchainResponse(account, amount);
+    if (!props.currency) {
+      // The amount that comes in through LNURL for Lightning is in millisatoshis
+      return this.getInvoiceResponse(account, Math.ceil(amount / 1000));
     }
 
-    // The amount that comes in through LNURL for Lightning is in millisatoshis
-    return this.getInvoiceResponse(account, Math.ceil(amount / 1000));
+    if (!props.network) {
+      return {
+        status: 'ERROR',
+        reason: 'A network needs to be provided',
+      };
+    }
+
+    if (props.currency === 'BTC') {
+      if (props.network === PaymentOptionNetwork.LIQUID) {
+        return this.getChainResponse({
+          account,
+          amount,
+          network: props.network,
+          currency: props.currency,
+        });
+      }
+
+      if (props.network === PaymentOptionNetwork.BITCOIN) {
+        return this.getBitcoinOnchainResponse(account, amount);
+      }
+    }
+
+    return {
+      status: 'ERROR',
+      reason: 'Invalid currency and network combination',
+    };
   }
 
   async getInfo(account: string) {
