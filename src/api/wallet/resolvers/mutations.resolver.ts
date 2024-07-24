@@ -143,6 +143,11 @@ export class WalletMutationsResolver {
     @Args('input') input: CreateWalletInput,
     @CurrentUser() { user_id }: any,
   ) {
+    const walletCount = await this.walletRepo.countAccountWallets(user_id);
+    if (walletCount >= 2) {
+      throw new GraphQLError(`Wallet limit reached`);
+    }
+
     return this.walletService.createWallet(user_id, input);
   }
 
