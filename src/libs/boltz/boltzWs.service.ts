@@ -6,6 +6,7 @@ import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
 import ws from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
+import { RedlockService } from '../redlock/redlock.service';
 import { BoltzSubscriptionAutoType } from './boltz.types';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 
@@ -21,6 +22,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
     private configService: ConfigService,
     private swapsRepo: SwapsRepoService,
     private tcpService: TransactionClaimPendingService,
+    private redlockService: RedlockService,
     @Logger('BoltzService') private logger: CustomLogger,
   ) {
     this.apiUrl = configService.getOrThrow('urls.boltz');
@@ -100,69 +102,73 @@ export class BoltzWsService implements OnApplicationBootstrap {
                   await eachSeries(
                     msg.args,
                     async (arg: { id: string; status: string }) => {
-                      const swap = await this.swapsRepo.getBoltzSwapByBoltzId(
-                        arg.id,
-                      );
+                      await this.redlockService.using(arg.id, async () => {
+                        const swap = await this.swapsRepo.getBoltzSwapByBoltzId(
+                          arg.id,
+                        );
 
-                      if (!swap) {
-                        throw new Error('Received message for unknown swap');
-                      }
-
-                      if (
-                        swap.request.provider !== SwapProvider.BOLTZ ||
-                        swap.response.provider !== SwapProvider.BOLTZ
-                      ) {
-                        return;
-                      }
-
-                      switch (arg.status) {
-                        // "invoice.set" means Boltz is waiting for an onchain transaction to be sent
-                        case 'invoice.set': {
-                          this.logger.debug('Waiting for onchain transaction');
-                          break;
+                        if (!swap) {
+                          throw new Error('Received message for unknown swap');
                         }
 
-                        // Create a partial signature to allow Boltz to do a key path spend to claim the mainchain coins
-                        case 'transaction.claim.pending': {
-                          await this.tcpService.handle(swap);
-                          break;
+                        if (
+                          swap.request.provider !== SwapProvider.BOLTZ ||
+                          swap.response.provider !== SwapProvider.BOLTZ
+                        ) {
+                          return;
                         }
 
-                        case 'swap.expired':
-                        case 'invoice.expired':
-                        case 'invoice.failedToPay':
-                        case 'transaction.failed':
-                        case 'transaction.refunded':
-                        case 'transaction.lockupFailed':
-                          this.logger.debug('Swap completed unsuccessfully');
-                          await this.swapsRepo.markCompleted(swap.id);
-                          break;
-
-                        case 'invoice.settled':
-                        case 'transaction.claimed':
-                          this.logger.debug('Swap successful');
-                          await this.swapsRepo.markCompleted(swap.id);
-                          break;
-
-                        case 'transaction.mempool':
-                        case 'transaction.confirmed':
-                          this.logger.debug('Creating claim transaction', {
-                            status: arg.status,
-                          });
-                          if (
-                            swap.request.type == BoltzSwapType.REVERSE &&
-                            swap.request.payload.claimCovenant
-                          ) {
-                            this.logger.debug('Ignoring covenant');
-                            return;
+                        switch (arg.status) {
+                          // "invoice.set" means Boltz is waiting for an onchain transaction to be sent
+                          case 'invoice.set': {
+                            this.logger.debug(
+                              'Waiting for onchain transaction',
+                            );
+                            break;
                           }
-                          await this.tcpService.handleReverse(swap, arg);
-                          break;
 
-                        default:
-                          this.logger.debug('Unhandled message', { msg });
-                          break;
-                      }
+                          // Create a partial signature to allow Boltz to do a key path spend to claim the mainchain coins
+                          case 'transaction.claim.pending': {
+                            await this.tcpService.handle(swap);
+                            break;
+                          }
+
+                          case 'swap.expired':
+                          case 'invoice.expired':
+                          case 'invoice.failedToPay':
+                          case 'transaction.failed':
+                          case 'transaction.refunded':
+                          case 'transaction.lockupFailed':
+                            this.logger.debug('Swap completed unsuccessfully');
+                            await this.swapsRepo.markCompleted(swap.id);
+                            break;
+
+                          case 'invoice.settled':
+                          case 'transaction.claimed':
+                            this.logger.debug('Swap successful');
+                            await this.swapsRepo.markCompleted(swap.id);
+                            break;
+
+                          case 'transaction.mempool':
+                          case 'transaction.confirmed':
+                            this.logger.debug('Creating claim transaction', {
+                              status: arg.status,
+                            });
+                            if (
+                              swap.request.type == BoltzSwapType.REVERSE &&
+                              swap.request.payload.claimCovenant
+                            ) {
+                              this.logger.debug('Ignoring covenant');
+                              return;
+                            }
+                            await this.tcpService.handleReverse(swap, arg);
+                            break;
+
+                          default:
+                            this.logger.debug('Unhandled message', { msg });
+                            break;
+                        }
+                      });
                     },
                   );
                 });

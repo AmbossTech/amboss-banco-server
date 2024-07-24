@@ -40,6 +40,15 @@ export class AmbossInfo {
 }
 
 @ObjectType()
+export class UserWalletInfo {
+  @Field()
+  id: string;
+
+  @Field()
+  wallet_limit: number;
+}
+
+@ObjectType()
 export class User {
   @Field()
   id: string;
@@ -58,6 +67,9 @@ export class User {
 
   @Field(() => AmbossInfo, { nullable: true })
   amboss: AmbossInfo;
+
+  @Field()
+  wallet: UserWalletInfo;
 }
 
 @ObjectType()

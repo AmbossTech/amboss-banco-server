@@ -36,6 +36,7 @@ import {
   SignUpInput,
   User,
   UserSwapInfo,
+  UserWalletInfo,
 } from './account.types';
 
 @Resolver(UserSwapInfo)
@@ -83,6 +84,24 @@ export class UserResolver {
     if (!ambossConfig) return;
 
     return account;
+  }
+
+  @ResolveField()
+  wallet(@Parent() account: account) {
+    return account;
+  }
+}
+
+@Resolver(UserWalletInfo)
+export class UserWalletInfoResolver {
+  @ResolveField()
+  id(@Parent() account: account) {
+    return account.id;
+  }
+
+  @ResolveField()
+  async wallet_limit() {
+    return 2;
   }
 }
 
