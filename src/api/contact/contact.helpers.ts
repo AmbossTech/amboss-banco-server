@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-export const MESSAGE_PAYLOAD_LIMIT = 512;
+export const MESSAGE_PAYLOAD_LIMIT = 100_000;
 
 export const checkPayloadLimit = (payloads: (string | null)[]) => {
   for (const payload of payloads) {

@@ -16,6 +16,13 @@ input BroadcastLiquidTransactionInput {
   wallet_account_id: String!
 }
 
+input ChangePasswordInput {
+  current_master_password_hash: String!
+  new_master_password_hash: String!
+  new_password_hint: String
+  new_protected_symmetric_key: String!
+}
+
 type ContactMessage {
   contact_is_sender: Boolean!
   created_at: String!
@@ -159,10 +166,10 @@ type MoneyAddress {
 }
 
 type Mutation {
-  checkPassword(password: String!): Boolean!
   contacts: ContactMutations!
   login(input: LoginInput!): NewAccount!
   logout: Boolean!
+  password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
@@ -173,6 +180,11 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+type PasswordMutations {
+  change(input: ChangePasswordInput!): Boolean!
+  check(password: String!): Boolean!
 }
 
 input PayInput {
