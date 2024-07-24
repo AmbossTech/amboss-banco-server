@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { GqlThrottlerGuard } from 'src/libs/graphql/graphql.throttler';
 
 import { AccountModule } from './account/account.module';
 import { ContactModule } from './contact/contact.module';
@@ -20,5 +22,6 @@ import { WalletModule } from './wallet/wallet.module';
     PayModule,
     EventsModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: GqlThrottlerGuard }],
 })
 export class ApiModule {}
