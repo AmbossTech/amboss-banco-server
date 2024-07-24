@@ -2,9 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import zkpInit from '@vulpemventures/secp256k1-zkp';
 import { SwapTreeSerializer } from 'boltz-core';
-import { init } from 'boltz-core/dist/lib/liquid';
 import { ECPairFactory } from 'ecpair';
 import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
@@ -143,9 +141,6 @@ export class BoltzService {
     if (from == to) {
       throw new Error(`You cannot send and receive to the same chain`);
     }
-
-    const zkp = await zkpInit();
-    init(zkp);
 
     // Create a random preimage for the swap; has to have a length of 32 bytes
     const preimage = randomBytes(32);
