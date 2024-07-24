@@ -12,6 +12,7 @@ import {
   PasswordMutationsResolver,
   UserResolver,
   UserSwapInfoResolver,
+  UserWalletInfoResolver,
 } from './account.resolver';
 import { AccountService } from './account.service';
 
@@ -31,6 +32,7 @@ import { AccountService } from './account.service';
     UserSwapInfoResolver,
     AmbossInfoResolver,
     PasswordMutationsResolver,
+    UserWalletInfoResolver,
   ],
 })
 export class AccountModule {}

@@ -368,11 +368,17 @@ type User {
   id: String!
   protected_symmetric_key: String!
   swap_info: UserSwapInfo!
+  wallet: UserWalletInfo!
 }
 
 type UserSwapInfo {
   id: String!
   shifts_enabled: Boolean!
+}
+
+type UserWalletInfo {
+  id: String!
+  wallet_limit: Float!
 }
 
 type Wallet {
