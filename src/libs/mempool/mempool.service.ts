@@ -12,7 +12,7 @@ export class MempoolService {
   }
 
   async getRecommendedFees() {
-    const response = await this.get(`v1/fees/recommended`);
+    const response = await this.get(`/v1/fees/recommended`);
 
     return mempoolRecommendedFeesSchema.parse(response);
   }

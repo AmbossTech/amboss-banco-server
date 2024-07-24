@@ -6,9 +6,11 @@ import { AssetSchema } from './esplora.validation';
 
 @Injectable()
 export class EsploraLiquidService {
-  constructor(private configService: ConfigService) {}
+  private baseUrl: string;
 
-  url = this.configService.getOrThrow<string>('urls.esplora.liquid');
+  constructor(private configService: ConfigService) {
+    this.baseUrl = this.configService.getOrThrow<string>('urls.esplora.liquid');
+  }
 
   // async getRecommendedFees() {
   //   const response = await fetch(`${this.url}/api/v1/fees/recommended`);
@@ -75,7 +77,7 @@ export class EsploraLiquidService {
   // }
 
   async postTransactionHex(tx_hex: string) {
-    const response = await fetch(`${this.url}/api/tx`, {
+    const response = await fetch(`${this.baseUrl}/tx`, {
       body: tx_hex,
       method: 'POST',
     });
@@ -85,7 +87,7 @@ export class EsploraLiquidService {
 
   async getAssetInfo(asset_id: string) {
     try {
-      const response = await fetch(`${this.url}/api/asset/${asset_id}`);
+      const response = await fetch(`${this.baseUrl}/asset/${asset_id}`);
 
       const text = await response.text();
 

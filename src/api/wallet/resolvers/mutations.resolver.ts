@@ -22,6 +22,7 @@ import { WalletService } from 'src/libs/wallet/wallet.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { toWithError } from 'src/utils/async';
 
+import { WALLET_LIMIT } from '../wallet.const';
 import {
   BroadcastLiquidTransactionInput,
   CreateOnchainAddressInput,
@@ -143,6 +144,11 @@ export class WalletMutationsResolver {
     @Args('input') input: CreateWalletInput,
     @CurrentUser() { user_id }: any,
   ) {
+    const walletCount = await this.walletRepo.countAccountWallets(user_id);
+    if (walletCount >= WALLET_LIMIT) {
+      throw new GraphQLError(`Wallet limit reached`);
+    }
+
     return this.walletService.createWallet(user_id, input);
   }
 

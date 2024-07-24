@@ -131,9 +131,6 @@ export class BoltzPendingLiquidHandler
     });
     const { response, request } = swap;
 
-    const zkp = await zkpInit();
-    init(zkp);
-
     if (
       response.type !== BoltzSwapType.REVERSE ||
       request.type !== BoltzSwapType.REVERSE
@@ -153,7 +150,7 @@ export class BoltzPendingLiquidHandler
     const boltzPublicKey = Buffer.from(responsePayload.refundPublicKey, 'hex');
 
     // Create a musig signing session and tweak it with the Taptree of the swap scripts
-    const musig = new Musig(zkp, keys, randomBytes(32), [
+    const musig = new Musig(this.zkp, keys, randomBytes(32), [
       boltzPublicKey,
       keys.publicKey,
     ]);

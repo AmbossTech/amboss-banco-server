@@ -74,6 +74,10 @@ export class AmbossService {
     email: string,
     referralCode?: string,
   ): Promise<AmbossCanSignup> {
+    if (!this.config.getOrThrow<boolean>('isProduction')) {
+      return { can_signup: true };
+    }
+
     if (!this.hasAmbossAccess) return { can_signup: false };
 
     const referralCodeParam = referralCode
