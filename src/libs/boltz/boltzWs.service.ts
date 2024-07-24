@@ -129,7 +129,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                           // Create a partial signature to allow Boltz to do a key path spend to claim the mainchain coins
                           case 'transaction.claim.pending': {
-                            await this.tcpService.handle(swap);
+                            await this.tcpService.handleSubmarine(swap);
                             break;
                           }
 
@@ -150,18 +150,41 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             break;
 
                           case 'transaction.mempool':
+                          case 'transaction.server.mempool':
+                          case 'transaction.server.confirmed':
                           case 'transaction.confirmed':
-                            this.logger.debug('Creating claim transaction', {
-                              status: arg.status,
-                            });
-                            if (
-                              swap.request.type == BoltzSwapType.REVERSE &&
-                              swap.request.payload.claimCovenant
-                            ) {
-                              this.logger.debug('Ignoring covenant');
-                              return;
+                            switch (swap.request.type) {
+                              case BoltzSwapType.REVERSE:
+                                if (swap.request.payload.claimCovenant) {
+                                  this.logger.debug('Ignoring covenant');
+                                  return;
+                                }
+                                await this.tcpService.handleReverse(swap, arg);
+                                break;
+
+                              case BoltzSwapType.SUBMARINE:
+                                await this.tcpService.handleSubmarine(swap);
+                                break;
+
+                              case BoltzSwapType.CHAIN:
+                                const isClaimable =
+                                  arg.status === 'transaction.server.mempool' ||
+                                  arg.status === 'transaction.server.confirmed';
+
+                                if (
+                                  swap.request.type == BoltzSwapType.CHAIN &&
+                                  isClaimable
+                                ) {
+                                  this.logger.debug(
+                                    'Creating claim transaction',
+                                    {
+                                      status: arg.status,
+                                    },
+                                  );
+                                  await this.tcpService.handleChain(swap, arg);
+                                }
+                                break;
                             }
-                            await this.tcpService.handleReverse(swap, arg);
                             break;
 
                           default:

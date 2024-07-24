@@ -1,4 +1,9 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
 import {
@@ -12,6 +17,17 @@ import {
   LnUrlCurrencyType,
 } from '../contact/contact.types';
 import { WalletAccount } from '../wallet/wallet.types';
+
+export enum PaySwapNetwork {
+  BITCOIN = 'BITCOIN',
+}
+
+export enum PaySwapCurrency {
+  BTC = 'BTC',
+}
+
+registerEnumType(PaySwapNetwork, { name: 'PaySwapNetwork' });
+registerEnumType(PaySwapCurrency, { name: 'PaySwapCurrency' });
 
 @ObjectType()
 export class CreateLiquidTransaction {
@@ -82,6 +98,9 @@ export class PayMutations {
   liquid_address: CreateLiquidTransaction;
 
   @Field()
+  swap_address: CreateLiquidTransaction;
+
+  @Field()
   network_swap: CreateLiquidTransaction;
 }
 
@@ -143,6 +162,15 @@ export class LiquidRecipientInput {
 }
 
 @InputType()
+export class SwapRecipientInput {
+  @Field()
+  address: string;
+
+  @Field()
+  amount: string;
+}
+
+@InputType()
 export class PayLiquidAddressInput {
   @Field(() => Boolean, { nullable: true })
   send_all_lbtc?: boolean | null;
@@ -173,6 +201,24 @@ export class SwapQuoteInput {
 
   @Field(() => SideShiftNetwork)
   settle_network: SideShiftNetwork;
+}
+
+@InputType()
+export class PaySwapAddressInput {
+  @Field(() => PaySwapNetwork)
+  network: PaySwapNetwork;
+
+  @Field(() => PaySwapCurrency)
+  currency: PaySwapCurrency;
+
+  @Field(() => Boolean, { nullable: true })
+  send_all_lbtc?: boolean | null;
+
+  @Field(() => Number, { nullable: true })
+  fee_rate?: number | null;
+
+  @Field(() => SwapRecipientInput)
+  recipient: SwapRecipientInput;
 }
 
 export type PayLnAddressPayload = {
@@ -207,6 +253,13 @@ export type ProcessInvoiceAuto = {
     | { address: string; amount: number; asset: string }
     | undefined;
   constructTransaction: { base_64: string };
+};
+
+export type PayBitcoinAddressInput = {
+  recipient: {
+    address: string;
+    amount: string;
+  };
 };
 
 // export type PayOnchainAddressAutoType = {};

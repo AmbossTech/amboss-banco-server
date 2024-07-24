@@ -170,7 +170,7 @@ export class LiquidService {
 
     const tx_hex = pset.extractTx().toString();
 
-    const tx = await this.boltz.broadcastTx(tx_hex);
+    const tx = await this.boltz.broadcastTx(tx_hex, 'L-BTC');
 
     return tx.id;
   }

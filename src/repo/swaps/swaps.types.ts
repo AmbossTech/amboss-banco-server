@@ -1,3 +1,4 @@
+import { BoltzChainSwapResponseType } from 'src/libs/boltz/boltz.types';
 import {
   SideShiftFixedSwap,
   SideShiftFixedSwapInput,
@@ -13,6 +14,12 @@ export enum SwapProvider {
 export enum BoltzSwapType {
   SUBMARINE = 'SUBMARINE',
   REVERSE = 'REVERSE',
+  CHAIN = 'CHAIN',
+}
+
+export enum BoltzChain {
+  'BTC' = 'BTC',
+  'L-BTC' = 'L-BTC',
 }
 
 export enum SideShiftSwapType {
@@ -21,7 +28,7 @@ export enum SideShiftSwapType {
 }
 
 export type BoltzSubmarineRequestType = {
-  from: string;
+  from: BoltzChain;
   to: string;
   invoice: string;
   //   preimageHash: string;
@@ -31,14 +38,25 @@ export type BoltzSubmarineRequestType = {
 };
 
 export type BoltzReverseRequestType = {
-  from: string;
-  to: string;
+  from: BoltzChain;
+  to: BoltzChain;
   preimageHash: string;
   claimPublicKey: string;
   invoiceAmount: number;
   referralId: string;
   address: string;
   claimCovenant: boolean;
+};
+
+export type BoltzChainSwapRequestType = {
+  userLockAmount: number;
+  from: BoltzChain;
+  to: BoltzChain;
+  claimAddress: string;
+  preimageHash: string;
+  claimPublicKey: string;
+  refundPublicKey: string;
+  referralId: string;
 };
 
 export type AccountSwapRequestType =
@@ -55,6 +73,15 @@ export type AccountSwapRequestType =
       payload: BoltzReverseRequestType & {
         preimage: string;
         privateKey: string;
+      };
+    }
+  | {
+      provider: SwapProvider.BOLTZ;
+      type: BoltzSwapType.CHAIN;
+      payload: BoltzChainSwapRequestType & {
+        preimage: string;
+        claimPrivateKey: string;
+        refundPrivateKey: string;
       };
     }
   | {
@@ -113,8 +140,13 @@ export type AccountSwapResponseType =
         refundPublicKey: string;
         timeoutBlockHeight: number;
         onchainAmount: number;
-        blindingKey: string;
+        blindingKey?: string;
       };
+    }
+  | {
+      provider: SwapProvider.BOLTZ;
+      type: BoltzSwapType.CHAIN;
+      payload: BoltzChainSwapResponseType;
     }
   | {
       provider: SwapProvider.SIDESHIFT;

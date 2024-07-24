@@ -213,6 +213,7 @@ type PayMutations {
   liquid_address(input: PayLiquidAddressInput!): CreateLiquidTransaction!
   money_address(input: PayLnAddressInput!): CreateLiquidTransaction!
   network_swap(input: PayNetworkSwapInput!): CreateLiquidTransaction!
+  swap_address(input: PaySwapAddressInput!): CreateLiquidTransaction!
 }
 
 input PayNetworkSwapInput {
@@ -223,6 +224,22 @@ input PayNetworkSwapInput {
 type PayQueries {
   lnurl_info(input: LnUrlInfoInput!): LnUrlInfo!
   network_swap_quote(input: SwapQuoteInput!): SwapQuote!
+}
+
+input PaySwapAddressInput {
+  currency: PaySwapCurrency!
+  fee_rate: Float
+  network: PaySwapNetwork!
+  recipient: SwapRecipientInput!
+  send_all_lbtc: Boolean
+}
+
+enum PaySwapCurrency {
+  BTC
+}
+
+enum PaySwapNetwork {
+  BITCOIN
 }
 
 enum PaymentOptionCode {
@@ -359,6 +376,11 @@ input SwapQuoteInput {
   settle_amount: String!
   settle_coin: SwapCoin!
   settle_network: SwapNetwork!
+}
+
+input SwapRecipientInput {
+  address: String!
+  amount: String!
 }
 
 type User {

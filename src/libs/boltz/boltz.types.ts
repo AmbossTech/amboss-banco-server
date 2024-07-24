@@ -89,7 +89,7 @@ export const boltzReverseSwapResponse = z.object({
   refundPublicKey: z.string(),
   timeoutBlockHeight: z.number(),
   onchainAmount: z.number(),
-  blindingKey: z.string(),
+  blindingKey: z.string().optional(),
 });
 
 export type BoltzReverseSwapResponseType = z.infer<
@@ -103,6 +103,12 @@ export type BoltzSubscriptionAutoType = {
 
 export const boltzSubmarineSwapClaimResponse = z.object({
   preimage: z.string(),
+  pubNonce: z.string(),
+  publicKey: z.string(),
+  transactionHash: z.string(),
+});
+
+export const boltzChainSwapClaimResponse = z.object({
   pubNonce: z.string(),
   publicKey: z.string(),
   transactionHash: z.string(),
@@ -132,3 +138,47 @@ export type CovenantParams = {
   address: string;
   tree: Types.SwapTree;
 };
+
+export const boltzChainSwapResponse = z.object({
+  id: z.string(),
+  referralId: z.string(),
+  claimDetails: z.object({
+    swapTree: z.object({
+      claimLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+      refundLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+    }),
+    serverPublicKey: z.string(),
+    amount: z.number(),
+    lockupAddress: z.string(),
+    timeoutBlockHeight: z.number(),
+    blindingKey: z.string().optional(),
+    refundAddress: z.string().optional(),
+  }),
+  lockupDetails: z.object({
+    blindingKey: z.string().optional(),
+    swapTree: z.object({
+      claimLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+      refundLeaf: z.object({
+        version: z.number(),
+        output: z.string(),
+      }),
+    }),
+    lockupAddress: z.string(),
+    serverPublicKey: z.string(),
+    timeoutBlockHeight: z.number(),
+    amount: z.number(),
+    refundAddress: z.string().optional(),
+    bip21: z.string(),
+  }),
+});
+
+export type BoltzChainSwapResponseType = z.infer<typeof boltzChainSwapResponse>;

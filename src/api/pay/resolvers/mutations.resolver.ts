@@ -20,6 +20,7 @@ import { WalletAccountType } from 'src/repo/wallet/wallet.types';
 import { toWithError } from 'src/utils/async';
 import { isUUID } from 'src/utils/string';
 
+import { isCurrencyCompatible } from '../pay.helpers';
 import { PayService } from '../pay.service';
 import {
   PayInput,
@@ -29,6 +30,8 @@ import {
   PayMutations,
   PayNetworkSwapInput,
   PayParentType,
+  PaySwapAddressInput,
+  PaySwapNetwork,
   SwapQuote,
 } from '../pay.types';
 
@@ -98,6 +101,34 @@ export class PayMutationsResolver {
       parent.wallet_account,
       input,
     );
+
+    return { base_64, wallet_account: parent.wallet_account };
+  }
+
+  @ResolveField()
+  async swap_address(
+    @Args('input') input: PaySwapAddressInput,
+    @Parent() parent: PayParentType,
+  ) {
+    if (!isCurrencyCompatible(input.network, input.currency)) {
+      throw new GraphQLError(`Invalid currency on network`);
+    }
+
+    if (parent.wallet_account.details.type !== WalletAccountType.LIQUID) {
+      throw new GraphQLError('Invalid wallet account id');
+    }
+
+    let base_64: string;
+
+    switch (input.network) {
+      case PaySwapNetwork.BITCOIN:
+        base_64 = (
+          await this.payService.payBitcoinAddress(parent.wallet_account, input)
+        ).base_64;
+        break;
+      default:
+        throw new GraphQLError(`Unable to send`);
+    }
 
     return { base_64, wallet_account: parent.wallet_account };
   }
