@@ -110,12 +110,13 @@ export class LnUrlLocalService {
       getAccountCurrencies: async () => {
         const currencies = await this.getCurrencies(account);
         return currencies.map((c) => {
-          const { code, name, network, symbol } = c;
+          const { code, name, network, symbol, convertible } = c;
           return {
             code,
             name,
             network,
             symbol,
+            convertible,
           };
         });
       },
@@ -198,6 +199,9 @@ export class LnUrlLocalService {
       // },
     });
 
+    const chainSwap = await this.boltzService.getChainSwapInfo();
+    const { limits } = chainSwap['BTC']['L-BTC'];
+
     currencies.push({
       code: PaymentOptionCode.BTC,
       name: LiquidWalletAssets.BTC.name,
@@ -208,10 +212,10 @@ export class LnUrlLocalService {
       asset_id: liquidAssetIds.mainnet.bitcoin,
       // multiplier: 1000,
       // decimals: 8,
-      // convertible: {
-      //   min: 1,
-      //   max: 100000000,
-      // },
+      convertible: {
+        min: limits.minimal.toString(),
+        max: limits.maximal.toString(),
+      },
     });
 
     return currencies;
@@ -382,7 +386,7 @@ export class LnUrlLocalService {
   ): Promise<LnUrlResponseSchemaType> {
     return auto<GetBitcoinOnchainAutoType>({
       checkAmount: async () => {
-        const boltzInfo = await this.boltzService.getReverseSwapInfo();
+        const boltzInfo = await this.boltzService.getChainSwapInfo();
 
         const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
 
@@ -456,7 +460,7 @@ export class LnUrlLocalService {
     })
       .then((result) => result.createPayload)
       .catch((error) => {
-        this.logger.error('Error getting lnurl invoice response', { error });
+        this.logger.error('Error getting lnurl chain response', { error });
         return {
           status: 'ERROR',
           reason: error.message,

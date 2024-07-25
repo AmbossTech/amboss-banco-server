@@ -43,6 +43,10 @@ export type AccountCurrency = {
   wallet_account: wallet_account;
   asset_id: string;
   conversion_decimals: number;
+  convertible?: {
+    min: string;
+    max: string;
+  };
 };
 
 export type GetLnurlAutoType = {
