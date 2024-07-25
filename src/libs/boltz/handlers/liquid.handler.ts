@@ -27,6 +27,8 @@ import { BoltzRestApi } from '../boltz.rest';
 import { BoltzChainSwapResponseType } from '../boltz.types';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
+const BOLTZ_SAT_VBYTE = 0.01;
+
 @Injectable()
 export class BoltzPendingLiquidHandler
   implements BoltzPendingTransactionInterface, OnModuleInit
@@ -170,7 +172,7 @@ export class BoltzPendingLiquidHandler
     }
     // Create a claim transaction to be signed cooperatively via a key path spend
 
-    const claimTx = targetFee(0.01, (fee) => {
+    const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
       if (!responsePayload.blindingKey) {
         throw new Error(`Cannot create claim tx without blinding key`);
       }
@@ -429,7 +431,7 @@ export class BoltzPendingLiquidHandler
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const transaction = targetFee(0.1, (fee) => {
+    const transaction = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
       if (!responsePayload.claimDetails.blindingKey) {
         throw new Error(`Cannot create claim tx without blinding key`);
       }
