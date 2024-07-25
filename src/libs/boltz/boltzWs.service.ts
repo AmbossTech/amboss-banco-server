@@ -170,16 +170,10 @@ export class BoltzWsService implements OnApplicationBootstrap {
                                   );
                                   break;
 
-                                case BoltzSwapType.SUBMARINE:
-                                  await this.tcpService.handleSubmarine(swap);
-                                  break;
-
                                 case BoltzSwapType.CHAIN:
                                   const isClaimable =
                                     arg.status ===
-                                      'transaction.server.mempool' ||
-                                    arg.status ===
-                                      'transaction.server.confirmed';
+                                    'transaction.server.confirmed';
 
                                   if (
                                     swap.request.type == BoltzSwapType.CHAIN &&

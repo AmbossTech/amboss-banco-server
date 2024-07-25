@@ -334,9 +334,22 @@ export class BoltzPendingLiquidHandler
     claimPubNonce: Buffer;
     claimTransaction: Transaction;
   }) {
-    const serverClaimDetails = await this.boltzRest.getChainClaimInfo(
-      responsePayload.id,
+    const [serverClaimDetails, error] = await toWithError(
+      this.boltzRest.getChainClaimInfo(responsePayload.id),
     );
+
+    // Let's assume for now that Boltz signs it
+    if (error) {
+      const boltzPartialSig = await this.boltzRest.getSigChainSwap({
+        swapId: responsePayload.id,
+        claimTransaction,
+        claimPubNonce,
+      });
+      return {
+        pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
+        partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
+      };
+    }
 
     // Sign the claim transaction of the server
     const boltzPublicKey = Buffer.from(
@@ -365,14 +378,13 @@ export class BoltzPendingLiquidHandler
 
     // When the server is happy with our signature, we get its partial signature
     // for our transaction in return
-    const boltzPartialSig = await this.boltzRest.getSigChainSwap(
-      responsePayload.id,
+    const boltzPartialSig = await this.boltzRest.getSigChainSwap({
+      swapId: responsePayload.id,
       preimage,
-      partialSig,
-      musig,
+      signature: { partialSig, musig },
       claimTransaction,
       claimPubNonce,
-    );
+    });
     return {
       pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
       partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
