@@ -21,9 +21,11 @@ import {
   LiquidWalletAssets,
   WalletAccountType,
 } from 'src/repo/wallet/wallet.types';
+import { toWithError } from 'src/utils/async';
 import { liquidAssetIds } from 'src/utils/crypto/crypto';
 
 import {
+  GetCurrenciesLnurlAuto,
   LnUrlResponseSchemaType,
   PaymentOptionCode,
   PaymentOptionNetwork,
@@ -153,72 +155,111 @@ export class LnUrlLocalService {
   }
 
   async getCurrencies(account: string): Promise<AccountCurrency[]> {
-    const wallet = await this.walletRepo.getWalletByLnAddress(account);
+    return auto<GetCurrenciesLnurlAuto>({
+      checkWallet: async () => {
+        const wallet = await this.walletRepo.getWalletByLnAddress(account);
 
-    if (!wallet?.wallet.wallet_account.length) {
-      return [];
-    }
+        if (!wallet?.wallet.wallet_account.length) {
+          throw new Error(`No wallet found`);
+        }
 
-    const hasLiquidAccount = wallet.wallet.wallet_account.find(
-      (a) => a.details.type === WalletAccountType.LIQUID,
-    );
+        const hasLiquidAccount = wallet.wallet.wallet_account.find(
+          (a) => a.details.type === WalletAccountType.LIQUID,
+        );
 
-    if (!hasLiquidAccount) return [];
+        if (!hasLiquidAccount) {
+          throw new Error(`No liquid wallet found`);
+        }
 
-    const currencies: AccountCurrency[] = [];
-
-    currencies.push({
-      code: PaymentOptionCode.BTC,
-      name: LiquidWalletAssets.BTC.name,
-      network: PaymentOptionNetwork.LIQUID,
-      symbol: LiquidWalletAssets.BTC.symbol,
-      wallet_account: hasLiquidAccount,
-      asset_id: liquidAssetIds.mainnet.bitcoin,
-      conversion_decimals: 8,
-      // multiplier: 1000,
-      // decimals: 8,
-      // convertible: {
-      //   min: 1,
-      //   max: 100000000,
-      // },
-    });
-
-    currencies.push({
-      code: PaymentOptionCode.USDT,
-      name: LiquidWalletAssets.USDT.name,
-      network: PaymentOptionNetwork.LIQUID,
-      symbol: LiquidWalletAssets.USDT.symbol,
-      wallet_account: hasLiquidAccount,
-      asset_id: liquidAssetIds.mainnet.tether,
-      conversion_decimals: 0,
-      // multiplier: 1000,
-      // decimals: 8,
-      // convertible: {
-      //   min: 1,
-      //   max: 100000000,
-      // },
-    });
-
-    const chainSwap = await this.boltzService.getChainSwapInfo();
-    const { limits } = chainSwap['BTC']['L-BTC'];
-
-    currencies.push({
-      code: PaymentOptionCode.BTC,
-      name: LiquidWalletAssets.BTC.name,
-      network: PaymentOptionNetwork.BITCOIN,
-      symbol: LiquidWalletAssets.BTC.symbol,
-      wallet_account: hasLiquidAccount,
-      conversion_decimals: 0,
-      asset_id: liquidAssetIds.mainnet.bitcoin,
-      // multiplier: 1000,
-      // decimals: 8,
-      convertible: {
-        min: limits.minimal.toString(),
-        max: limits.maximal.toString(),
+        return hasLiquidAccount;
       },
-    });
+      getLiquidCurrencies: [
+        'checkWallet',
+        async ({
+          checkWallet,
+        }: Pick<GetCurrenciesLnurlAuto, 'checkWallet'>): Promise<
+          GetCurrenciesLnurlAuto['getLiquidCurrencies']
+        > => {
+          const currencies: AccountCurrency[] = [];
 
-    return currencies;
+          currencies.push({
+            code: PaymentOptionCode.BTC,
+            name: LiquidWalletAssets.BTC.name,
+            network: PaymentOptionNetwork.LIQUID,
+            symbol: LiquidWalletAssets.BTC.symbol,
+            wallet_account: checkWallet,
+            asset_id: liquidAssetIds.mainnet.bitcoin,
+            conversion_decimals: 8,
+            // multiplier: 1000,
+            // decimals: 8,
+            // convertible: {
+            //   min: 1,
+            //   max: 100000000,
+            // },
+          });
+
+          currencies.push({
+            code: PaymentOptionCode.USDT,
+            name: LiquidWalletAssets.USDT.name,
+            network: PaymentOptionNetwork.LIQUID,
+            symbol: LiquidWalletAssets.USDT.symbol,
+            wallet_account: checkWallet,
+            asset_id: liquidAssetIds.mainnet.tether,
+            conversion_decimals: 0,
+            // multiplier: 1000,
+            // decimals: 8,
+            // convertible: {
+            //   min: 1,
+            //   max: 100000000,
+            // },
+          });
+
+          return currencies;
+        },
+      ],
+      getSwapCurrencies: [
+        'checkWallet',
+        async ({
+          checkWallet,
+        }: Pick<GetCurrenciesLnurlAuto, 'checkWallet'>): Promise<
+          GetCurrenciesLnurlAuto['getSwapCurrencies']
+        > => {
+          const currencies: AccountCurrency[] = [];
+
+          const [chainSwap, error] = await toWithError(
+            this.boltzService.getChainSwapInfo(),
+          );
+          if (error) return [];
+
+          const { limits } = chainSwap['BTC']['L-BTC'];
+
+          currencies.push({
+            code: PaymentOptionCode.BTC,
+            name: LiquidWalletAssets.BTC.name,
+            network: PaymentOptionNetwork.BITCOIN,
+            symbol: LiquidWalletAssets.BTC.symbol,
+            wallet_account: checkWallet,
+            conversion_decimals: 0,
+            asset_id: liquidAssetIds.mainnet.bitcoin,
+            // multiplier: 1000,
+            // decimals: 8,
+            convertible: {
+              min: limits.minimal.toString(),
+              max: limits.maximal.toString(),
+            },
+          });
+
+          return currencies;
+        },
+      ],
+    })
+      .then((res) => {
+        return [...res.getLiquidCurrencies, ...res.getSwapCurrencies];
+      })
+      .catch((e) => {
+        this.logger.error(e);
+        return [];
+      });
   }
 
   async getChainResponse({
