@@ -103,7 +103,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                     msg.args,
                     async (arg: { id: string; status: string }) => {
                       await this.redlockService.usingWithoutError(
-                        arg.id,
+                        `${arg.id}${arg.status}`,
                         async () => {
                           const swap =
                             await this.swapsRepo.getBoltzSwapByBoltzId(arg.id);
