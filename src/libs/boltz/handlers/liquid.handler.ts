@@ -127,8 +127,9 @@ export class BoltzPendingLiquidHandler
 
   async handleReverseSwap(swap: wallet_account_swap, arg: any) {
     this.logger.debug(`Handling reverse swap`, {
-      arg: { ...arg, transaction: { hex: arg.transaction.hex.slice(0, 40) } },
+      arg: { ...arg, transaction: { id: arg.transaction.id } },
     });
+
     const { response, request } = swap;
 
     if (
