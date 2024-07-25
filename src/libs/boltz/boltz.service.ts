@@ -188,6 +188,10 @@ export class BoltzService {
     return this.boltzRest.getReverseSwapInfo();
   }
 
+  async getChainSwapInfo() {
+    return this.boltzRest.getChainSwapInfo();
+  }
+
   private async registerCovenant(params: CovenantParams) {
     const body = {
       address: params.address,

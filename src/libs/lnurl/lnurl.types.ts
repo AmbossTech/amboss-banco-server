@@ -1,3 +1,5 @@
+import { wallet_account } from '@prisma/client';
+import { AccountCurrency } from 'src/api/lnurl/lnurl.types';
 import { z } from 'zod';
 
 export enum PaymentOptionCode {
@@ -59,4 +61,10 @@ export const isLnUrlError = (
   result: unknown,
 ): result is LnUrlErrorSchemaType => {
   return (result as any)['status'] === 'ERROR';
+};
+
+export type GetCurrenciesLnurlAuto = {
+  checkWallet: wallet_account;
+  getLiquidCurrencies: AccountCurrency[];
+  getSwapCurrencies: AccountCurrency[];
 };
