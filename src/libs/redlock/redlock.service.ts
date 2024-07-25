@@ -74,4 +74,33 @@ export class RedlockService {
         throw error;
       });
   }
+
+  async usingWithoutError(
+    key: string,
+    methodToCall: () => Promise<void>,
+  ): Promise<void> {
+    const finalKey = `redlockService-${key}`;
+    await this.redlock
+      .using([finalKey], 10000, async (signal: RedlockAbortSignal) => {
+        await methodToCall();
+
+        if (signal.aborted) {
+          throw signal.error;
+        }
+      })
+      .catch((error) => {
+        if (error instanceof ExecutionError) {
+          // Fix for this bug https://github.com/mike-marcacci/node-redlock/issues/168
+          // This error is incorrectly thrown when it should be a "ResourceLockedError"
+          if (
+            error.message ===
+            'The operation was unable to achieve a quorum during its retry window.'
+          ) {
+            return;
+          }
+        }
+
+        this.logger.error('Unknown redlock error', { error });
+      });
+  }
 }

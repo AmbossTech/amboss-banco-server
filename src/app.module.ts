@@ -21,12 +21,12 @@ import { RedisModule } from './libs/redis/redis.module';
       {
         name: 'short',
         ttl: 1_000,
-        limit: 3,
+        limit: 10,
       },
       {
         name: 'medium',
         ttl: 10_000,
-        limit: 20,
+        limit: 40,
       },
       {
         name: 'long',
