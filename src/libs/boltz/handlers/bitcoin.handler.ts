@@ -317,9 +317,22 @@ export class BoltzPendingBitcoinHandler
     claimPubNonce: Buffer;
     claimTransaction: Transaction;
   }) {
-    const serverClaimDetails = await this.boltzRest.getChainClaimInfo(
-      responsePayload.id,
+    const [serverClaimDetails, error] = await toWithError(
+      this.boltzRest.getChainClaimInfo(responsePayload.id),
     );
+
+    // Let's assume for now that Boltz signs it
+    if (error) {
+      const boltzPartialSig = await this.boltzRest.getSigChainSwap({
+        swapId: responsePayload.id,
+        claimTransaction,
+        claimPubNonce,
+      });
+      return {
+        pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
+        partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
+      };
+    }
 
     // Sign the claim transaction of the server
     const boltzPublicKey = Buffer.from(
@@ -348,14 +361,13 @@ export class BoltzPendingBitcoinHandler
 
     // When the server is happy with our signature, we get its partial signature
     // for our transaction in return
-    const boltzPartialSig = await this.boltzRest.getSigChainSwap(
-      responsePayload.id,
+    const boltzPartialSig = await this.boltzRest.getSigChainSwap({
+      swapId: responsePayload.id,
       preimage,
-      partialSig,
-      musig,
       claimTransaction,
       claimPubNonce,
-    );
+      signature: { musig, partialSig },
+    });
     return {
       pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
       partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
@@ -391,6 +403,7 @@ export class BoltzPendingBitcoinHandler
         responsePayload.claimDetails.swapTree,
       ).tree,
     );
+
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(lockupTransactionHex);
     const swapOutput = detectSwap(tweakedKey, lockupTx);

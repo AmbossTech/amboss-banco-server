@@ -256,21 +256,31 @@ export class BoltzRestApi {
     return boltzChainSwapClaimResponse.parse(body);
   }
 
-  async getSigChainSwap(
-    swapId: string,
-    preimage: Buffer,
-    partialSig: Uint8Array,
-    musig: Musig,
-    claimTransaction: BitcoinTransaction | LiquidTransaction,
-    claimPubNonce: Buffer,
-  ) {
+  async getSigChainSwap({
+    swapId,
+    claimPubNonce,
+    claimTransaction,
+    preimage,
+    signature,
+  }: {
+    swapId: string;
+    claimTransaction: BitcoinTransaction | LiquidTransaction;
+    claimPubNonce: Buffer;
+    preimage?: Buffer;
+    signature?: {
+      partialSig: Uint8Array;
+      musig: Musig;
+    };
+  }) {
     const result = await fetch(`${this.apiUrl}swap/chain/${swapId}/claim`, {
       method: 'POST',
       body: JSON.stringify({
-        preimage: preimage.toString('hex'),
-        signature: {
-          partialSignature: Buffer.from(partialSig).toString('hex'),
-          pubNonce: Buffer.from(musig.getPublicNonce()).toString('hex'),
+        preimage: preimage && preimage.toString('hex'),
+        signature: signature && {
+          partialSignature: Buffer.from(signature.partialSig).toString('hex'),
+          pubNonce: Buffer.from(signature.musig.getPublicNonce()).toString(
+            'hex',
+          ),
         },
         toSign: {
           index: 0,
@@ -316,6 +326,7 @@ export class BoltzRestApi {
         parsedError,
         body,
         chain,
+        hex,
       });
       throw new Error(parsedError.data.error);
     }
