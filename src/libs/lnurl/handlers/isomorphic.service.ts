@@ -255,6 +255,14 @@ export class LnUrlIsomorphicService {
       > => {
         if (!currencies.length) return [];
 
+        const hasLiquid = currencies.some(
+          (c) => c.network === PaymentOptionNetwork.LIQUID,
+        );
+
+        if (hasLiquid) {
+          currencies.filter((c) => c.network === PaymentOptionNetwork.LIQUID);
+        }
+
         const mapped = currencies.map((c) => {
           return {
             name: c.name,
