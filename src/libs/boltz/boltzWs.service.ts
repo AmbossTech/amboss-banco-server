@@ -165,7 +165,10 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             case 'transaction.server.mempool':
                             case 'transaction.server.confirmed':
                             case 'transaction.confirmed':
-                              if (arg.status === 'transaction.mempool') {
+                              if (
+                                arg.status === 'transaction.mempool' &&
+                                swap.request.type !== BoltzSwapType.SUBMARINE
+                              ) {
                                 this.notifyUser(swap);
                               }
                               switch (swap.request.type) {
