@@ -104,6 +104,7 @@ export const getReceivingAmount = (swap: wallet_account_swap): number => {
   }
 
   // Using 0.01 sat/vbyte
+  // 1 input 2 outputs
   const liquidSweepFee = 13;
 
   switch (response.type) {
@@ -111,7 +112,8 @@ export const getReceivingAmount = (swap: wallet_account_swap): number => {
       return response.payload.claimDetails.amount - liquidSweepFee;
     case BoltzSwapType.REVERSE:
       return response.payload.onchainAmount - liquidSweepFee;
+    case BoltzSwapType.SUBMARINE:
+      // You cannot receive with a submarine swap, since the destination is always lightning
+      throw new Error(`Unhandled incoming payment`);
   }
-
-  throw new Error(`Unhandled incoming payment`);
 };
