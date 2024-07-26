@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { EventsModule } from 'src/api/sse/sse.module';
+import { AccountRepoModule } from 'src/repo/account/account.module';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
 
 import { MempoolModule } from '../mempool/mempool.module';
@@ -11,7 +13,13 @@ import { BoltzPendingLiquidHandler } from './handlers/liquid.handler';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 
 @Module({
-  imports: [SwapsRepoModule, MempoolModule, RedlockModule],
+  imports: [
+    SwapsRepoModule,
+    MempoolModule,
+    RedlockModule,
+    EventsModule,
+    AccountRepoModule,
+  ],
   providers: [
     BoltzRestApi,
     BoltzWsService,

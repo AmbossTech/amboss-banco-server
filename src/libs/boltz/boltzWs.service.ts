@@ -1,6 +1,10 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { wallet_account_swap } from '@prisma/client';
 import { auto, eachSeries, forever } from 'async';
+import { EventsService } from 'src/api/sse/sse.service';
+import { EventTypes } from 'src/api/sse/sse.utils';
+import { AccountRepo } from 'src/repo/account/account.repo';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
 import ws from 'ws';
@@ -8,6 +12,7 @@ import ws from 'ws';
 import { CustomLogger, Logger } from '../logging';
 import { RedlockService } from '../redlock/redlock.service';
 import { BoltzSubscriptionAutoType } from './boltz.types';
+import { getReceivingAmount } from './boltz.utils';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 
 const RESTART_TIMEOUT = 1000 * 30;
@@ -23,6 +28,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
     private swapsRepo: SwapsRepoService,
     private tcpService: TransactionClaimPendingService,
     private redlockService: RedlockService,
+    private accountRepo: AccountRepo,
+    private eventsService: EventsService,
     @Logger('BoltzService') private logger: CustomLogger,
   ) {
     this.apiUrl = configService.getOrThrow('urls.boltz');
@@ -158,6 +165,9 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             case 'transaction.server.mempool':
                             case 'transaction.server.confirmed':
                             case 'transaction.confirmed':
+                              if (arg.status === 'transaction.mempool') {
+                                this.notifyUser(swap);
+                              }
                               switch (swap.request.type) {
                                 case BoltzSwapType.REVERSE:
                                   if (swap.request.payload.claimCovenant) {
@@ -241,5 +251,22 @@ export class BoltzWsService implements OnApplicationBootstrap {
         this.logger.error('Boltz Websocket Connection Failed', { err });
       },
     );
+  }
+
+  private async notifyUser(swap: wallet_account_swap, amount?: number) {
+    const receivingAmount = amount ? amount : getReceivingAmount(swap);
+
+    const accounts = await this.accountRepo.getByWalletId(
+      swap.wallet_account_id,
+    );
+
+    for (const acc of accounts) {
+      this.logger.debug(`Notifying the user of incoming payment`, {
+        receivingAmount,
+      });
+      this.eventsService.emit(EventTypes.payments(acc.id), {
+        amount: receivingAmount,
+      });
+    }
   }
 }
