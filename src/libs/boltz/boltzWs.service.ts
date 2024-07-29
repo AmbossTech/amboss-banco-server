@@ -17,6 +17,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
   webSocket: ws;
   apiUrl: string;
   retryCount = 0;
+  isAlive: boolean;
+  healthcheckInterval = 10_000;
 
   constructor(
     private configService: ConfigService,
@@ -55,6 +57,24 @@ export class BoltzWsService implements OnApplicationBootstrap {
     );
   }
 
+  healthcheck(next: (e?: Error) => void) {
+    setInterval(() => {
+      this.logger.debug(`Checking connection`);
+
+      if (this.isAlive === false) {
+        return next();
+      }
+
+      this.isAlive = false;
+      this.webSocket.ping();
+    }, this.healthcheckInterval);
+  }
+
+  private heartbeat() {
+    this.logger.silly(`Pong from Boltz`);
+    this.isAlive = true;
+  }
+
   async startSubscription() {
     this.logger.debug('Starting Boltz websocket...');
 
@@ -73,8 +93,12 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                 this.webSocket = new ws(webSocketUrl);
 
+                this.webSocket.on('pong', this.heartbeat.bind(this));
+
                 this.webSocket.on('open', () => {
                   this.logger.info('Connected to Boltz websocket');
+                  this.isAlive = true;
+                  this.healthcheck(next);
 
                   if (!getPendingSwaps.length) return;
 
