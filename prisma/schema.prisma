@@ -114,7 +114,6 @@ model account_2fa {
   account_id String        @db.Uuid
   method     two_fa_method
   enabled    Boolean       @default(false)
-  verified   Boolean       @default(false)
   /// [TwoFactorPayload]
   payload    Json          @db.JsonB
 }

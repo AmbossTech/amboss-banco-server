@@ -7,7 +7,6 @@ CREATE TABLE "account_2fa" (
     "account_id" UUID NOT NULL,
     "method" "two_fa_method" NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "verified" BOOLEAN NOT NULL DEFAULT false,
     "payload" JSONB NOT NULL,
 
     CONSTRAINT "account_2fa_pkey" PRIMARY KEY ("id")
