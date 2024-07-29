@@ -110,10 +110,12 @@ model wallet_account_swap {
 
 model account_2fa {
   id         String        @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at DateTime      @default(now()) @db.Timestamp(6)
+  updated_at DateTime      @default(now()) @updatedAt @db.Timestamp(6)
   account    account       @relation(fields: [account_id], references: [id])
   account_id String        @db.Uuid
   method     two_fa_method
-  enabled    Boolean       @default(false)
+  enabled    Boolean       @default(true)
   /// [TwoFactorPayload]
   payload    Json          @db.JsonB
 }
