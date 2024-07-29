@@ -57,15 +57,17 @@ export class BoltzWsService implements OnApplicationBootstrap {
     );
   }
 
-  healthcheck(next: (e?: Error) => void) {
-    setInterval(() => {
-      this.logger.debug(`Checking connection`);
+  healthcheck(ckb: () => void) {
+    const interval = setInterval(() => {
+      this.logger.silly(`Checking connection`);
 
       if (this.isAlive === false) {
-        return next();
+        clearInterval(interval);
+        return ckb();
       }
 
       this.isAlive = false;
+      this.logger.debug(`Send ping to Boltz`);
       this.webSocket.ping();
     }, this.healthcheckInterval);
   }
@@ -89,6 +91,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
             websocket: [
               'getPendingSwaps',
               ({ getPendingSwaps }, cbk) => {
+                this.logger.debug(`Setting up Boltz WS`);
                 const webSocketUrl = `${this.apiUrl.replace('https://', 'wss://')}ws`;
 
                 this.webSocket = new ws(webSocketUrl);
@@ -98,7 +101,10 @@ export class BoltzWsService implements OnApplicationBootstrap {
                 this.webSocket.on('open', () => {
                   this.logger.info('Connected to Boltz websocket');
                   this.isAlive = true;
-                  this.healthcheck(next);
+                  this.healthcheck(() => {
+                    this.webSocket.close();
+                    next();
+                  });
 
                   if (!getPendingSwaps.length) return;
 
