@@ -29,6 +29,7 @@ model account {
   /// [Secp256k1KeyPair]
   secp256k1_key_pair      Json                 @db.JsonB
   wallets                 wallet_on_accounts[]
+  account_2fa             account_2fa[]
 }
 
 model wallet_on_accounts {
@@ -105,4 +106,21 @@ model wallet_account_swap {
   response          Json           @db.JsonB
   wallet_account    wallet_account @relation(fields: [wallet_account_id], references: [id])
   wallet_account_id String         @db.Uuid
+}
+
+model account_2fa {
+  id         String        @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at DateTime      @default(now()) @db.Timestamp(6)
+  updated_at DateTime      @default(now()) @updatedAt @db.Timestamp(6)
+  account    account       @relation(fields: [account_id], references: [id])
+  account_id String        @db.Uuid
+  method     two_fa_method
+  enabled    Boolean       @default(true)
+  /// [TwoFactorPayload]
+  payload    Json          @db.JsonB
+}
+
+enum two_fa_method {
+  OTP
+  PASSKEY
 }
