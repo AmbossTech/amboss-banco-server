@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { auto, eachSeries, forever } from 'async';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
-import ws from 'ws';
+import ws, { WebSocket } from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
 import { RedlockService } from '../redlock/redlock.service';
@@ -17,6 +17,12 @@ export class BoltzWsService implements OnApplicationBootstrap {
   webSocket: ws;
   apiUrl: string;
   retryCount = 0;
+
+  healthCheckInterval = 10_000;
+  healthCheckIntervalId: NodeJS.Timeout | null = null;
+
+  pingTimeout = 5_000;
+  pingTimeoutId: NodeJS.Timeout | null = null;
 
   constructor(
     private configService: ConfigService,
@@ -55,6 +61,28 @@ export class BoltzWsService implements OnApplicationBootstrap {
     );
   }
 
+  startHealthCheck(cbk: () => void) {
+    this.healthCheckIntervalId = setInterval(() => {
+      if (this.webSocket.readyState !== WebSocket.OPEN) return;
+
+      this.logger.silly(`Send ping to Boltz`);
+
+      this.webSocket.ping();
+
+      this.pingTimeoutId = setTimeout(() => {
+        this.logger.error(`Health check timed out.`);
+        this.webSocket.terminate();
+        cbk();
+      }, this.pingTimeout);
+    }, this.healthCheckInterval);
+  }
+
+  private resetHealthCheckTimeout() {
+    if (!this.pingTimeoutId) return;
+    clearTimeout(this.pingTimeoutId);
+    this.pingTimeoutId = null;
+  }
+
   async startSubscription() {
     this.logger.debug('Starting Boltz websocket...');
 
@@ -69,12 +97,27 @@ export class BoltzWsService implements OnApplicationBootstrap {
             websocket: [
               'getPendingSwaps',
               ({ getPendingSwaps }, cbk) => {
+                this.logger.debug(`Setting up Boltz WS`);
                 const webSocketUrl = `${this.apiUrl.replace('https://', 'wss://')}ws`;
 
                 this.webSocket = new ws(webSocketUrl);
 
+                this.webSocket.on('pong', () => {
+                  this.logger.silly(`Pong from Boltz`);
+                  this.resetHealthCheckTimeout();
+                });
+
                 this.webSocket.on('open', () => {
                   this.logger.info('Connected to Boltz websocket');
+
+                  this.startHealthCheck(() => {
+                    if (this.healthCheckIntervalId) {
+                      clearInterval(this.healthCheckIntervalId);
+                      this.healthCheckIntervalId = null;
+                    }
+
+                    cbk(Error('Health check failed'));
+                  });
 
                   if (!getPendingSwaps.length) return;
 
@@ -204,11 +247,11 @@ export class BoltzWsService implements OnApplicationBootstrap {
                   );
                 });
 
-                this.webSocket.on('error', () => {
-                  this.webSocket.close();
-                  this.logger.error('Error in Boltz websocket');
+                this.webSocket.on('error', (error) => {
+                  this.logger.error('Error in Boltz websocket', { error });
 
-                  cbk(Error('Error in Boltz websocket'));
+                  this.webSocket.terminate();
+                  cbk(Error('Connection error'));
                 });
               },
             ],
@@ -216,9 +259,9 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
           async (err, results) => {
             if (err) {
-              this.logger.error('Websocket Handler Error', err);
+              this.logger.error('Websocket Handler Error', { err });
             } else {
-              this.logger.error('Websocket Handler Result', results);
+              this.logger.error('Websocket Handler Result', { results });
             }
 
             this.retryCount = this.retryCount + 1;
