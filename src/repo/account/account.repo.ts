@@ -62,4 +62,22 @@ export class AccountRepo {
       },
     });
   }
+
+  async getByWalletId(walletAccountId: string) {
+    return this.prisma.account.findMany({
+      where: {
+        wallets: {
+          some: {
+            wallet: {
+              wallet_account: {
+                some: {
+                  id: walletAccountId,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 }

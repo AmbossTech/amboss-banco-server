@@ -1,6 +1,8 @@
+import { wallet_account_swap } from '@prisma/client';
 import { crypto } from 'bitcoinjs-lib';
 import { decode, PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
 import { ECPairFactory } from 'ecpair';
+import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
 import * as ecc from 'tiny-secp256k1';
 
 import { BoltzMagicRouteHintType } from './boltz.types';
@@ -89,4 +91,29 @@ export const checkMagicRouteHintInfo = (
     amount,
     asset,
   };
+};
+
+export const getReceivingAmount = (swap: wallet_account_swap): number => {
+  const { request, response } = swap;
+
+  if (response.provider !== SwapProvider.BOLTZ) {
+    throw new Error(`Not a Boltz swap`);
+  }
+  if (request.provider !== SwapProvider.BOLTZ) {
+    throw new Error(`Not a Boltz swap`);
+  }
+
+  // Using 0.01 sat/vbyte
+  // 1 input 2 outputs
+  const liquidSweepFee = 13;
+
+  switch (response.type) {
+    case BoltzSwapType.CHAIN:
+      return response.payload.claimDetails.amount - liquidSweepFee;
+    case BoltzSwapType.REVERSE:
+      return response.payload.onchainAmount - liquidSweepFee;
+    case BoltzSwapType.SUBMARINE:
+      // You cannot receive with a submarine swap, since the destination is always lightning
+      throw new Error(`Unhandled incoming payment`);
+  }
 };
