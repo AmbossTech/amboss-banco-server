@@ -134,13 +134,14 @@ export class LiquidService {
           const client = new EsploraClient(network, liquidEsploraUrl, true);
 
           const start = new Date();
-          this.logger.debug('Scan start time', { start: start.toISOString() });
+
+          this.logger.silly('Scan start time', { start: start.toISOString() });
 
           const update = await client.fullScan(getWolletWithUpdates);
 
           const end = new Date();
 
-          this.logger.debug('Scan end time', {
+          this.logger.silly('Scan end time', {
             end: end.toISOString(),
             duration: end.getTime() - start.getTime(),
           });
