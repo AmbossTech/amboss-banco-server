@@ -1,7 +1,14 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { account } from '@prisma/client';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
+import { account, two_fa_method } from '@prisma/client';
 
 import { CreateWalletInput } from '../wallet/wallet.types';
+
+registerEnumType(two_fa_method, { name: 'TwoFactorMethod' });
 
 @ObjectType()
 export class UserSwapInfo {
@@ -85,6 +92,15 @@ export class RefreshToken {
 }
 
 @ObjectType()
+export class TwoFactorLogin {
+  @Field(() => [two_fa_method])
+  methods: two_fa_method[];
+
+  @Field()
+  session_id: string;
+}
+
+@ObjectType()
 export class NewAccount {
   @Field()
   id: string;
@@ -101,11 +117,14 @@ export class Login {
   @Field()
   id: string;
 
-  @Field()
-  access_token: string;
+  @Field({ nullable: true })
+  access_token?: string;
 
-  @Field()
-  refresh_token: string;
+  @Field({ nullable: true })
+  refresh_token?: string;
+
+  @Field(() => TwoFactorLogin, { nullable: true })
+  two_factor?: TwoFactorLogin;
 }
 
 @InputType()
@@ -172,6 +191,27 @@ export class PasswordMutations {
 
   @Field()
   change: boolean;
+}
+
+@ObjectType()
+export class SetupOTP {
+  @Field()
+  otp_url: string;
+
+  @Field()
+  otp_secret: string;
+}
+
+@ObjectType()
+export class SetupTwoFactor {
+  @Field(() => SetupOTP)
+  otp: SetupOTP;
+}
+
+@ObjectType()
+export class TwoFactorMutations {
+  @Field()
+  setup: SetupOTP;
 }
 
 export type PasswordParentType = {

@@ -14,19 +14,25 @@ import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
+import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
 import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { RedisService } from 'src/libs/redis/redis.service';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
+import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
+import { v4 as uuidv4 } from 'uuid';
 
+import { twoFactorSessionKey } from '../2fa/2fa.resolver';
 import { AccountService } from './account.service';
 import {
   AmbossInfo,
   ChangePasswordInput,
+  Login,
   LoginInput,
   NewAccount,
   PasswordMutations,
@@ -135,6 +141,8 @@ export class AccountResolver {
     private walletService: WalletService,
     private ambossService: AmbossService,
     private redlockService: RedlockService,
+    private twoFactorRepo: TwoFactorRepository,
+    private redisService: RedisService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -151,11 +159,11 @@ export class AccountResolver {
   }
 
   @Public()
-  @Mutation(() => NewAccount)
+  @Mutation(() => Login)
   async login(
     @Args('input') input: LoginInput,
     @Context() { res }: { res: Response },
-  ) {
+  ): Promise<Login> {
     const normalizedEmail = input.email.trim().toLowerCase();
 
     const account = await this.accountRepo.findOne(normalizedEmail);
@@ -177,27 +185,36 @@ export class AccountResolver {
       account.id,
     );
 
-    const hashedRefreshToken =
-      await this.cryptoService.argon2Hash(refreshToken);
+    const twoFactorMethods = await this.twoFactorRepo.getMethodsByAccount(
+      account.id,
+    );
 
-    await this.accountRepo.updateRefreshToken(account.id, hashedRefreshToken);
+    if (!!twoFactorMethods.length) {
+      const sessionId = uuidv4();
+      await this.redisService.set<TwoFactorSession>(
+        twoFactorSessionKey(sessionId),
+        {
+          accountId: account.id,
+          accessToken,
+          refreshToken,
+        },
+      );
 
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain.includes('localhost') ? undefined : this.domain,
-    };
+      return {
+        id: account.id,
+        two_factor: {
+          methods: twoFactorMethods.map((t) => t.method),
+          session_id: sessionId,
+        },
+      };
+    }
 
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
-    });
-
+    await this.accountService.setLoginCookies(
+      res,
+      account.id,
+      accessToken,
+      refreshToken,
+    );
     return {
       id: account.id,
       access_token: accessToken,
