@@ -46,7 +46,7 @@ export class BoltzPendingBitcoinHandler
     this.zkp = await zkpInit();
   }
 
-  async handleChain(swap: wallet_account_swap, arg: any) {
+  async handleChain(swap: wallet_account_swap, arg: any, cooperative = true) {
     this.logger.debug(`Handling chain swap`, {
       swap: swap.id,
     });
@@ -79,7 +79,16 @@ export class BoltzPendingBitcoinHandler
       destinationAddress: requestPayload.claimAddress,
       lockupTransactionHex: arg.transaction.hex,
       responsePayload: response.payload,
+      cooperative,
     });
+
+    if (!cooperative) {
+      this.logger.debug(`Non cooperative spend`);
+      // Broadcast the finalized transaction
+      await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'BTC');
+
+      return;
+    }
 
     // Get the partial signature from Boltz
     const boltzPartialSig = await this.getBoltzPartialSignature({
@@ -422,12 +431,14 @@ export class BoltzPendingBitcoinHandler
     lockupTransactionHex,
     preimage,
     responsePayload,
+    cooperative = true,
   }: {
     responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
     lockupTransactionHex: string;
     destinationAddress: string;
+    cooperative: boolean;
   }) {
     const boltzPublicKey = Buffer.from(
       responsePayload.claimDetails.serverPublicKey,
@@ -463,9 +474,15 @@ export class BoltzPendingBitcoinHandler
             ...swapOutput,
             preimage,
             keys: claimKeys,
-            cooperative: true,
+            cooperative,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
+            ...(!cooperative && {
+              swapTree: SwapTreeSerializer.deserializeSwapTree(
+                responsePayload.claimDetails.swapTree,
+              ),
+              internalKey: musig.getAggregatedPublicKey(),
+            }),
           },
         ],
         address.toOutputScript(destinationAddress, this.network),

@@ -46,7 +46,7 @@ export class BoltzPendingLiquidHandler
     init(this.zkp);
   }
 
-  async handleChain(swap: wallet_account_swap, arg: any) {
+  async handleChain(swap: wallet_account_swap, arg: any, cooperative = true) {
     this.logger.debug(`Handling chain swap`, {
       swap: swap.id,
     });
@@ -77,7 +77,19 @@ export class BoltzPendingLiquidHandler
       destinationAddress: requestPayload.claimAddress,
       lockupTransactionHex: arg.transaction.hex,
       responsePayload: response.payload,
+      cooperative,
     });
+
+    if (!cooperative) {
+      this.logger.debug(`Non cooperative spend`);
+      // Broadcast the finalized transaction
+      await this.boltzRest.broadcastTx(
+        claimDetails.transaction.toHex(),
+        'L-BTC',
+      );
+
+      return;
+    }
 
     // Get the partial signature from Boltz
     const boltzPartialSig = await this.getBoltzPartialSignature({
@@ -444,12 +456,14 @@ export class BoltzPendingLiquidHandler
     lockupTransactionHex,
     preimage,
     responsePayload,
+    cooperative = true,
   }: {
     responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
     lockupTransactionHex: string;
     destinationAddress: string;
+    cooperative: boolean;
   }) {
     const boltzPublicKey = Buffer.from(
       responsePayload.claimDetails.serverPublicKey,
@@ -486,13 +500,19 @@ export class BoltzPendingLiquidHandler
             ...swapOutput,
             preimage,
             keys: claimKeys,
-            cooperative: true,
+            cooperative,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
             blindingPrivateKey: Buffer.from(
               responsePayload.claimDetails.blindingKey,
               'hex',
             ),
+            ...(!cooperative && {
+              swapTree: SwapTreeSerializer.deserializeSwapTree(
+                responsePayload.claimDetails.swapTree,
+              ),
+              internalKey: musig.getAggregatedPublicKey(),
+            }),
           },
         ],
         address.toOutputScript(destinationAddress, this.network),
