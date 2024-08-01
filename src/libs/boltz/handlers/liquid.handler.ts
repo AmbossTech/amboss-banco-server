@@ -127,9 +127,14 @@ export class BoltzPendingLiquidHandler
     await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'L-BTC');
   }
 
-  async handleReverseSwap(swap: wallet_account_swap, arg: any) {
+  async handleReverseSwap(
+    swap: wallet_account_swap,
+    arg: any,
+    cooperative = true,
+  ) {
     this.logger.debug(`Handling reverse swap`, {
       arg: { ...arg, transaction: { id: arg.transaction.id } },
+      cooperative,
     });
 
     const { response, request } = swap;
@@ -170,6 +175,46 @@ export class BoltzPendingLiquidHandler
       this.logger.error('No swap output found in lockup transaction');
       return;
     }
+
+    if (!cooperative) {
+      this.logger.debug(`Non cooperative spend`);
+      const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
+        if (!responsePayload.blindingKey) {
+          throw new Error(`Cannot create claim tx without blinding key`);
+        }
+        return constructClaimTransaction(
+          [
+            {
+              ...swapOutput,
+              keys,
+              preimage,
+              cooperative: false,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              blindingPrivateKey: Buffer.from(
+                responsePayload.blindingKey,
+                'hex',
+              ),
+              swapTree: SwapTreeSerializer.deserializeSwapTree(
+                responsePayload.swapTree,
+              ),
+              internalKey: musig.getAggregatedPublicKey(),
+            },
+          ],
+          address.toOutputScript(destinationAddress, this.network),
+          fee,
+          false,
+          this.network,
+          address.fromConfidential(destinationAddress).blindingKey,
+        );
+      });
+
+      // Broadcast the finalized transaction
+      await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
+
+      return;
+    }
+
     // Create a claim transaction to be signed cooperatively via a key path spend
 
     const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
