@@ -2,10 +2,12 @@ import {
   Args,
   Context,
   Mutation,
+  Parent,
+  Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { $Enums, two_fa_method } from '@prisma/client';
+import { $Enums, account_2fa, two_fa_method } from '@prisma/client';
 import { Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
@@ -19,8 +21,10 @@ import { TwoFactorService } from './2fa.service';
 import {
   CreateTwoFactor,
   CreateTwoFactorInput,
+  SimpleTwoFactor,
   TwoFactorInput,
   TwoFactorMutations,
+  TwoFactorQueries,
   VerifyTwoFactorInput,
 } from './2fa.types';
 
@@ -43,6 +47,11 @@ export class TwoFactorMutationsResolver {
     private twoFactorRepo: TwoFactorRepository,
     private accountRepo: AccountRepo,
   ) {}
+
+  @ResolveField()
+  id(@CurrentUser() { user_id }: any) {
+    return user_id;
+  }
 
   @ResolveField()
   async add(
@@ -138,9 +147,40 @@ export class TwoFactorMutationsResolver {
   }
 }
 
+@Resolver(SimpleTwoFactor)
+export class SimpleTwoFactorResolver {
+  @ResolveField()
+  created_at(@Parent() { created_at }: account_2fa) {
+    return created_at.toISOString();
+  }
+}
+
+@Resolver(TwoFactorQueries)
+export class TwoFactorQueriesResolver {
+  constructor(private twoFactorRepo: TwoFactorRepository) {}
+
+  @ResolveField()
+  id(@CurrentUser() { user_id }: any) {
+    return user_id;
+  }
+
+  @ResolveField()
+  async find_many(@CurrentUser() { user_id }: any) {
+    return this.twoFactorRepo.findAllForAccount(user_id);
+  }
+}
+
 @Resolver()
-export class TwoFactorResolver {
+export class TwoFactorMainMutationResolver {
   @Mutation(() => TwoFactorMutations)
+  async two_factor() {
+    return {};
+  }
+}
+
+@Resolver()
+export class TwoFactorMainQueryResolver {
+  @Query(() => TwoFactorQueries)
   async two_factor() {
     return {};
   }

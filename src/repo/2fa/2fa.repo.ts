@@ -7,6 +7,13 @@ import { PrismaService } from 'src/libs/prisma/prisma.service';
 export class TwoFactorRepository {
   constructor(private prisma: PrismaService) {}
 
+  async findAllForAccount(account_id: string) {
+    return this.prisma.account_2fa.findMany({
+      where: { account_id },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
   async getMethodsByAccount(account_id: string) {
     return this.prisma.account_2fa.findMany({
       where: {

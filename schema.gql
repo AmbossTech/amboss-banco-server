@@ -277,6 +277,7 @@ enum PaymentOptionNetwork {
 type Query {
   hello: String!
   pay: PayQueries!
+  two_factor: TwoFactorQueries!
   user: User!
   wallets: WalletQueries!
 }
@@ -356,6 +357,13 @@ type SimpleSwap {
   id: String!
 }
 
+type SimpleTwoFactor {
+  created_at: String!
+  enabled: Boolean!
+  id: String!
+  method: TwoFactorMethod!
+}
+
 type SimpleWallet {
   accounts: [SimpleWalletAccount!]!
   id: String!
@@ -427,12 +435,18 @@ enum TwoFactorMethod {
 
 type TwoFactorMutations {
   add(input: CreateTwoFactorInput!): CreateTwoFactor!
+  id: String!
   login(input: TwoFactorInput!): Login!
   verify(input: VerifyTwoFactorInput!): Boolean!
 }
 
 input TwoFactorOTPLogin {
   code: String!
+}
+
+type TwoFactorQueries {
+  find_many: [SimpleTwoFactor!]!
+  id: String!
 }
 
 type User {

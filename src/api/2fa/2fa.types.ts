@@ -25,7 +25,34 @@ export class CreateTwoFactor {
 }
 
 @ObjectType()
+export class SimpleTwoFactor {
+  @Field()
+  id: string;
+
+  @Field()
+  created_at: string;
+
+  @Field(() => two_fa_method)
+  method: two_fa_method;
+
+  @Field()
+  enabled: boolean;
+}
+
+@ObjectType()
+export class TwoFactorQueries {
+  @Field()
+  id: string;
+
+  @Field(() => [SimpleTwoFactor])
+  find_many: SimpleTwoFactor[];
+}
+
+@ObjectType()
 export class TwoFactorMutations {
+  @Field()
+  id: string;
+
   @Field(() => CreateTwoFactor)
   add: CreateTwoFactor;
 
