@@ -4,6 +4,16 @@ import { createLogger, format, Logger, transports } from 'winston';
 
 const { combine, timestamp, prettyPrint, json } = format;
 
+const replaceError = ({ label, level, message, stack }: any) => ({
+  label,
+  level,
+  message,
+  stack,
+});
+const replacer = (key: string, value: any) => {
+  return value instanceof Error ? replaceError(value) : value;
+};
+
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLogger implements LoggerService {
   private logger: Logger;
@@ -12,8 +22,8 @@ export class CustomLogger implements LoggerService {
   constructor(private config: ConfigService) {
     this.logger = createLogger({
       format: config.get('isProduction')
-        ? combine(timestamp(), json())
-        : combine(timestamp(), prettyPrint()),
+        ? combine(timestamp(), json({ replacer }))
+        : combine(timestamp(), prettyPrint({ colorize: true })),
       transports: [new transports.Console()],
       level: config.get('logLevel'),
     });
