@@ -440,15 +440,9 @@ export class PasswordMutationsResolver {
       input: password,
     });
 
-    const verified = await this.cryptoService.argon2Verify(
+    return this.cryptoService.argon2Verify(
       account.master_password_hash,
       password,
     );
-
-    if (!verified) {
-      throw new GraphQLError('Invalid password.');
-    }
-
-    return true;
   }
 }
