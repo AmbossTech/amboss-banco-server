@@ -331,6 +331,10 @@ export class BoltzRestApi {
       throw new Error(parsedError.data.error);
     }
 
-    return boltzBroadcastTxResponse.parse(body);
+    const response = boltzBroadcastTxResponse.parse(body);
+
+    this.logger.debug(`Broadcasted transaction`, { chain, response });
+
+    return response;
   }
 }
