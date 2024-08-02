@@ -198,6 +198,7 @@ export class AccountResolver {
           accessToken,
           refreshToken,
         },
+        { ttl: 10 * 60 },
       );
 
       return {

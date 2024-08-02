@@ -93,6 +93,7 @@ export class TwoFactorService {
         secret: base32Secret,
         url: totp.toString(),
       },
+      { ttl: 10 * 60 },
     );
 
     return { secret: base32Secret, authUrl: totp.toString() };
