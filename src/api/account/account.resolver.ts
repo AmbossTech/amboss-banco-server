@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Args,
@@ -18,7 +18,6 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
-import { CustomLogger, Logger } from 'src/libs/logging';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
@@ -136,7 +135,6 @@ export class AccountResolver {
     private walletService: WalletService,
     private ambossService: AmbossService,
     private redlockService: RedlockService,
-    @Logger(AccountResolver.name) private logger: CustomLogger,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -165,11 +163,6 @@ export class AccountResolver {
     if (!account) {
       throw new GraphQLError('Invalid email or password.');
     }
-
-    this.logger.debug(`check password`, {
-      account,
-      input: input.master_password_hash,
-    });
 
     const verified = await this.cryptoService.argon2Verify(
       account.master_password_hash,
@@ -393,7 +386,6 @@ export class PasswordMutationsResolver {
   constructor(
     private cryptoService: CryptoService,
     private accountRepo: AccountRepo,
-    @Logger(PasswordMutationsResolver.name) private logger: CustomLogger,
   ) {}
 
   @ResolveField()
@@ -435,14 +427,15 @@ export class PasswordMutationsResolver {
     @Args('password') password: string,
     @Parent() { account }: PasswordParentType,
   ) {
-    this.logger.debug(`check password`, {
-      account,
-      input: password,
-    });
-
-    return this.cryptoService.argon2Verify(
+    const verified = await this.cryptoService.argon2Verify(
       account.master_password_hash,
       password,
     );
+
+    if (!verified) {
+      throw new BadRequestException('Invalid password.');
+    }
+
+    return true;
   }
 }
