@@ -3,12 +3,6 @@ import { two_fa_method } from '@prisma/client';
 
 import { Login } from '../account/account.types';
 
-@InputType()
-export class CreateTwoFactorInput {
-  @Field(() => two_fa_method)
-  method: two_fa_method;
-}
-
 @ObjectType()
 export class CreateTwoFactorOTP {
   @Field()
@@ -16,12 +10,6 @@ export class CreateTwoFactorOTP {
 
   @Field()
   otp_secret: string;
-}
-
-@ObjectType()
-export class CreateTwoFactor {
-  @Field({ nullable: true })
-  otp?: CreateTwoFactorOTP;
 }
 
 @ObjectType()
@@ -49,12 +37,12 @@ export class TwoFactorQueries {
 }
 
 @ObjectType()
-export class TwoFactorMutations {
+export class TwoFactorOTPMutations {
   @Field()
   id: string;
 
-  @Field(() => CreateTwoFactor)
-  add: CreateTwoFactor;
+  @Field(() => CreateTwoFactorOTP)
+  add: CreateTwoFactorOTP;
 
   @Field()
   verify: boolean;
@@ -63,22 +51,28 @@ export class TwoFactorMutations {
   login: Login;
 }
 
+@ObjectType()
+export class TwoFactorMutations {
+  @Field()
+  id: string;
+
+  @Field(() => TwoFactorOTPMutations)
+  otp: TwoFactorOTPMutations;
+}
+
 @InputType()
-export class TwoFactorOTPLogin {
+export class TwoFactorOTPVerifyInput {
   @Field()
   code: string;
 }
 
 @InputType()
-export class TwoFactorInput {
+export class TwoFactorOTPLogin {
   @Field()
   session_id: string;
 
-  @Field(() => two_fa_method)
-  method: two_fa_method;
-
-  @Field(() => TwoFactorOTPLogin, { nullable: true })
-  otp?: TwoFactorOTPLogin;
+  @Field()
+  code: string;
 }
 
 @InputType()

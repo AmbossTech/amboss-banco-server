@@ -84,15 +84,17 @@ export class TwoFactorService {
       ...baseTotp,
     });
 
+    const base32Secret = totp.secret.base32;
+
     await this.redisService.set<TwoFactorPendingVerify>(
       twoFactorPendingKey(account.id, 'OTP'),
       {
         type: 'OTP',
-        secret: totp.secret.base32,
+        secret: base32Secret,
         url: totp.toString(),
       },
     );
 
-    return { secret, authUrl: totp.toString() };
+    return { secret: base32Secret, authUrl: totp.toString() };
   }
 }

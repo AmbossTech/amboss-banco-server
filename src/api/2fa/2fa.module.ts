@@ -11,6 +11,7 @@ import {
   TwoFactorQueriesResolver,
 } from './2fa.resolver';
 import { TwoFactorService } from './2fa.service';
+import { TwoFactorOTPMutationsResolver } from './otp/otp.resolver';
 
 @Module({
   imports: [AccountModule, TwoFactorRepoModule, AccountRepoModule],
@@ -21,6 +22,7 @@ import { TwoFactorService } from './2fa.service';
     TwoFactorService,
     TwoFactorQueriesResolver,
     SimpleTwoFactorResolver,
+    TwoFactorOTPMutationsResolver,
   ],
 })
 export class TwoFactorModule {}

@@ -64,14 +64,6 @@ input CreateOnchainAddressInput {
   wallet_account_id: String!
 }
 
-type CreateTwoFactor {
-  otp: CreateTwoFactorOTP
-}
-
-input CreateTwoFactorInput {
-  method: TwoFactorMethod!
-}
-
 type CreateTwoFactorOTP {
   otp_secret: String!
   otp_url: String!
@@ -417,12 +409,6 @@ input SwapRecipientInput {
   amount: String!
 }
 
-input TwoFactorInput {
-  method: TwoFactorMethod!
-  otp: TwoFactorOTPLogin
-  session_id: String!
-}
-
 type TwoFactorLogin {
   methods: [TwoFactorMethod!]!
   session_id: String!
@@ -434,13 +420,23 @@ enum TwoFactorMethod {
 }
 
 type TwoFactorMutations {
-  add(input: CreateTwoFactorInput!): CreateTwoFactor!
   id: String!
-  login(input: TwoFactorInput!): Login!
-  verify(input: VerifyTwoFactorInput!): Boolean!
+  otp: TwoFactorOTPMutations!
 }
 
 input TwoFactorOTPLogin {
+  code: String!
+  session_id: String!
+}
+
+type TwoFactorOTPMutations {
+  add: CreateTwoFactorOTP!
+  id: String!
+  login(input: TwoFactorOTPLogin!): Login!
+  verify(input: TwoFactorOTPVerifyInput!): Boolean!
+}
+
+input TwoFactorOTPVerifyInput {
   code: String!
 }
 
@@ -467,11 +463,6 @@ type UserSwapInfo {
 type UserWalletInfo {
   id: String!
   wallet_limit: Float!
-}
-
-input VerifyTwoFactorInput {
-  method: TwoFactorMethod!
-  otp: TwoFactorOTPLogin
 }
 
 type Wallet {
