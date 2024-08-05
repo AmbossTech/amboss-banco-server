@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { decode } from 'bolt11';
 import { SwapTreeSerializer } from 'boltz-core';
 import { ECPairFactory } from 'ecpair';
 import { BoltzRestApi } from 'src/libs/boltz/boltz.rest';
@@ -38,6 +39,12 @@ export class BoltzService {
   }
 
   async createSubmarineSwap(invoice: string, wallet_account_id: string) {
+    const swapInfo = await this.getSubmarineSwapInfo();
+    const { limits } = swapInfo['L-BTC']['BTC'];
+
+    const { satoshis } = decode(invoice);
+    this.checkLimits(limits, satoshis || 0);
+
     const keys = ECPair.makeRandom();
 
     const request: BoltzSubmarineRequestType = {
@@ -79,6 +86,11 @@ export class BoltzService {
     wallet_account_id: string,
     covenant = true,
   ) {
+    const swapInfo = await this.getReverseSwapInfo();
+    const { limits } = swapInfo['BTC']['L-BTC'];
+
+    this.checkLimits(limits, amount);
+
     const preimage = randomBytes(32);
     const keys = ECPair.makeRandom();
 
@@ -138,9 +150,19 @@ export class BoltzService {
     direction: { from: BoltzChain; to: BoltzChain },
   ) {
     const { from, to } = direction;
-    if (from == to) {
+
+    const swapInfo = await this.getChainSwapInfo();
+    let limits;
+
+    if (from == BoltzChain['L-BTC'] && to == BoltzChain['BTC']) {
+      limits = swapInfo[from][to].limits;
+    } else if (from == BoltzChain['BTC'] && to == BoltzChain['L-BTC']) {
+      limits = swapInfo[from][to].limits;
+    } else {
       throw new Error(`You cannot send and receive to the same chain`);
     }
+
+    this.checkLimits(limits, amount);
 
     // Create a random preimage for the swap; has to have a length of 32 bytes
     const preimage = randomBytes(32);
@@ -192,6 +214,10 @@ export class BoltzService {
     return this.boltzRest.getChainSwapInfo();
   }
 
+  async getSubmarineSwapInfo() {
+    return this.boltzRest.getSubmarineSwapInfo();
+  }
+
   private async registerCovenant(params: CovenantParams) {
     const body = {
       address: params.address,
@@ -211,5 +237,18 @@ export class BoltzService {
     });
 
     this.logger.info('Registered Convenant', { covRes: await res.text() });
+  }
+
+  private checkLimits(
+    { minimal, maximal }: { minimal: number; maximal: number },
+    amount: number,
+  ): void {
+    if (amount < minimal) {
+      throw new Error(`Amount is too small, minimum is ${minimal}`);
+    }
+
+    if (amount > maximal) {
+      throw new Error(`Amount is too big, maximum is ${maximal}`);
+    }
   }
 }
