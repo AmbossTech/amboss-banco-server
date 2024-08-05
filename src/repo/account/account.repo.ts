@@ -19,7 +19,14 @@ export class AccountRepo {
   }
 
   findOne(email: string) {
-    return this.prisma.account.findUnique({ where: { email } });
+    return this.prisma.account.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive',
+        },
+      },
+    });
   }
 
   async updateRefreshToken(id: string, refresh_token_hash: string | null) {

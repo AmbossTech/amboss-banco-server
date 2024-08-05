@@ -156,7 +156,7 @@ export class AccountResolver {
     @Args('input') input: LoginInput,
     @Context() { res }: { res: Response },
   ) {
-    const normalizedEmail = input.email.trim().toLowerCase();
+    const normalizedEmail = input.email.trim();
 
     const account = await this.accountRepo.findOne(normalizedEmail);
 
@@ -242,7 +242,7 @@ export class AccountResolver {
 
     const { email, referral_code } = input;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email.trim();
 
     if (referral_code) {
       newAccount = await this.redlockService.using<account>(
