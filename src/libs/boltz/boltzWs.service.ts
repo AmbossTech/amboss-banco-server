@@ -7,7 +7,7 @@ import { EventTypes } from 'src/api/sse/sse.utils';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
-import ws, { WebSocket } from 'ws';
+import ws from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
 import { RedlockService } from '../redlock/redlock.service';
@@ -70,8 +70,6 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
   startHealthCheck(cbk: () => void) {
     this.healthCheckIntervalId = setInterval(() => {
-      if (this.webSocket.readyState !== WebSocket.OPEN) return;
-
       this.logger.silly(`Send ping to Boltz`);
 
       this.webSocket.ping();
