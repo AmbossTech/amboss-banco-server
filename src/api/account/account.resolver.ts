@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Args,
@@ -433,7 +433,7 @@ export class PasswordMutationsResolver {
     );
 
     if (!verified) {
-      throw new GraphQLError('Invalid password.');
+      throw new BadRequestException('Invalid password.');
     }
 
     return true;
