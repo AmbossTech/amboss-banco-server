@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Args,
@@ -164,7 +164,7 @@ export class AccountResolver {
     @Args('input') input: LoginInput,
     @Context() { res }: { res: Response },
   ): Promise<Login> {
-    const normalizedEmail = input.email.trim().toLowerCase();
+    const normalizedEmail = input.email.trim();
 
     const account = await this.accountRepo.findOne(normalizedEmail);
 
@@ -260,7 +260,7 @@ export class AccountResolver {
 
     const { email, referral_code } = input;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email.trim();
 
     if (referral_code) {
       newAccount = await this.redlockService.using<account>(
@@ -451,7 +451,7 @@ export class PasswordMutationsResolver {
     );
 
     if (!verified) {
-      throw new GraphQLError('Invalid password.');
+      throw new BadRequestException('Invalid password.');
     }
 
     return true;

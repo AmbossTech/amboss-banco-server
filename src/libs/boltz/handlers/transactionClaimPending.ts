@@ -43,11 +43,21 @@ export class TransactionClaimPendingService {
       throw new Error('Received message for unknown swap');
     }
 
-    if (request.payload.to === BoltzChain['L-BTC']) {
-      return this.liquidHandler.handleReverseSwap(swap, arg);
+    const handlerFunc =
+      request.payload.to === BoltzChain['L-BTC']
+        ? this.liquidHandler.handleReverseSwap.bind(this.liquidHandler)
+        : this.bitcoinHandler.handleReverseSwap.bind(this.bitcoinHandler);
+
+    try {
+      await handlerFunc(swap, arg);
+    } catch (e) {
+      this.logger.debug(`Failed to spend claim transaction cooperatively`, {
+        swap,
+      });
+      await handlerFunc(swap, arg, false);
     }
 
-    return this.bitcoinHandler.handleReverseSwap(swap, arg);
+    return;
   }
 
   async handleChain(swap: wallet_account_swap, arg: any) {
@@ -61,10 +71,18 @@ export class TransactionClaimPendingService {
       throw new Error('Received message for unknown swap');
     }
 
-    if (request.payload.to === BoltzChain['L-BTC']) {
-      return this.liquidHandler.handleChain(swap, arg);
-    }
+    const handlerFunc =
+      request.payload.to === BoltzChain['L-BTC']
+        ? this.liquidHandler.handleChain.bind(this.liquidHandler)
+        : this.bitcoinHandler.handleChain.bind(this.bitcoinHandler);
 
-    return this.bitcoinHandler.handleChain(swap, arg);
+    try {
+      await handlerFunc(swap, arg);
+    } catch (e) {
+      this.logger.debug(`Failed to spend claim transaction cooperatively`, {
+        swap,
+      });
+      await handlerFunc(swap, arg, false);
+    }
   }
 }

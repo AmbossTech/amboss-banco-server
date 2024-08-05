@@ -1,6 +1,12 @@
 import { wallet_account_swap } from '@prisma/client';
 import zkpInit, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
-import { address, crypto, networks, Transaction } from 'bitcoinjs-lib';
+import {
+  address,
+  crypto,
+  initEccLib,
+  networks,
+  Transaction,
+} from 'bitcoinjs-lib';
 import bolt11 from 'bolt11';
 import {
   constructClaimTransaction,
@@ -40,10 +46,12 @@ export class BoltzPendingBitcoinHandler
     this.zkp = await zkpInit();
   }
 
-  async handleChain(swap: wallet_account_swap, arg: any) {
+  async handleChain(swap: wallet_account_swap, arg: any, cooperative = true) {
     this.logger.debug(`Handling chain swap`, {
       swap: swap.id,
     });
+    initEccLib(ecc);
+
     const { response, request } = swap;
 
     if (
@@ -71,7 +79,16 @@ export class BoltzPendingBitcoinHandler
       destinationAddress: requestPayload.claimAddress,
       lockupTransactionHex: arg.transaction.hex,
       responsePayload: response.payload,
+      cooperative,
     });
+
+    if (!cooperative) {
+      this.logger.debug(`Non cooperative spend`);
+      // Broadcast the finalized transaction
+      await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'BTC');
+
+      return;
+    }
 
     // Get the partial signature from Boltz
     const boltzPartialSig = await this.getBoltzPartialSignature({
@@ -115,10 +132,15 @@ export class BoltzPendingBitcoinHandler
     await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'BTC');
   }
 
-  async handleReverseSwap(swap: wallet_account_swap, arg: any) {
+  async handleReverseSwap(
+    swap: wallet_account_swap,
+    arg: any,
+    cooperative = true,
+  ) {
     this.logger.debug(`Handling reverse swap`, {
       arg: { ...arg, transaction: { id: arg.transaction.id } },
     });
+    initEccLib(ecc);
 
     const { response, request } = swap;
 
@@ -160,6 +182,35 @@ export class BoltzPendingBitcoinHandler
     }
 
     const { halfHourFee } = await this.mempoolService.getRecommendedFees();
+
+    if (!cooperative) {
+      this.logger.debug(`Non cooperative spend`);
+      const claimTx = targetFee(halfHourFee, (fee) => {
+        return constructClaimTransaction(
+          [
+            {
+              ...swapOutput,
+              keys,
+              preimage,
+              cooperative: false,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              swapTree: SwapTreeSerializer.deserializeSwapTree(
+                responsePayload.swapTree,
+              ),
+              internalKey: musig.getAggregatedPublicKey(),
+            },
+          ],
+          address.toOutputScript(destinationAddress, this.network),
+          fee,
+        );
+      });
+
+      // Broadcast the finalized transaction
+      await this.boltzRest.broadcastTx(claimTx.toHex(), 'BTC');
+
+      return;
+    }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
     const claimTx = targetFee(halfHourFee, (fee) =>
@@ -215,7 +266,7 @@ export class BoltzPendingBitcoinHandler
     claimTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
+    await this.boltzRest.broadcastTx(claimTx.toHex(), 'BTC');
 
     return;
   }
@@ -380,12 +431,14 @@ export class BoltzPendingBitcoinHandler
     lockupTransactionHex,
     preimage,
     responsePayload,
+    cooperative = true,
   }: {
     responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
     lockupTransactionHex: string;
     destinationAddress: string;
+    cooperative: boolean;
   }) {
     const boltzPublicKey = Buffer.from(
       responsePayload.claimDetails.serverPublicKey,
@@ -421,9 +474,15 @@ export class BoltzPendingBitcoinHandler
             ...swapOutput,
             preimage,
             keys: claimKeys,
-            cooperative: true,
+            cooperative,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
+            ...(!cooperative && {
+              swapTree: SwapTreeSerializer.deserializeSwapTree(
+                responsePayload.claimDetails.swapTree,
+              ),
+              internalKey: musig.getAggregatedPublicKey(),
+            }),
           },
         ],
         address.toOutputScript(destinationAddress, this.network),
