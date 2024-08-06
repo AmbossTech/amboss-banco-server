@@ -58,6 +58,7 @@ export const ConfigSchema = z.object({
   mailgun: z
     .object({
       apiKey: z.string(),
+      domain: z.string(),
     })
     .optional(),
 });
