@@ -1,7 +1,11 @@
-import { two_fa_method } from '@prisma/client';
-
 export type TwoFactorPayloadType = {
-  type: keyof typeof two_fa_method.OTP;
+  type: 'OTP';
   otpSecret: string;
   otpUrl: string;
+};
+
+export type TwoFactorSession = {
+  accountId: string;
+  accessToken: string;
+  refreshToken: string;
 };
