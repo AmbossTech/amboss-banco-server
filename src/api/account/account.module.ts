@@ -10,6 +10,7 @@ import { AccountRepoModule } from 'src/repo/account/account.module';
 import {
   AccountResolver,
   AmbossInfoResolver,
+  LoginMutationsResolver,
   PasswordMutationsResolver,
   UserResolver,
   UserSwapInfoResolver,
@@ -35,6 +36,7 @@ import { AccountService } from './account.service';
     AmbossInfoResolver,
     PasswordMutationsResolver,
     UserWalletInfoResolver,
+    LoginMutationsResolver,
   ],
   exports: [AccountService],
 })

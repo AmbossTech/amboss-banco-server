@@ -1,8 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { two_fa_method } from '@prisma/client';
 
-import { Login } from '../account/account.types';
-
 @ObjectType()
 export class CreateTwoFactorOTP {
   @Field()
@@ -38,24 +36,15 @@ export class TwoFactorQueries {
 
 @ObjectType()
 export class TwoFactorOTPMutations {
-  @Field()
-  id: string;
-
   @Field(() => CreateTwoFactorOTP)
   add: CreateTwoFactorOTP;
 
   @Field()
   verify: boolean;
-
-  @Field(() => Login)
-  login: Login;
 }
 
 @ObjectType()
 export class TwoFactorMutations {
-  @Field()
-  id: string;
-
   @Field(() => TwoFactorOTPMutations)
   otp: TwoFactorOTPMutations;
 }
@@ -87,4 +76,10 @@ export class VerifyTwoFactorInput {
 export type OTPVerifyAuto = {
   getSecret: string;
   verifyToken: boolean;
+};
+
+export type TwoFactorPendingVerify = {
+  type: 'OTP';
+  secret: string;
+  url: string;
 };

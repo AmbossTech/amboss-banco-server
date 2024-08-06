@@ -1,29 +1,70 @@
 import {
+  Args,
+  Context,
   Mutation,
   Parent,
   Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { account_2fa, two_fa_method } from '@prisma/client';
+import { account_2fa } from '@prisma/client';
+import { Response } from 'express';
+import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
+import { RedisService } from 'src/libs/redis/redis.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 
+import { AccountService } from '../account/account.service';
+import { TwoFactorLoginMutations } from '../account/account.types';
+import { TwoFactorService } from './2fa.service';
 import {
   SimpleTwoFactor,
   TwoFactorMutations,
+  TwoFactorOTPLogin,
   TwoFactorQueries,
 } from './2fa.types';
+import { twoFactorSessionKey } from './2fa.utils';
 
-export const twoFactorSessionKey = (id: string) => `twoFactorSession-${id}`;
-export const twoFactorPendingKey = (accountId: string, method: two_fa_method) =>
-  `twoFactorPending-${accountId}-${method}`;
+@Resolver(TwoFactorLoginMutations)
+export class TwoFactorLoginMutationsResolver {
+  constructor(
+    private accountService: AccountService,
+    private twoFactorService: TwoFactorService,
+    private redisService: RedisService,
+  ) {}
 
-export type TwoFactorPendingVerify = {
-  type: 'OTP';
-  secret: string;
-  url: string;
-};
+  @ResolveField()
+  async otp(
+    @Args('input') input: TwoFactorOTPLogin,
+    @Context() { res }: { res: Response },
+  ) {
+    const session = await this.redisService.get<TwoFactorSession>(
+      twoFactorSessionKey(input.session_id),
+    );
+
+    if (!session) {
+      throw new GraphQLError(`Could not verify`);
+    }
+    const { accountId, accessToken, refreshToken } = session;
+
+    const isValid = await this.twoFactorService.validOTP(accountId, input.code);
+    if (!isValid) throw new GraphQLError(`Token invalid`);
+
+    await this.accountService.setLoginCookies(
+      res,
+      accountId,
+      accessToken,
+      refreshToken,
+    );
+
+    return {
+      id: accessToken,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+}
 
 @Resolver(TwoFactorMutations)
 export class TwoFactorMutationsResolver {

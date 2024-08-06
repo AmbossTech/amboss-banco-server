@@ -4,8 +4,9 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
-import { account, two_fa_method } from '@prisma/client';
+import { account, account_2fa, two_fa_method } from '@prisma/client';
 
+import { SimpleTwoFactor } from '../2fa/2fa.types';
 import { CreateWalletInput } from '../wallet/wallet.types';
 
 registerEnumType(two_fa_method, { name: 'TwoFactorMethod' });
@@ -93,8 +94,8 @@ export class RefreshToken {
 
 @ObjectType()
 export class TwoFactorLogin {
-  @Field(() => [two_fa_method])
-  methods: two_fa_method[];
+  @Field(() => [SimpleTwoFactor])
+  methods: SimpleTwoFactor[];
 
   @Field()
   session_id: string;
@@ -125,6 +126,21 @@ export class Login {
 
   @Field(() => TwoFactorLogin, { nullable: true })
   two_factor?: TwoFactorLogin;
+}
+
+@ObjectType()
+export class TwoFactorLoginMutations {
+  @Field(() => Login)
+  otp: Login;
+}
+
+@ObjectType()
+export class LoginMutations {
+  @Field(() => Login)
+  initial: Login;
+
+  @Field(() => TwoFactorLoginMutations)
+  two_factor: TwoFactorLoginMutations;
 }
 
 @InputType()
@@ -217,3 +233,17 @@ export class TwoFactorMutations {
 export type PasswordParentType = {
   account: account;
 };
+
+export type LoginType =
+  | {
+      id: string;
+      two_factor: {
+        methods: account_2fa[];
+        session_id: string;
+      };
+    }
+  | {
+      id: string;
+      access_token: string;
+      refresh_token: string;
+    };

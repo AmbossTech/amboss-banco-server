@@ -7,8 +7,8 @@ import { generateOtpSecret } from 'src/libs/crypto/crypto.utils';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 
-import { twoFactorPendingKey, TwoFactorPendingVerify } from './2fa.resolver';
-import { OTPVerifyAuto } from './2fa.types';
+import { OTPVerifyAuto, TwoFactorPendingVerify } from './2fa.types';
+import { twoFactorPendingKey } from './2fa.utils';
 
 export const baseTotp = {
   issuer: 'MiBanco',
@@ -32,7 +32,9 @@ export class TwoFactorService {
     return auto<OTPVerifyAuto>({
       getSecret: async (): Promise<OTPVerifyAuto['getSecret']> => {
         if (secret) return secret;
+
         const otp = await this.twoFactorRepo.get(accountId, two_fa_method.OTP);
+
         if (!otp) {
           throw new GraphQLError(`Could not verify token`);
         }
@@ -64,7 +66,9 @@ export class TwoFactorService {
     }).then((res) => res.verifyToken);
   }
 
-  async setupOTP(account: account) {
+  async setupOTP(
+    account: account,
+  ): Promise<{ secret: string; authUrl: string }> {
     const methods = await this.twoFactorRepo.getMethodsByAccount(account.id);
 
     const otpRecord = methods.find((f) => f.method === two_fa_method.OTP);
@@ -76,26 +80,40 @@ export class TwoFactorService {
       throw new GraphQLError(`OTP is already enabled`);
     }
 
+    const cached = await this.redisService.get<TwoFactorPendingVerify>(
+      twoFactorPendingKey(account.id, 'OTP'),
+    );
+
+    if (!!cached) {
+      if (cached.type === 'OTP') {
+        return {
+          secret: cached.secret,
+          authUrl: cached.url,
+        };
+      }
+    }
+
     const secret = generateOtpSecret();
 
     const totp = new TOTP({
       label: account.email,
-      secret: Secret.fromUTF8(secret),
+      secret: Secret.fromHex(secret),
       ...baseTotp,
     });
 
     const base32Secret = totp.secret.base32;
 
+    const payload = { secret: base32Secret, url: totp.toString() };
+
     await this.redisService.set<TwoFactorPendingVerify>(
       twoFactorPendingKey(account.id, 'OTP'),
       {
         type: 'OTP',
-        secret: base32Secret,
-        url: totp.toString(),
+        ...payload,
       },
       { ttl: 10 * 60 },
     );
 
-    return { secret: base32Secret, authUrl: totp.toString() };
+    return { secret: payload.secret, authUrl: payload.url };
   }
 }

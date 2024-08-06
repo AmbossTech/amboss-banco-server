@@ -9,6 +9,6 @@ export const ARGON_DEFAULTS = {
 };
 
 export const generateOtpSecret = () => {
-  const buffer = randomBytes(15);
-  return buffer.toString('utf8').replace(/=/g, '').substring(0, 24);
+  const buffer = randomBytes(32);
+  return buffer.toString('hex');
 };

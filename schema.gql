@@ -171,6 +171,11 @@ input LoginInput {
   master_password_hash: String!
 }
 
+type LoginMutations {
+  initial(input: LoginInput!): Login!
+  two_factor: TwoFactorLoginMutations!
+}
+
 type MoneyAddress {
   domains: [String!]!
   id: String!
@@ -179,7 +184,7 @@ type MoneyAddress {
 
 type Mutation {
   contacts: ContactMutations!
-  login(input: LoginInput!): Login!
+  login: LoginMutations!
   logout: Boolean!
   password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
@@ -410,8 +415,12 @@ input SwapRecipientInput {
 }
 
 type TwoFactorLogin {
-  methods: [TwoFactorMethod!]!
+  methods: [SimpleTwoFactor!]!
   session_id: String!
+}
+
+type TwoFactorLoginMutations {
+  otp(input: TwoFactorOTPLogin!): Login!
 }
 
 enum TwoFactorMethod {
@@ -420,7 +429,6 @@ enum TwoFactorMethod {
 }
 
 type TwoFactorMutations {
-  id: String!
   otp: TwoFactorOTPMutations!
 }
 
@@ -431,8 +439,6 @@ input TwoFactorOTPLogin {
 
 type TwoFactorOTPMutations {
   add: CreateTwoFactorOTP!
-  id: String!
-  login(input: TwoFactorOTPLogin!): Login!
   verify(input: TwoFactorOTPVerifyInput!): Boolean!
 }
 

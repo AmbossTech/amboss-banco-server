@@ -27,13 +27,14 @@ import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { v4 as uuidv4 } from 'uuid';
 
-import { twoFactorSessionKey } from '../2fa/2fa.resolver';
+import { twoFactorSessionKey } from '../2fa/2fa.utils';
 import { AccountService } from './account.service';
 import {
   AmbossInfo,
   ChangePasswordInput,
-  Login,
   LoginInput,
+  LoginMutations,
+  LoginType,
   NewAccount,
   PasswordMutations,
   PasswordParentType,
@@ -128,42 +129,22 @@ export class AmbossInfoResolver {
   }
 }
 
-@Resolver()
-export class AccountResolver {
-  domain: string;
-
+@Resolver(LoginMutations)
+export class LoginMutationsResolver {
   constructor(
-    private config: ConfigService,
     private accountRepo: AccountRepo,
     private authService: AuthService,
     private cryptoService: CryptoService,
     private accountService: AccountService,
-    private walletService: WalletService,
-    private ambossService: AmbossService,
-    private redlockService: RedlockService,
     private twoFactorRepo: TwoFactorRepository,
     private redisService: RedisService,
-  ) {
-    this.domain = config.getOrThrow('server.cookies.domain');
-  }
+  ) {}
 
-  @Query(() => User)
-  async user(@CurrentUser() { user_id }: any) {
-    const account = await this.accountRepo.findOneById(user_id);
-
-    if (!account) {
-      throw new GraphQLError('Error getting account.');
-    }
-
-    return account;
-  }
-
-  @Public()
-  @Mutation(() => Login)
-  async login(
+  @ResolveField()
+  async initial(
     @Args('input') input: LoginInput,
     @Context() { res }: { res: Response },
-  ): Promise<Login> {
+  ): Promise<LoginType> {
     const normalizedEmail = input.email.trim();
 
     const account = await this.accountRepo.findOne(normalizedEmail);
@@ -204,7 +185,7 @@ export class AccountResolver {
       return {
         id: account.id,
         two_factor: {
-          methods: twoFactorMethods.map((t) => t.method),
+          methods: twoFactorMethods,
           session_id: sessionId,
         },
       };
@@ -216,11 +197,52 @@ export class AccountResolver {
       accessToken,
       refreshToken,
     );
+
     return {
       id: account.id,
       access_token: accessToken,
       refresh_token: refreshToken,
     };
+  }
+
+  @ResolveField()
+  two_factor() {
+    return {};
+  }
+}
+
+@Resolver()
+export class AccountResolver {
+  domain: string;
+
+  constructor(
+    private config: ConfigService,
+    private accountRepo: AccountRepo,
+    private authService: AuthService,
+    private cryptoService: CryptoService,
+    private accountService: AccountService,
+    private walletService: WalletService,
+    private ambossService: AmbossService,
+    private redlockService: RedlockService,
+  ) {
+    this.domain = config.getOrThrow('server.cookies.domain');
+  }
+
+  @Query(() => User)
+  async user(@CurrentUser() { user_id }: any) {
+    const account = await this.accountRepo.findOneById(user_id);
+
+    if (!account) {
+      throw new GraphQLError('Error getting account.');
+    }
+
+    return account;
+  }
+
+  @Public()
+  @Mutation(() => LoginMutations)
+  async login() {
+    return {};
   }
 
   @Mutation(() => Boolean)

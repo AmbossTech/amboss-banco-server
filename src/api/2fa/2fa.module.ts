@@ -5,6 +5,7 @@ import { AccountRepoModule } from 'src/repo/account/account.module';
 import { AccountModule } from '../account/account.module';
 import {
   SimpleTwoFactorResolver,
+  TwoFactorLoginMutationsResolver,
   TwoFactorMainMutationResolver,
   TwoFactorMainQueryResolver,
   TwoFactorMutationsResolver,
@@ -23,6 +24,7 @@ import { TwoFactorOTPMutationsResolver } from './otp/otp.resolver';
     TwoFactorQueriesResolver,
     SimpleTwoFactorResolver,
     TwoFactorOTPMutationsResolver,
+    TwoFactorLoginMutationsResolver,
   ],
 })
 export class TwoFactorModule {}
