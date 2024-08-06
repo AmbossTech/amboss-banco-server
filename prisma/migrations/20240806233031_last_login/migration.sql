@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "account" ADD COLUMN     "last_login_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP;
