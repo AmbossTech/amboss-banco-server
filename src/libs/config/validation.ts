@@ -10,19 +10,23 @@ export const ConfigSchema = z.object({
     cookies: z.object({
       domain: z.string(),
     }),
+
     jwt: z.object({
       accessSecret: z.string(),
       refreshSecret: z.string(),
     }),
+
     boltz: z.object({
       enableWebsocket: z.boolean(),
     }),
   }),
+
   redis: z.object({
     host: z.string(),
     port: z.number(),
     cacheTTL: z.number(),
   }),
+
   urls: z.object({
     boltz: z.string(),
     covclaim: z.string(),
@@ -32,6 +36,7 @@ export const ConfigSchema = z.object({
       waterfall: z.string(),
     }),
   }),
+
   fiat: z
     .object({
       coingecko: z
@@ -50,10 +55,17 @@ export const ConfigSchema = z.object({
       affiliateId: z.string(),
     })
     .optional(),
+
   amboss: z
     .object({
       url: z.string(),
       secret: z.string(),
     })
     .optional(),
+
+  webauthn: z.object({
+    name: z.string(),
+    id: z.string(),
+    origin: z.string(),
+  }),
 });
