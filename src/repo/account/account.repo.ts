@@ -32,7 +32,10 @@ export class AccountRepo {
   async updateRefreshToken(id: string, refresh_token_hash: string | null) {
     return this.prisma.account.update({
       where: { id },
-      data: { refresh_token_hash },
+      data: {
+        refresh_token_hash,
+        last_login_at: new Date(),
+      },
     });
   }
 
