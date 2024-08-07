@@ -5,6 +5,7 @@ export type ConfigSchemaType = z.infer<typeof ConfigSchema>;
 export const ConfigSchema = z.object({
   server: z.object({
     encryptionKey: z.string().min(64),
+    fallbackRedirectUrl: z.string().optional(),
     domains: z.array(z.string()),
     cookies: z.object({
       domain: z.string(),
