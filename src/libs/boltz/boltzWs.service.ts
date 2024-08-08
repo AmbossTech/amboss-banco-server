@@ -6,7 +6,11 @@ import { EventsService } from 'src/api/sse/sse.service';
 import { EventTypes } from 'src/api/sse/sse.utils';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
-import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
+import {
+  BoltzChain,
+  BoltzSwapType,
+  SwapProvider,
+} from 'src/repo/swaps/swaps.types';
 import ws, { WebSocket } from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
@@ -170,6 +174,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
                           ) {
                             return;
                           }
+                          const isIncoming =
+                            swap.request.payload.to == BoltzChain['L-BTC'];
 
                           switch (arg.status) {
                             // "invoice.set" means Boltz is waiting for an onchain transaction to be sent
@@ -219,7 +225,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             case 'transaction.confirmed':
                               if (
                                 arg.status === 'transaction.mempool' &&
-                                swap.request.type !== BoltzSwapType.SUBMARINE
+                                isIncoming
                               ) {
                                 this.notifyUser(swap);
                               }
