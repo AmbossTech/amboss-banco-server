@@ -4,7 +4,6 @@ import zkpInit, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import bolt11 from 'bolt11';
 import {
   detectSwap,
-  Musig,
   OutputType,
   SwapTreeSerializer,
   TaprootUtils as BitcoinTaprootUtils,
@@ -16,7 +15,6 @@ import {
   init,
   TaprootUtils,
 } from 'boltz-core/dist/lib/liquid';
-import { randomBytes } from 'crypto';
 import ECPairFactory, { ECPairInterface } from 'ecpair';
 import { address, crypto, networks, Transaction } from 'liquidjs-lib';
 import { CustomLogger, Logger } from 'src/libs/logging';
@@ -26,6 +24,11 @@ import * as ecc from 'tiny-secp256k1';
 
 import { BoltzRestApi } from '../boltz.rest';
 import { BoltzChainSwapResponseType } from '../boltz.types';
+import {
+  applyBoltzSigLiquid,
+  getTweakedKey,
+  setupMusig,
+} from './boltz.helpers';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
 const BOLTZ_SAT_VBYTE = 0.01;
@@ -72,22 +75,20 @@ export class BoltzPendingLiquidHandler
     );
     const preimage = Buffer.from(requestPayload.preimage, 'hex');
 
-    const claimDetails = await this.createClaimTransaction({
-      claimKeys,
-      preimage,
-      destinationAddress: requestPayload.claimAddress,
-      lockupTransactionHex: arg.transaction.hex,
-      responsePayload: response.payload,
-      cooperative,
-    });
+    const { transaction, musig, boltzPublicKey, swapOutput } =
+      await this.createClaimTransaction({
+        claimKeys,
+        preimage,
+        destinationAddress: requestPayload.claimAddress,
+        lockupTransactionHex: arg.transaction.hex,
+        responsePayload: response.payload,
+        cooperative,
+      });
 
     if (!cooperative) {
       this.logger.debug(`Non cooperative spend`);
       // Broadcast the finalized transaction
-      await this.boltzRest.broadcastTx(
-        claimDetails.transaction.toHex(),
-        'L-BTC',
-      );
+      await this.boltzRest.broadcastTx(transaction.toHex(), 'L-BTC');
 
       return;
     }
@@ -96,48 +97,22 @@ export class BoltzPendingLiquidHandler
     const boltzPartialSig = await this.getBoltzPartialSignature({
       refundKeys,
       preimage,
-      claimPubNonce: Buffer.from(claimDetails.musig.getPublicNonce()),
-      claimTransaction: claimDetails.transaction,
+      claimPubNonce: Buffer.from(musig.getPublicNonce()),
+      claimTransaction: transaction,
       responsePayload,
     });
 
-    // Aggregate the nonces
-    claimDetails.musig.aggregateNonces([
-      [claimDetails.boltzPublicKey, boltzPartialSig.pubNonce],
-    ]);
-
-    // Initialize the session to sign the claim transaction
-    claimDetails.musig.initializeSession(
-      claimDetails.transaction.hashForWitnessV1(
-        0,
-        [claimDetails.swapOutput.script],
-        [
-          {
-            value: claimDetails.swapOutput.value,
-            asset: claimDetails.swapOutput.asset,
-          },
-        ],
-        Transaction.SIGHASH_DEFAULT,
-        this.network.genesisBlockHash,
-      ),
+    const signedTx = applyBoltzSigLiquid(
+      musig,
+      transaction,
+      swapOutput,
+      boltzPublicKey,
+      boltzPartialSig,
+      this.network.genesisBlockHash,
     );
-
-    // Add the partial signature from Boltz
-    claimDetails.musig.addPartial(
-      claimDetails.boltzPublicKey,
-      boltzPartialSig.partialSignature,
-    );
-
-    // Create our partial signature
-    claimDetails.musig.signPartial();
-
-    // Witness of the input to the aggregated signature
-    claimDetails.transaction.ins[0].witness = [
-      claimDetails.musig.aggregatePartials(),
-    ];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimDetails.transaction.toHex(), 'L-BTC');
+    await this.boltzRest.broadcastTx(signedTx.toHex(), 'L-BTC');
   }
 
   async handleReverseSwap(
@@ -171,14 +146,11 @@ export class BoltzPendingLiquidHandler
     const boltzPublicKey = Buffer.from(responsePayload.refundPublicKey, 'hex');
 
     // Create a musig signing session and tweak it with the Taptree of the swap scripts
-    const musig = new Musig(this.zkp, keys, randomBytes(32), [
-      boltzPublicKey,
-      keys.publicKey,
-    ]);
-    const tweakedKey = TaprootUtils.tweakMusig(
-      musig,
-      SwapTreeSerializer.deserializeSwapTree(responsePayload.swapTree).tree,
+    const musig = setupMusig(this.zkp, keys, [boltzPublicKey, keys.publicKey]);
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(
+      responsePayload.swapTree,
     );
+    const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(arg.transaction.hex);
@@ -262,38 +234,17 @@ export class BoltzPendingLiquidHandler
       musig,
     );
 
-    // Aggregate the nonces
-    musig.aggregateNonces([
-      [boltzPublicKey, Buffer.from(boltzSig.pubNonce, 'hex')],
-    ]);
-
-    // Initialize the session to sign the claim transaction
-    musig.initializeSession(
-      claimTx.hashForWitnessV1(
-        0,
-        [swapOutput.script],
-        [{ value: swapOutput.value, asset: swapOutput.asset }],
-        Transaction.SIGHASH_DEFAULT,
-        this.network.genesisBlockHash,
-      ),
-    );
-
-    // Add the partial signature from Boltz
-    musig.addPartial(
+    const sigedTx = applyBoltzSigLiquid(
+      musig,
+      claimTx,
+      swapOutput,
       boltzPublicKey,
-      Buffer.from(boltzSig.partialSignature, 'hex'),
+      boltzSig,
+      this.network.genesisBlockHash,
     );
-
-    // Create our partial signature
-    musig.signPartial();
-
-    // Witness of the input to the aggregated signature
-    claimTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
-
-    return;
+    await this.boltzRest.broadcastTx(sigedTx.toHex(), 'L-BTC');
   }
 
   // Same as bitcoin handler
@@ -302,11 +253,10 @@ export class BoltzPendingLiquidHandler
 
     const { request, response } = swap;
 
-    if (request.type !== BoltzSwapType.SUBMARINE) {
-      throw new Error('Received message for unknown swap');
-    }
-
-    if (response.type !== BoltzSwapType.SUBMARINE) {
+    if (
+      request.type !== BoltzSwapType.SUBMARINE ||
+      response.type !== BoltzSwapType.SUBMARINE
+    ) {
       throw new Error('Received message for unknown swap');
     }
 
@@ -349,10 +299,7 @@ export class BoltzPendingLiquidHandler
     );
 
     // Create a musig signing instance
-    const musig = new Musig(await zkpInit(), keys, randomBytes(32), [
-      boltzPublicKey,
-      keys.publicKey,
-    ]);
+    const musig = setupMusig(this.zkp, keys, [boltzPublicKey, keys.publicKey]);
 
     // Tweak that musig with the Taptree of the swap scripts
     TaprootUtils.tweakMusig(
@@ -406,14 +353,11 @@ export class BoltzPendingLiquidHandler
     const boltzPublicKey = Buffer.from(responsePayload.claimPublicKey, 'hex');
 
     // // Create a musig signing session and tweak it with the Taptree of the swap scripts
-    const musig = new Musig(this.zkp, keys, randomBytes(32), [
-      boltzPublicKey,
-      keys.publicKey,
-    ]);
-    const tweakedKey = TaprootUtils.tweakMusig(
-      musig,
-      SwapTreeSerializer.deserializeSwapTree(responsePayload.swapTree).tree,
+    const musig = setupMusig(this.zkp, keys, [boltzPublicKey, keys.publicKey]);
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(
+      responsePayload.swapTree,
     );
+    const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     const lockupTransaction =
       await this.boltzRest.getSubmarineLockupTransaction(responsePayload.id);
@@ -462,37 +406,17 @@ export class BoltzPendingLiquidHandler
       refundTx.toHex(),
     );
 
-    // Aggregate the nonces
-    musig.aggregateNonces([
-      [boltzPublicKey, Buffer.from(boltzSig.pubNonce, 'hex')],
-    ]);
-
-    // Initialize the session to sign the claim transaction
-    musig.initializeSession(
-      refundTx.hashForWitnessV1(
-        0,
-        [swapOutput.script],
-        [{ value: swapOutput.value, asset: swapOutput.asset }],
-        Transaction.SIGHASH_DEFAULT,
-        this.network.genesisBlockHash,
-      ),
-    );
-
-    // Add the partial signature from Boltz
-    musig.addPartial(
+    const signedTx = applyBoltzSigLiquid(
+      musig,
+      refundTx,
+      swapOutput,
       boltzPublicKey,
-      Buffer.from(boltzSig.partialSignature, 'hex'),
+      boltzSig,
+      this.network.genesisBlockHash,
     );
-
-    // Create our partial signature
-    musig.signPartial();
-
-    // Witness of the input to the aggregated signature
-    refundTx.ins[0].witness = [musig.aggregatePartials()];
 
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(refundTx.toHex(), 'L-BTC');
-    return;
+    await this.boltzRest.broadcastTx(signedTx.toHex(), 'L-BTC');
   }
 
   async handleChainRefund(
@@ -525,7 +449,7 @@ export class BoltzPendingLiquidHandler
       Buffer.from(requestPayload.refundPrivateKey, 'hex'),
     );
 
-    const musig = new Musig(this.zkp, refundKeys, randomBytes(32), [
+    const musig = setupMusig(this.zkp, refundKeys, [
       boltzPublicKey,
       refundKeys.publicKey,
     ]);
@@ -533,8 +457,7 @@ export class BoltzPendingLiquidHandler
     const swapTree = SwapTreeSerializer.deserializeSwapTree(
       responsePayload.lockupDetails.swapTree,
     );
-
-    const tweakedKey = TaprootUtils.tweakMusig(musig, swapTree.tree);
+    const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     const { userLock } = await this.boltzRest.getChainTransactions(
       responsePayload.id,
@@ -590,33 +513,18 @@ export class BoltzPendingLiquidHandler
       musig,
       refundTx.toHex(),
     );
-    // Aggregate the nonces
-    musig.aggregateNonces([
-      [boltzPublicKey, Buffer.from(boltzSig.pubNonce, 'hex')],
-    ]);
-    // Initialize the session to sign the claim transaction
-    musig.initializeSession(
-      refundTx.hashForWitnessV1(
-        0,
-        [swapOutput.script],
-        [{ value: swapOutput.value, asset: swapOutput.asset }],
-        Transaction.SIGHASH_DEFAULT,
-        this.network.genesisBlockHash,
-      ),
-    );
-    // Add the partial signature from Boltz
-    musig.addPartial(
-      boltzPublicKey,
-      Buffer.from(boltzSig.partialSignature, 'hex'),
-    );
-    // Create our partial signature
-    musig.signPartial();
-    // Witness of the input to the aggregated signature
-    refundTx.ins[0].witness = [musig.aggregatePartials()];
-    // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(refundTx.toHex(), 'L-BTC');
 
-    return;
+    const signedTx = applyBoltzSigLiquid(
+      musig,
+      refundTx,
+      swapOutput,
+      boltzPublicKey,
+      boltzSig,
+      this.network.genesisBlockHash,
+    );
+
+    // Broadcast the finalized transaction
+    await this.boltzRest.broadcastTx(signedTx.toHex(), 'L-BTC');
   }
 
   private async getBoltzPartialSignature({
@@ -638,14 +546,15 @@ export class BoltzPendingLiquidHandler
 
     // Let's assume for now that Boltz signs it
     if (error) {
-      const boltzPartialSig = await this.boltzRest.getSigChainSwap({
-        swapId: responsePayload.id,
-        claimTransaction,
-        claimPubNonce,
-      });
+      const { partialSignature, pubNonce } =
+        await this.boltzRest.getSigChainSwap({
+          swapId: responsePayload.id,
+          claimTransaction,
+          claimPubNonce,
+        });
       return {
-        pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
-        partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
+        pubNonce,
+        partialSignature,
       };
     }
 
@@ -655,10 +564,11 @@ export class BoltzPendingLiquidHandler
       'hex',
     );
 
-    const musig = new Musig(this.zkp, refundKeys, randomBytes(32), [
+    const musig = setupMusig(this.zkp, refundKeys, [
       boltzPublicKey,
       refundKeys.publicKey,
     ]);
+
     BitcoinTaprootUtils.tweakMusig(
       musig,
       SwapTreeSerializer.deserializeSwapTree(
@@ -676,16 +586,18 @@ export class BoltzPendingLiquidHandler
 
     // When the server is happy with our signature, we get its partial signature
     // for our transaction in return
-    const boltzPartialSig = await this.boltzRest.getSigChainSwap({
-      swapId: responsePayload.id,
-      preimage,
-      signature: { partialSig, musig },
-      claimTransaction,
-      claimPubNonce,
-    });
+    const { partialSignature, pubNonce } = await this.boltzRest.getSigChainSwap(
+      {
+        swapId: responsePayload.id,
+        preimage,
+        signature: { partialSig, musig },
+        claimTransaction,
+        claimPubNonce,
+      },
+    );
     return {
-      pubNonce: Buffer.from(boltzPartialSig.pubNonce, 'hex'),
-      partialSignature: Buffer.from(boltzPartialSig.partialSignature, 'hex'),
+      pubNonce,
+      partialSignature,
     };
   }
 
@@ -710,16 +622,15 @@ export class BoltzPendingLiquidHandler
     );
 
     // Create a musig signing session and tweak it with the Taptree of the swap scripts
-    const musig = new Musig(this.zkp, claimKeys, randomBytes(32), [
+    const musig = setupMusig(this.zkp, claimKeys, [
       boltzPublicKey,
       claimKeys.publicKey,
     ]);
-    const tweakedKey = TaprootUtils.tweakMusig(
-      musig,
-      SwapTreeSerializer.deserializeSwapTree(
-        responsePayload.claimDetails.swapTree,
-      ).tree,
+
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(
+      responsePayload.claimDetails.swapTree,
     );
+    const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(lockupTransactionHex);
