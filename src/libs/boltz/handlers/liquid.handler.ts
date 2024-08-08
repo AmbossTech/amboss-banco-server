@@ -12,7 +12,9 @@ import {
 } from 'boltz-core';
 import {
   constructClaimTransaction,
+  constructRefundTransaction,
   init,
+  LiquidRefundDetails,
   TaprootUtils,
 } from 'boltz-core/dist/lib/liquid';
 import { randomBytes } from 'crypto';
@@ -378,6 +380,234 @@ export class BoltzPendingLiquidHandler
       });
       return;
     }
+  }
+
+  async handleSubmarineRefund(
+    swap: wallet_account_swap,
+    arg: any,
+    refundAddress: string,
+  ) {
+    this.logger.debug(`Handling submarine refund`, {
+      arg: { ...arg },
+    });
+
+    const { response, request } = swap;
+    if (
+      response.type !== BoltzSwapType.SUBMARINE ||
+      request.type !== BoltzSwapType.SUBMARINE
+    ) {
+      return;
+    }
+    const { payload: responsePayload } = response;
+    const { payload: requestPayload } = request;
+
+    const keys = ECPairFactory(ecc).fromPrivateKey(
+      Buffer.from(requestPayload.privateKey, 'hex'),
+    );
+    const boltzPublicKey = Buffer.from(responsePayload.claimPublicKey, 'hex');
+
+    // // Create a musig signing session and tweak it with the Taptree of the swap scripts
+    const musig = new Musig(this.zkp, keys, randomBytes(32), [
+      boltzPublicKey,
+      keys.publicKey,
+    ]);
+    const tweakedKey = TaprootUtils.tweakMusig(
+      musig,
+      SwapTreeSerializer.deserializeSwapTree(responsePayload.swapTree).tree,
+    );
+
+    const lockupTransaction =
+      await this.boltzRest.getSubmarineLockupTransaction(responsePayload.id);
+
+    // Parse the lockup transaction and find the output relevant for the swap
+    const lockupTx = Transaction.fromHex(lockupTransaction.hex);
+
+    const swapOutput = detectSwap(tweakedKey, lockupTx);
+    if (swapOutput === undefined) {
+      this.logger.error('No swap output found in lockup transaction');
+      return;
+    }
+
+    // Create a claim transaction to be signed cooperatively via a key path spend
+    const refundTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
+      if (!responsePayload.blindingKey) {
+        throw new Error(`Cannot create claim tx without blinding key`);
+      }
+
+      return constructRefundTransaction(
+        [
+          {
+            ...swapOutput,
+            txHash: lockupTx.getHash(),
+            cooperative: true,
+            type: OutputType.Taproot,
+            keys,
+            blindingPrivateKey: Buffer.from(responsePayload.blindingKey, 'hex'),
+          },
+        ],
+        address.toOutputScript(refundAddress, this.network),
+        0,
+        this.network == networks.liquid ? fee : fee * 10,
+        false,
+        this.network,
+        address.fromConfidential(refundAddress).blindingKey,
+      );
+    });
+    // Get the partial signature from Boltz
+    const boltzSig = await this.boltzRest.postSubmarineRefundInfo(
+      responsePayload.id,
+      musig,
+      refundTx.toHex(),
+    );
+
+    // Aggregate the nonces
+    musig.aggregateNonces([
+      [boltzPublicKey, Buffer.from(boltzSig.pubNonce, 'hex')],
+    ]);
+
+    // Initialize the session to sign the claim transaction
+    musig.initializeSession(
+      refundTx.hashForWitnessV1(
+        0,
+        [swapOutput.script],
+        [{ value: swapOutput.value, asset: swapOutput.asset }],
+        Transaction.SIGHASH_DEFAULT,
+        this.network.genesisBlockHash,
+      ),
+    );
+
+    // Add the partial signature from Boltz
+    musig.addPartial(
+      boltzPublicKey,
+      Buffer.from(boltzSig.partialSignature, 'hex'),
+    );
+
+    // Create our partial signature
+    musig.signPartial();
+
+    // Witness of the input to the aggregated signature
+    refundTx.ins[0].witness = [musig.aggregatePartials()];
+
+    // Broadcast the finalized transaction
+    await this.boltzRest.broadcastTx(refundTx.toHex(), 'L-BTC');
+    return;
+  }
+
+  async handleChainRefund(
+    swap: wallet_account_swap,
+    arg: any,
+    refundAddress: string,
+  ) {
+    this.logger.debug(`Handling chain refund`, {
+      swap: swap.id,
+    });
+    const { response, request } = swap;
+
+    if (
+      response.type !== BoltzSwapType.CHAIN ||
+      request.type !== BoltzSwapType.CHAIN
+    ) {
+      return;
+    }
+
+    const { payload: responsePayload } = response;
+    const { payload: requestPayload } = request;
+
+    const boltzPublicKey = Buffer.from(
+      responsePayload.lockupDetails.serverPublicKey,
+      'hex',
+    );
+
+    // Set some variables
+    const refundKeys = ECPairFactory(ecc).fromPrivateKey(
+      Buffer.from(requestPayload.refundPrivateKey, 'hex'),
+    );
+
+    const musig = new Musig(this.zkp, refundKeys, randomBytes(32), [
+      boltzPublicKey,
+      refundKeys.publicKey,
+    ]);
+
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(
+      responsePayload.lockupDetails.swapTree,
+    );
+
+    const tweakedKey = TaprootUtils.tweakMusig(musig, swapTree.tree);
+
+    const { userLock } = await this.boltzRest.getChainTransactions(
+      responsePayload.id,
+    );
+
+    // Parse the lockup transaction and find the output relevant for the swap
+    const lockupTx = Transaction.fromHex(userLock.transaction.hex);
+    const swapOutput = detectSwap(tweakedKey, lockupTx);
+    if (swapOutput === undefined) {
+      throw 'No swap output found in lockup transaction';
+    }
+
+    // Create a claim transaction to be signed cooperatively via a key path spend
+    const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
+      if (!responsePayload.claimDetails.blindingKey) {
+        throw new Error(`Cannot create claim tx without blinding key`);
+      }
+      const details = [
+        {
+          ...swapOutput,
+          keys: refundKeys,
+          cooperative: true,
+          type: OutputType.Taproot,
+          txHash: lockupTx.getHash(),
+          blindingPrivateKey: Buffer.from(
+            responsePayload.claimDetails.blindingKey,
+            'hex',
+          ),
+          swapTree,
+          internalKey: musig.getAggregatedPublicKey(),
+        },
+      ] as LiquidRefundDetails[];
+
+      return constructRefundTransaction(
+        details,
+        address.toOutputScript(refundAddress, this.network),
+        0,
+        fee,
+        true,
+        this.network,
+        address.fromConfidential(refundAddress).blindingKey,
+      );
+    });
+    // Get the partial signature from Boltz
+    const boltzSig = await this.boltzRest.postChainRefundInfo(
+      responsePayload.id,
+      musig,
+    );
+    // Aggregate the nonces
+    musig.aggregateNonces([
+      [boltzPublicKey, Buffer.from(boltzSig.pubNonce, 'hex')],
+    ]);
+    // Initialize the session to sign the claim transaction
+    musig.initializeSession(
+      claimTx.hashForWitnessV1(
+        0,
+        [swapOutput.script],
+        [{ value: swapOutput.value, asset: swapOutput.asset }],
+        Transaction.SIGHASH_DEFAULT,
+        this.network.genesisBlockHash,
+      ),
+    );
+    // Add the partial signature from Boltz
+    musig.addPartial(
+      boltzPublicKey,
+      Buffer.from(boltzSig.partialSignature, 'hex'),
+    );
+    // Create our partial signature
+    musig.signPartial();
+    // Witness of the input to the aggregated signature
+    claimTx.ins[0].witness = [musig.aggregatePartials()];
+    // Broadcast the finalized transaction
+    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
+
+    return;
   }
 
   private async getBoltzPartialSignature({

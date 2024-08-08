@@ -106,7 +106,7 @@ export const boltzSubmarineSwapResponse = z.object({
   timeoutBlockHeight: z.number(),
   acceptZeroConf: z.boolean(),
   expectedAmount: z.number(),
-  blindingKey: z.string(),
+  blindingKey: z.string().optional(),
 });
 
 export type BoltzSubmarineSwapResponseType = z.infer<
@@ -153,6 +153,41 @@ export const boltzSubmarineSwapClaimResponse = z.object({
   pubNonce: z.string(),
   publicKey: z.string(),
   transactionHash: z.string(),
+});
+
+export const boltzSubmarineLockupTxResponse = z.object({
+  id: z.string(),
+  hex: z.string(),
+  timeoutBlockHeight: z.number(),
+  timeoutEta: z.number(),
+});
+
+export const boltzChainTxsResponse = z.object({
+  userLock: z.object({
+    transaction: z.object({
+      id: z.string(),
+      hex: z.string(),
+    }),
+    timeout: z.object({
+      blockHeight: z.number(),
+      eta: z.number(),
+    }),
+  }),
+  serverLock: z.object({
+    transaction: z.object({
+      id: z.string(),
+      hex: z.string(),
+    }),
+    timeout: z.object({
+      blockHeight: z.number(),
+      eta: z.number(),
+    }),
+  }),
+});
+
+export const boltzRefundClaimResponse = z.object({
+  pubNonce: z.string(),
+  partialSignature: z.string(),
 });
 
 export const boltzChainSwapClaimResponse = z.object({

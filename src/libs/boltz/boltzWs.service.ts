@@ -186,16 +186,31 @@ export class BoltzWsService implements OnApplicationBootstrap {
                               break;
                             }
 
+                            case 'transaction.lockupFailed':
+                              await this.tcpService.handleRefundSubmarine(
+                                swap,
+                                arg,
+                              );
+                              break;
+
+                            case 'transaction.refunded':
+                              await this.swapsRepo.markRefunded(swap.id);
+                              break;
+
                             case 'swap.expired':
                             case 'invoice.expired':
-                            case 'invoice.failedToPay':
                             case 'transaction.failed':
-                            case 'transaction.refunded':
-                            case 'transaction.lockupFailed':
                               this.logger.debug(
                                 'Swap completed unsuccessfully',
                               );
                               await this.swapsRepo.markCompleted(swap.id);
+                              break;
+
+                            case 'invoice.failedToPay':
+                              await this.tcpService.handleRefundSubmarine(
+                                swap,
+                                arg,
+                              );
                               break;
 
                             case 'invoice.settled':

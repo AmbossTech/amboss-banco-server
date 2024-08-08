@@ -58,6 +58,16 @@ export class SwapsRepoService {
     });
   }
 
+  async markRefunded(id: string) {
+    return this.prisma.wallet_account_swap.update({
+      where: { id },
+      data: {
+        swap_completed: true,
+        swap_refunded: true,
+      },
+    });
+  }
+
   async getActiveBoltzSwaps() {
     return this.prisma.wallet_account_swap.findMany({
       where: {

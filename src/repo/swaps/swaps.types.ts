@@ -117,7 +117,7 @@ export type AccountSwapResponseType =
         timeoutBlockHeight: number;
         acceptZeroConf: boolean;
         expectedAmount: number;
-        blindingKey: string;
+        blindingKey?: string;
       };
     }
   | {
