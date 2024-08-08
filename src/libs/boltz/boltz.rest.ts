@@ -250,7 +250,7 @@ export class BoltzRestApi {
     const parsedError = boltzError.passthrough().safeParse(body);
 
     if (parsedError.success) {
-      this.logger.error('Error posting submarine claim info', {
+      this.logger.error('Error posting chain claim info', {
         parsedError,
         body,
       });
