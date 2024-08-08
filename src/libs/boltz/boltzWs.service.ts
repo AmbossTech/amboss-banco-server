@@ -187,10 +187,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             }
 
                             case 'transaction.lockupFailed':
-                              await this.tcpService.handleRefundSubmarine(
-                                swap,
-                                arg,
-                              );
+                              await this.tcpService.handleRefund(swap, arg);
                               break;
 
                             case 'transaction.refunded':
@@ -207,10 +204,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                               break;
 
                             case 'invoice.failedToPay':
-                              await this.tcpService.handleRefundSubmarine(
-                                swap,
-                                arg,
-                              );
+                              await this.tcpService.handleRefund(swap, arg);
                               break;
 
                             case 'invoice.settled':

@@ -94,7 +94,27 @@ export class TransactionClaimPendingService {
     }
   }
 
-  async handleRefundSubmarine(swap: wallet_account_swap, arg: any) {
+  async handleRefund(swap: wallet_account_swap, arg: any) {
+    const { request, response } = swap;
+
+    if (
+      request.type === BoltzSwapType.SUBMARINE &&
+      response.type === BoltzSwapType.SUBMARINE
+    ) {
+      await this.handleRefundSubmarine(swap, arg);
+      return;
+    }
+
+    if (
+      request.type === BoltzSwapType.CHAIN &&
+      response.type === BoltzSwapType.CHAIN
+    ) {
+      await this.handleRefundChain(swap, arg);
+      return;
+    }
+  }
+
+  private async handleRefundSubmarine(swap: wallet_account_swap, arg: any) {
     const { request, response } = swap;
 
     if (request.type !== BoltzSwapType.SUBMARINE) {
@@ -135,6 +155,52 @@ export class TransactionClaimPendingService {
       await this.swapsRepo.markRefunded(swap.id);
     } catch (e) {
       this.logger.debug(`Failed to refund submarine swap`, {
+        swap,
+        e,
+      });
+    }
+  }
+
+  private async handleRefundChain(swap: wallet_account_swap, arg: any) {
+    const { request, response } = swap;
+
+    if (request.type !== BoltzSwapType.CHAIN) {
+      throw new Error('Received message for unknown swap');
+    }
+
+    if (response.type !== BoltzSwapType.CHAIN) {
+      throw new Error('Received message for unknown swap');
+    }
+
+    if (request.payload.from === BoltzChain['BTC']) {
+      throw new Error(`Unable to refund BTC swaps`);
+    }
+
+    const handlerFunc =
+      request.payload.from === BoltzChain['L-BTC']
+        ? this.liquidHandler.handleChainRefund.bind(this.liquidHandler)
+        : this.bitcoinHandler.handleChainRefund.bind(this.bitcoinHandler);
+
+    const walletAccount = await this.walletRepo.getByWalletAccountId(
+      swap.wallet_account_id,
+    );
+
+    if (!walletAccount) {
+      this.logger.debug(`Could not find wallet account for refund`, { swap });
+      throw new Error(`Could not find wallet account for refund`);
+    }
+
+    const descriptor = this.cryptoService.decryptString(
+      walletAccount.details.local_protected_descriptor,
+    );
+
+    const refundAddress =
+      await this.liquidService.getOnchainAddress(descriptor);
+    try {
+      await handlerFunc(swap, arg, refundAddress.address().toString());
+      await this.swapsRepo.markRefunded(swap.id);
+    } catch (e) {
+      this.logger.debug(`Failed to refund chain swap`, {
         swap,
         e,
       });

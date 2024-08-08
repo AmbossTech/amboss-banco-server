@@ -163,26 +163,30 @@ export const boltzSubmarineLockupTxResponse = z.object({
 });
 
 export const boltzChainTxsResponse = z.object({
-  userLock: z.object({
-    transaction: z.object({
-      id: z.string(),
-      hex: z.string(),
-    }),
-    timeout: z.object({
-      blockHeight: z.number(),
-      eta: z.number(),
-    }),
-  }),
-  serverLock: z.object({
-    transaction: z.object({
-      id: z.string(),
-      hex: z.string(),
-    }),
-    timeout: z.object({
-      blockHeight: z.number(),
-      eta: z.number(),
-    }),
-  }),
+  userLock: z
+    .object({
+      transaction: z.object({
+        id: z.string(),
+        hex: z.string(),
+      }),
+      timeout: z.object({
+        blockHeight: z.number(),
+        eta: z.number(),
+      }),
+    })
+    .optional(),
+  serverLock: z
+    .object({
+      transaction: z.object({
+        id: z.string(),
+        hex: z.string(),
+      }),
+      timeout: z.object({
+        blockHeight: z.number(),
+        eta: z.number(),
+      }),
+    })
+    .optional(),
 });
 
 export const boltzRefundClaimResponse = z.object({

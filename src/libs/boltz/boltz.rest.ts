@@ -234,13 +234,13 @@ export class BoltzRestApi {
     return boltzRefundClaimResponse.parse(body);
   }
 
-  async postChainRefundInfo(id: string, musig: Musig) {
+  async postChainRefundInfo(id: string, musig: Musig, hex: string) {
     const result = await fetch(`${this.apiUrl}swap/chain/${id}/refund`, {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         index: 0,
         pubNonce: Buffer.from(musig.getPublicNonce()).toString('hex'),
-        partialSignature: Buffer.from(musig.signPartial()).toString('hex'),
+        transaction: hex,
       }),
       method: 'POST',
     });

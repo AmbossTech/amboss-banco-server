@@ -14,7 +14,6 @@ import {
   constructClaimTransaction,
   constructRefundTransaction,
   init,
-  LiquidRefundDetails,
   TaprootUtils,
 } from 'boltz-core/dist/lib/liquid';
 import { randomBytes } from 'crypto';
@@ -424,8 +423,11 @@ export class BoltzPendingLiquidHandler
 
     const swapOutput = detectSwap(tweakedKey, lockupTx);
     if (swapOutput === undefined) {
-      this.logger.error('No swap output found in lockup transaction');
-      return;
+      this.logger.error(
+        'No swap output found in lockup transaction for submarine refund',
+        { swap },
+      );
+      throw new Error('No swap output found in lockup transaction');
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
@@ -538,39 +540,45 @@ export class BoltzPendingLiquidHandler
       responsePayload.id,
     );
 
+    if (!userLock) {
+      this.logger.error(`No user lock tx found`, { swap });
+      throw new Error(`No user lock tx found`);
+    }
+
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(userLock.transaction.hex);
     const swapOutput = detectSwap(tweakedKey, lockupTx);
     if (swapOutput === undefined) {
-      throw 'No swap output found in lockup transaction';
+      this.logger.error(
+        'No swap output found in lockup transaction for chain refund',
+        { swap },
+      );
+      throw new Error('No swap output found in lockup transaction');
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-      if (!responsePayload.claimDetails.blindingKey) {
-        throw new Error(`Cannot create claim tx without blinding key`);
+    const refundTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
+      if (!responsePayload.lockupDetails.blindingKey) {
+        throw new Error(`Cannot create refund tx without blinding key`);
       }
-      const details = [
-        {
-          ...swapOutput,
-          keys: refundKeys,
-          cooperative: true,
-          type: OutputType.Taproot,
-          txHash: lockupTx.getHash(),
-          blindingPrivateKey: Buffer.from(
-            responsePayload.claimDetails.blindingKey,
-            'hex',
-          ),
-          swapTree,
-          internalKey: musig.getAggregatedPublicKey(),
-        },
-      ] as LiquidRefundDetails[];
 
       return constructRefundTransaction(
-        details,
+        [
+          {
+            ...swapOutput,
+            keys: refundKeys,
+            cooperative: true,
+            type: OutputType.Taproot,
+            txHash: lockupTx.getHash(),
+            blindingPrivateKey: Buffer.from(
+              responsePayload.lockupDetails.blindingKey,
+              'hex',
+            ),
+          },
+        ],
         address.toOutputScript(refundAddress, this.network),
         0,
-        fee,
+        this.network == networks.liquid ? fee : fee * 10,
         true,
         this.network,
         address.fromConfidential(refundAddress).blindingKey,
@@ -580,6 +588,7 @@ export class BoltzPendingLiquidHandler
     const boltzSig = await this.boltzRest.postChainRefundInfo(
       responsePayload.id,
       musig,
+      refundTx.toHex(),
     );
     // Aggregate the nonces
     musig.aggregateNonces([
@@ -587,7 +596,7 @@ export class BoltzPendingLiquidHandler
     ]);
     // Initialize the session to sign the claim transaction
     musig.initializeSession(
-      claimTx.hashForWitnessV1(
+      refundTx.hashForWitnessV1(
         0,
         [swapOutput.script],
         [{ value: swapOutput.value, asset: swapOutput.asset }],
@@ -603,9 +612,9 @@ export class BoltzPendingLiquidHandler
     // Create our partial signature
     musig.signPartial();
     // Witness of the input to the aggregated signature
-    claimTx.ins[0].witness = [musig.aggregatePartials()];
+    refundTx.ins[0].witness = [musig.aggregatePartials()];
     // Broadcast the finalized transaction
-    await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
+    await this.boltzRest.broadcastTx(refundTx.toHex(), 'L-BTC');
 
     return;
   }
