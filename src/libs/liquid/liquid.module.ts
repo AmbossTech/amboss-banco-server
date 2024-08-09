@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { BoltzRestModule } from '../boltz/boltz.module';
 import { LiquidService } from './liquid.service';
 
 @Module({
-  imports: [BoltzRestModule],
+  imports: [forwardRef(() => BoltzRestModule)],
   providers: [LiquidService],
   exports: [LiquidService],
 })

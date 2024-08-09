@@ -109,4 +109,10 @@ export class WalletRepoService {
       data: { wallet_id, details, name },
     });
   }
+
+  async getByWalletAccountId(wallet_account_id: string) {
+    return this.prisma.wallet_account.findUnique({
+      where: { id: wallet_account_id },
+    });
+  }
 }

@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { EventsModule } from 'src/api/sse/sse.module';
 import { AccountRepoModule } from 'src/repo/account/account.module';
 import { SwapsRepoModule } from 'src/repo/swaps/swaps.module';
+import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
+import { LiquidModule } from '../liquid/liquid.module';
 import { MempoolModule } from '../mempool/mempool.module';
 import { RedlockModule } from '../redlock/redlock.module';
 import { BoltzRestApi } from './boltz.rest';
@@ -19,6 +21,8 @@ import { TransactionClaimPendingService } from './handlers/transactionClaimPendi
     RedlockModule,
     EventsModule,
     AccountRepoModule,
+    LiquidModule,
+    WalletRepoModule,
   ],
   providers: [
     BoltzRestApi,
