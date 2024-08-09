@@ -94,11 +94,6 @@ export class PasskeyTwoFactorService implements OnModuleInit {
           residentKey: 'discouraged',
           userVerification: 'required',
         },
-        // {
-        //     requireResidentKey: true,
-        //     residentKey: 'required',
-        //     userVerification: 'required',
-        //   },
         timeout: REGISTRATION_TIMEOUT_IN_MS,
       });
 
