@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { two_fa_method } from '@prisma/client';
 import {
@@ -20,13 +20,11 @@ import {
   base64urlToUint8Array,
   uint8ArrayToBase64url,
 } from 'src/utils/crypto/crypto';
-import { fetch } from 'undici';
 
 import { ConfigSchemaType } from '../config/validation';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import {
-  AAGUID_JSON_URL,
   getPasskeyId,
   getTwoFactorAuthenticationKey,
   getTwoFactorRegistrationKey,
@@ -34,11 +32,10 @@ import {
 } from './passkey.utils';
 
 @Injectable()
-export class PasskeyTwoFactorService implements OnModuleInit {
+export class PasskeyTwoFactorService {
   private rpName: string;
   private rpID: string;
   private origin: string;
-  private aaguidJson: { [key: string]: { name: string } } = {};
 
   constructor(
     private redis: RedisService,
@@ -53,23 +50,6 @@ export class PasskeyTwoFactorService implements OnModuleInit {
     this.rpName = webauthn.name;
     this.rpID = webauthn.id;
     this.origin = webauthn.origin;
-  }
-
-  async onModuleInit() {
-    const isProduction = this.config.get<boolean>('isProduction');
-    if (!isProduction) return;
-
-    try {
-      this.aaguidJson = await fetch(AAGUID_JSON_URL).then(
-        (res) => res.json() as any,
-      );
-    } catch (error) {
-      this.logger.error('Error fetching AAGUID JSON array');
-    }
-  }
-
-  async getPasskeyInfo(aaguid: string | undefined) {
-    return this.aaguidJson[aaguid || ''] || { name: 'Passkey' };
   }
 
   async generateRegistrationOptions(account_id: string): Promise<string> {
