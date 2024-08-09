@@ -9,8 +9,7 @@ import { AccountService } from 'src/api/account/account.service';
 import { TwoFactorPasskeyLoginMutations } from 'src/api/account/account.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
-import { PasskeyService } from 'src/libs/passkey/passkey.service';
-import { PasskeyOptionsType } from 'src/libs/passkey/passkey.types';
+import { PasskeyTwoFactorService } from 'src/libs/passkey/passkeyTwoFactor.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 
 import {
@@ -22,14 +21,12 @@ import { twoFactorSessionKey } from '../2fa.utils';
 
 @Resolver(TwoFactorPasskeyMutations)
 export class TwoFactorPasskeyMutationsResolver {
-  constructor(private passkeyService: PasskeyService) {}
+  constructor(private passkeyService: PasskeyTwoFactorService) {}
 
   @ResolveField()
   async add(@CurrentUser() { user_id }: any) {
-    const options = await this.passkeyService.generateRegistrationOptions(
-      user_id,
-      PasskeyOptionsType.TWO_FACTOR,
-    );
+    const options =
+      await this.passkeyService.generateRegistrationOptions(user_id);
     return { options };
   }
 
@@ -58,7 +55,7 @@ export class TwoFactorPasskeyLoginMutationsResolver {
   constructor(
     private redisService: RedisService,
     private accountService: AccountService,
-    private passkeyService: PasskeyService,
+    private passkeyService: PasskeyTwoFactorService,
   ) {}
 
   @ResolveField()

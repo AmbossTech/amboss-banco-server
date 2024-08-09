@@ -12,7 +12,7 @@ import { Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
-import { PasskeyService } from 'src/libs/passkey/passkey.service';
+import { PasskeyTwoFactorService } from 'src/libs/passkey/passkeyTwoFactor.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 
@@ -88,7 +88,7 @@ export class TwoFactorMutationsResolver {
 
 @Resolver(SimpleTwoFactor)
 export class SimpleTwoFactorResolver {
-  constructor(private passkeyService: PasskeyService) {}
+  constructor(private passkeyService: PasskeyTwoFactorService) {}
 
   @ResolveField()
   created_at(@Parent() { created_at }: account_2fa) {

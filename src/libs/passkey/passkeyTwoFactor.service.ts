@@ -25,17 +25,16 @@ import { fetch } from 'undici';
 import { ConfigSchemaType } from '../config/validation';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
-import { PasskeyOptionsType } from './passkey.types';
 import {
   AAGUID_JSON_URL,
-  getAccountAuthenticationKey,
-  getAccountRegistrationKey,
   getPasskeyId,
+  getTwoFactorAuthenticationKey,
+  getTwoFactorRegistrationKey,
   REGISTRATION_TIMEOUT_IN_MS,
 } from './passkey.utils';
 
 @Injectable()
-export class PasskeyService implements OnModuleInit {
+export class PasskeyTwoFactorService implements OnModuleInit {
   private rpName: string;
   private rpID: string;
   private origin: string;
@@ -46,7 +45,7 @@ export class PasskeyService implements OnModuleInit {
     private config: ConfigService,
     private accountRepo: AccountRepo,
     private twoFactorRepo: TwoFactorRepository,
-    @Logger(PasskeyService.name) private logger: CustomLogger,
+    @Logger(PasskeyTwoFactorService.name) private logger: CustomLogger,
   ) {
     const webauthn =
       this.config.getOrThrow<ConfigSchemaType['webauthn']>('webauthn');
@@ -73,17 +72,12 @@ export class PasskeyService implements OnModuleInit {
     return this.aaguidJson[aaguid || ''] || { name: 'Passkey' };
   }
 
-  async generateRegistrationOptions(
-    account_id: string,
-    type: PasskeyOptionsType,
-  ): Promise<string> {
+  async generateRegistrationOptions(account_id: string): Promise<string> {
     const account = await this.accountRepo.findOneByIdWithTwoFactor(account_id);
 
     if (!account) {
       throw new GraphQLError('Account not found');
     }
-
-    const isTwoFactor = type === PasskeyOptionsType.TWO_FACTOR;
 
     const options: PublicKeyCredentialCreationOptionsJSON =
       await generateRegistrationOptions({
@@ -96,20 +90,19 @@ export class PasskeyService implements OnModuleInit {
           if (t.payload.type !== 'PASSKEY') return p;
           return [...p, { id: t.payload.id, transports: t.payload.transports }];
         }, []),
-        authenticatorSelection: isTwoFactor
-          ? {
-              residentKey: 'discouraged',
-              userVerification: 'required',
-            }
-          : {
-              requireResidentKey: true,
-              residentKey: 'required',
-              userVerification: 'required',
-            },
+        authenticatorSelection: {
+          residentKey: 'discouraged',
+          userVerification: 'required',
+        },
+        // {
+        //     requireResidentKey: true,
+        //     residentKey: 'required',
+        //     userVerification: 'required',
+        //   },
         timeout: REGISTRATION_TIMEOUT_IN_MS,
       });
 
-    await this.redis.set(getAccountRegistrationKey(account_id, type), options, {
+    await this.redis.set(getTwoFactorRegistrationKey(account_id), options, {
       ttl: (options.timeout || REGISTRATION_TIMEOUT_IN_MS) / 1000,
     });
 
@@ -132,7 +125,7 @@ export class PasskeyService implements OnModuleInit {
         }, []),
       });
 
-    await this.redis.set(getAccountAuthenticationKey(account_id), options, {
+    await this.redis.set(getTwoFactorAuthenticationKey(account_id), options, {
       ttl: (options.timeout || REGISTRATION_TIMEOUT_IN_MS) / 1000,
     });
 
@@ -143,10 +136,7 @@ export class PasskeyService implements OnModuleInit {
     account_id: string,
     options: RegistrationResponseJSON,
   ) {
-    const key = getAccountRegistrationKey(
-      account_id,
-      PasskeyOptionsType.TWO_FACTOR,
-    );
+    const key = getTwoFactorRegistrationKey(account_id);
 
     const savedOptions =
       await this.redis.get<PublicKeyCredentialCreationOptionsJSON>(key);
@@ -212,7 +202,7 @@ export class PasskeyService implements OnModuleInit {
     account_id: string,
     options: AuthenticationResponseJSON,
   ): Promise<boolean> {
-    const key = getAccountAuthenticationKey(account_id);
+    const key = getTwoFactorAuthenticationKey(account_id);
 
     const savedOptions =
       await this.redis.get<PublicKeyCredentialCreationOptionsJSON>(key);
