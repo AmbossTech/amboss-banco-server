@@ -31,6 +31,7 @@ model account {
   secp256k1_key_pair      Json                 @db.JsonB
   wallets                 wallet_on_accounts[]
   account_2fa             account_2fa[]
+  account_passkey         account_passkey[]
 }
 
 model wallet_on_accounts {
@@ -121,6 +122,19 @@ model account_2fa {
   enabled    Boolean       @default(true)
   /// [TwoFactorPayload]
   payload    Json          @db.JsonB
+}
+
+model account_passkey {
+  id                      String   @id() @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  created_at              DateTime @default(now()) @db.Timestamp(6)
+  updated_at              DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  account                 account  @relation(fields: [account_id], references: [id])
+  account_id              String   @db.Uuid
+  enabled                 Boolean  @default(true)
+  encryption_available    Boolean
+  protected_symmetric_key String?  @db.VarChar
+  /// [PasskeyPayload]
+  payload                 Json     @db.JsonB
 }
 
 enum two_fa_method {

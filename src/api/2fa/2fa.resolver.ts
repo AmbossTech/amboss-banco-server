@@ -94,6 +94,7 @@ export class SimpleTwoFactorResolver {
   created_at(@Parent() { created_at }: account_2fa) {
     return created_at.toISOString();
   }
+
   @ResolveField()
   async passkey_name(@Parent() { payload }: account_2fa) {
     if (payload.type !== 'PASSKEY') return;
