@@ -101,6 +101,13 @@ export class TransactionClaimPendingService {
       request.type === BoltzSwapType.SUBMARINE &&
       response.type === BoltzSwapType.SUBMARINE
     ) {
+      if (request.payload.from === BoltzChain['BTC']) {
+        this.logger.error(
+          `Swap failed with onchain bitcoin! Unable to refund`,
+          { swap },
+        );
+        throw new Error(`Unable to refund BTC swaps`);
+      }
       await this.handleRefundSubmarine(swap, arg);
       return;
     }
@@ -109,6 +116,13 @@ export class TransactionClaimPendingService {
       request.type === BoltzSwapType.CHAIN &&
       response.type === BoltzSwapType.CHAIN
     ) {
+      if (request.payload.from === BoltzChain['BTC']) {
+        this.logger.error(
+          `Swap failed with onchain bitcoin! Unable to refund`,
+          { swap },
+        );
+        throw new Error(`Unable to refund BTC swaps`);
+      }
       await this.handleRefundChain(swap, arg);
       return;
     }
@@ -117,16 +131,11 @@ export class TransactionClaimPendingService {
   private async handleRefundSubmarine(swap: wallet_account_swap, arg: any) {
     const { request, response } = swap;
 
-    if (request.type !== BoltzSwapType.SUBMARINE) {
+    if (
+      request.type !== BoltzSwapType.SUBMARINE ||
+      response.type !== BoltzSwapType.SUBMARINE
+    ) {
       throw new Error('Received message for unknown swap');
-    }
-
-    if (response.type !== BoltzSwapType.SUBMARINE) {
-      throw new Error('Received message for unknown swap');
-    }
-
-    if (request.payload.from === BoltzChain['BTC']) {
-      throw new Error(`Unable to refund BTC swaps`);
     }
 
     const handlerFunc =
@@ -164,16 +173,11 @@ export class TransactionClaimPendingService {
   private async handleRefundChain(swap: wallet_account_swap, arg: any) {
     const { request, response } = swap;
 
-    if (request.type !== BoltzSwapType.CHAIN) {
+    if (
+      request.type !== BoltzSwapType.CHAIN ||
+      response.type !== BoltzSwapType.CHAIN
+    ) {
       throw new Error('Received message for unknown swap');
-    }
-
-    if (response.type !== BoltzSwapType.CHAIN) {
-      throw new Error('Received message for unknown swap');
-    }
-
-    if (request.payload.from === BoltzChain['BTC']) {
-      throw new Error(`Unable to refund BTC swaps`);
     }
 
     const handlerFunc =
