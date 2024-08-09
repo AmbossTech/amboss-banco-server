@@ -41,8 +41,10 @@ export class MailService {
       from: `Banco <noreply@${this.mailgun.domain}>`,
       to: [email],
       subject,
-      template: '',
-      'h:X-Mailgun-Variables': JSON.stringify(variables),
+      html: '<h1>Hi %recipient.name%!</h1>',
+      'recipient-variables': JSON.stringify({
+        [email]: variables,
+      }),
     };
 
     await this.mailgun.client.messages
