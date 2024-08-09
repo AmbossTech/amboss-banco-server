@@ -64,6 +64,11 @@ input CreateOnchainAddressInput {
   wallet_account_id: String!
 }
 
+type CreateTwoFactorOTP {
+  otp_secret: String!
+  otp_url: String!
+}
+
 type CreateWallet {
   id: String!
 }
@@ -154,9 +159,21 @@ input LnUrlInfoInput {
   money_address: String!
 }
 
+type Login {
+  access_token: String
+  id: String!
+  refresh_token: String
+  two_factor: TwoFactorLogin
+}
+
 input LoginInput {
   email: String!
   master_password_hash: String!
+}
+
+type LoginMutations {
+  initial(input: LoginInput!): Login!
+  two_factor: TwoFactorLoginMutations!
 }
 
 type MoneyAddress {
@@ -167,12 +184,13 @@ type MoneyAddress {
 
 type Mutation {
   contacts: ContactMutations!
-  login(input: LoginInput!): NewAccount!
+  login: LoginMutations!
   logout: Boolean!
   password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
+  two_factor: TwoFactorMutations!
   wallets: WalletMutations!
 }
 
@@ -256,6 +274,7 @@ enum PaymentOptionNetwork {
 type Query {
   hello: String!
   pay: PayQueries!
+  two_factor: TwoFactorQueries!
   user: User!
   wallets: WalletQueries!
 }
@@ -316,6 +335,11 @@ input SendMessageInput {
   sender_payload: String!
 }
 
+type SetupOTP {
+  otp_secret: String!
+  otp_url: String!
+}
+
 input SignUpInput {
   email: String!
   master_password_hash: String!
@@ -328,6 +352,13 @@ input SignUpInput {
 
 type SimpleSwap {
   id: String!
+}
+
+type SimpleTwoFactor {
+  created_at: String!
+  enabled: Boolean!
+  id: String!
+  method: TwoFactorMethod!
 }
 
 type SimpleWallet {
@@ -381,6 +412,43 @@ input SwapQuoteInput {
 input SwapRecipientInput {
   address: String!
   amount: String!
+}
+
+type TwoFactorLogin {
+  methods: [SimpleTwoFactor!]!
+  session_id: String!
+}
+
+type TwoFactorLoginMutations {
+  otp(input: TwoFactorOTPLogin!): Login!
+}
+
+enum TwoFactorMethod {
+  OTP
+  PASSKEY
+}
+
+type TwoFactorMutations {
+  otp: TwoFactorOTPMutations!
+}
+
+input TwoFactorOTPLogin {
+  code: String!
+  session_id: String!
+}
+
+type TwoFactorOTPMutations {
+  add: CreateTwoFactorOTP!
+  verify(input: TwoFactorOTPVerifyInput!): Boolean!
+}
+
+input TwoFactorOTPVerifyInput {
+  code: String!
+}
+
+type TwoFactorQueries {
+  find_many: [SimpleTwoFactor!]!
+  id: String!
 }
 
 type User {

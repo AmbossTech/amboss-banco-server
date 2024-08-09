@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Args,
@@ -14,20 +14,27 @@ import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser, Public, SkipAccessCheck } from 'src/auth/auth.decorators';
 import { RefreshTokenGuard } from 'src/auth/guards/refreshToken.guard';
+import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
 import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { RedisService } from 'src/libs/redis/redis.service';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
+import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
+import { v4 as uuidv4 } from 'uuid';
 
+import { twoFactorSessionKey } from '../2fa/2fa.utils';
 import { AccountService } from './account.service';
 import {
   AmbossInfo,
   ChangePasswordInput,
   LoginInput,
+  LoginMutations,
+  LoginType,
   NewAccount,
   PasswordMutations,
   PasswordParentType,
@@ -122,6 +129,88 @@ export class AmbossInfoResolver {
   }
 }
 
+@Resolver(LoginMutations)
+export class LoginMutationsResolver {
+  constructor(
+    private accountRepo: AccountRepo,
+    private authService: AuthService,
+    private cryptoService: CryptoService,
+    private accountService: AccountService,
+    private twoFactorRepo: TwoFactorRepository,
+    private redisService: RedisService,
+  ) {}
+
+  @ResolveField()
+  async initial(
+    @Args('input') input: LoginInput,
+    @Context() { res }: { res: Response },
+  ): Promise<LoginType> {
+    const normalizedEmail = input.email.trim();
+
+    const account = await this.accountRepo.findOne(normalizedEmail);
+
+    if (!account) {
+      throw new GraphQLError('Invalid email or password.');
+    }
+
+    const verified = await this.cryptoService.argon2Verify(
+      account.master_password_hash,
+      input.master_password_hash,
+    );
+
+    if (!verified) {
+      throw new GraphQLError('Invalid email or password.');
+    }
+
+    const { accessToken, refreshToken } = await this.authService.getTokens(
+      account.id,
+    );
+
+    const twoFactorMethods = await this.twoFactorRepo.getMethodsByAccount(
+      account.id,
+    );
+
+    if (!!twoFactorMethods.length) {
+      const sessionId = uuidv4();
+      await this.redisService.set<TwoFactorSession>(
+        twoFactorSessionKey(sessionId),
+        {
+          accountId: account.id,
+          accessToken,
+          refreshToken,
+        },
+        { ttl: 10 * 60 },
+      );
+
+      return {
+        id: account.id,
+        two_factor: {
+          methods: twoFactorMethods,
+          session_id: sessionId,
+        },
+      };
+    }
+
+    await this.accountService.setLoginCookies(
+      res,
+      account.id,
+      accessToken,
+      refreshToken,
+    );
+
+    return {
+      id: account.id,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
+  @ResolveField()
+  two_factor() {
+    return {};
+  }
+}
+
 @Resolver()
 export class AccountResolver {
   domain: string;
@@ -151,58 +240,9 @@ export class AccountResolver {
   }
 
   @Public()
-  @Mutation(() => NewAccount)
-  async login(
-    @Args('input') input: LoginInput,
-    @Context() { res }: { res: Response },
-  ) {
-    const normalizedEmail = input.email.trim().toLowerCase();
-
-    const account = await this.accountRepo.findOne(normalizedEmail);
-
-    if (!account) {
-      throw new GraphQLError('Invalid email or password.');
-    }
-
-    const verified = await this.cryptoService.argon2Verify(
-      account.master_password_hash,
-      input.master_password_hash,
-    );
-
-    if (!verified) {
-      throw new GraphQLError('Invalid email or password.');
-    }
-
-    const { accessToken, refreshToken } = await this.authService.getTokens(
-      account.id,
-    );
-
-    const hashedRefreshToken =
-      await this.cryptoService.argon2Hash(refreshToken);
-
-    await this.accountRepo.updateRefreshToken(account.id, hashedRefreshToken);
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: true,
-      domain: this.domain.includes('localhost') ? undefined : this.domain,
-    };
-
-    res.cookie('amboss_banco_refresh_token', refreshToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
-    res.cookie('amboss_banco_access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 1000 * 60 * 10,
-    });
-
-    return {
-      id: account.id,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+  @Mutation(() => LoginMutations)
+  async login() {
+    return {};
   }
 
   @Mutation(() => Boolean)
@@ -242,7 +282,7 @@ export class AccountResolver {
 
     const { email, referral_code } = input;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email.trim();
 
     if (referral_code) {
       newAccount = await this.redlockService.using<account>(
@@ -433,7 +473,7 @@ export class PasswordMutationsResolver {
     );
 
     if (!verified) {
-      throw new GraphQLError('Invalid password.');
+      throw new BadRequestException('Invalid password.');
     }
 
     return true;

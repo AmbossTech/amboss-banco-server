@@ -4,11 +4,13 @@ import { AuthModule } from 'src/libs/auth/auth.module';
 import { RedlockModule } from 'src/libs/redlock/redlock.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
+import { TwoFactorRepoModule } from 'src/repo/2fa/2fa.module';
 import { AccountRepoModule } from 'src/repo/account/account.module';
 
 import {
   AccountResolver,
   AmbossInfoResolver,
+  LoginMutationsResolver,
   PasswordMutationsResolver,
   UserResolver,
   UserSwapInfoResolver,
@@ -24,6 +26,7 @@ import { AccountService } from './account.service';
     SideShiftModule,
     AmbossModule,
     RedlockModule,
+    TwoFactorRepoModule,
   ],
   providers: [
     AccountResolver,
@@ -33,6 +36,8 @@ import { AccountService } from './account.service';
     AmbossInfoResolver,
     PasswordMutationsResolver,
     UserWalletInfoResolver,
+    LoginMutationsResolver,
   ],
+  exports: [AccountService],
 })
 export class AccountModule {}

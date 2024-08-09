@@ -1,7 +1,15 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { account } from '@prisma/client';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
+import { account, account_2fa, two_fa_method } from '@prisma/client';
 
+import { SimpleTwoFactor } from '../2fa/2fa.types';
 import { CreateWalletInput } from '../wallet/wallet.types';
+
+registerEnumType(two_fa_method, { name: 'TwoFactorMethod' });
 
 @ObjectType()
 export class UserSwapInfo {
@@ -85,6 +93,15 @@ export class RefreshToken {
 }
 
 @ObjectType()
+export class TwoFactorLogin {
+  @Field(() => [SimpleTwoFactor])
+  methods: SimpleTwoFactor[];
+
+  @Field()
+  session_id: string;
+}
+
+@ObjectType()
 export class NewAccount {
   @Field()
   id: string;
@@ -101,11 +118,29 @@ export class Login {
   @Field()
   id: string;
 
-  @Field()
-  access_token: string;
+  @Field({ nullable: true })
+  access_token?: string;
 
-  @Field()
-  refresh_token: string;
+  @Field({ nullable: true })
+  refresh_token?: string;
+
+  @Field(() => TwoFactorLogin, { nullable: true })
+  two_factor?: TwoFactorLogin;
+}
+
+@ObjectType()
+export class TwoFactorLoginMutations {
+  @Field(() => Login)
+  otp: Login;
+}
+
+@ObjectType()
+export class LoginMutations {
+  @Field(() => Login)
+  initial: Login;
+
+  @Field(() => TwoFactorLoginMutations)
+  two_factor: TwoFactorLoginMutations;
 }
 
 @InputType()
@@ -174,6 +209,41 @@ export class PasswordMutations {
   change: boolean;
 }
 
+@ObjectType()
+export class SetupOTP {
+  @Field()
+  otp_url: string;
+
+  @Field()
+  otp_secret: string;
+}
+
+@ObjectType()
+export class SetupTwoFactor {
+  @Field(() => SetupOTP)
+  otp: SetupOTP;
+}
+
+@ObjectType()
+export class TwoFactorMutations {
+  @Field()
+  setup: SetupOTP;
+}
+
 export type PasswordParentType = {
   account: account;
 };
+
+export type LoginType =
+  | {
+      id: string;
+      two_factor: {
+        methods: account_2fa[];
+        session_id: string;
+      };
+    }
+  | {
+      id: string;
+      access_token: string;
+      refresh_token: string;
+    };

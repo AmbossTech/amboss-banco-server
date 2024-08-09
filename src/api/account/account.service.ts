@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
@@ -9,11 +11,16 @@ import { SignUpInput } from './account.types';
 
 @Injectable()
 export class AccountService {
+  private domain: string;
+
   constructor(
     private accountRepo: AccountRepo,
     private cryptoService: CryptoService,
+    private config: ConfigService,
     @Logger('AccountService') private logger: CustomLogger,
-  ) {}
+  ) {
+    this.domain = this.config.getOrThrow('server.cookies.domain');
+  }
 
   async signUp(input: SignUpInput) {
     const account = await this.accountRepo.findOne(input.email);
@@ -42,5 +49,33 @@ export class AccountService {
     this.logger.debug('New account created', { accountInfo });
 
     return newAccount;
+  }
+
+  async setLoginCookies(
+    res: Response,
+    accountId: string,
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    const hashedRefreshToken =
+      await this.cryptoService.argon2Hash(refreshToken);
+
+    await this.accountRepo.updateRefreshToken(accountId, hashedRefreshToken);
+
+    const cookieOptions: CookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: true,
+      domain: this.domain.includes('localhost') ? undefined : this.domain,
+    };
+
+    res.cookie('amboss_banco_refresh_token', refreshToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+    res.cookie('amboss_banco_access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 1000 * 60 * 10,
+    });
   }
 }
