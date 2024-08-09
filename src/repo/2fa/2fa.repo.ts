@@ -39,7 +39,7 @@ export class TwoFactorRepository {
 
   async getPasskeyById(id: string) {
     return this.prisma.account_2fa.findUnique({
-      where: { id },
+      where: { id, method: two_fa_method.PASSKEY },
     });
   }
 
