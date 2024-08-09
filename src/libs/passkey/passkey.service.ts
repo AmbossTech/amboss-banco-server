@@ -89,7 +89,7 @@ export class PasskeyService implements OnModuleInit {
       await generateRegistrationOptions({
         rpName: this.rpName,
         rpID: this.rpID,
-        userDisplayName: '',
+        userDisplayName: account.email.toLowerCase(),
         userName: account.email.toLowerCase(),
         attestationType: 'direct',
         excludeCredentials: account.account_2fa.reduce((p, t) => {
@@ -107,7 +107,6 @@ export class PasskeyService implements OnModuleInit {
               userVerification: 'required',
             },
         timeout: REGISTRATION_TIMEOUT_IN_MS,
-        ...(isTwoFactor ? {} : { extensions: { hmacCreateSecret: true } }),
       });
 
     await this.redis.set(getAccountRegistrationKey(account_id, type), options, {
