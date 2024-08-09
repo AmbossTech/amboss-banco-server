@@ -18,6 +18,13 @@ export class AccountRepo {
     });
   }
 
+  findOneByIdWithTwoFactor(id: string) {
+    return this.prisma.account.findUnique({
+      where: { id },
+      include: { account_2fa: true },
+    });
+  }
+
   findOne(email: string) {
     return this.prisma.account.findFirst({
       where: {

@@ -57,10 +57,14 @@ export class TwoFactorOTPMutationsResolver {
 
     if (!isValid) throw new GraphQLError(`Token invalid`);
 
-    await this.twoFactorRepo.add(user_id, 'OTP', {
-      type: 'OTP',
-      otpSecret: secret,
-      otpUrl: url,
+    await this.twoFactorRepo.add({
+      account_id: user_id,
+      method: 'OTP',
+      payload: {
+        type: 'OTP',
+        otpSecret: secret,
+        otpUrl: url,
+      },
     });
 
     this.redisService.delete(key);
