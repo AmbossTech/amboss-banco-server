@@ -285,7 +285,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
             if (this.retryCount > 5) {
               this.logger.error(
-                `Unable to estabilsh Boltz websocket connection!`,
+                `Unable to establish Boltz websocket connection!`,
               );
             }
 
