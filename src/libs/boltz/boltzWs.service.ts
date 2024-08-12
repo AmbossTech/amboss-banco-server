@@ -15,7 +15,8 @@ import { BoltzSubscriptionAutoType } from './boltz.types';
 import { getReceivingAmount } from './boltz.utils';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 
-const RESTART_TIMEOUT = 1000 * 30;
+const RESTART_TIMEOUT = 1000 * 5;
+const MAX_RESTART_TIMEOUT = 1000 * 30;
 
 @Injectable()
 export class BoltzWsService implements OnApplicationBootstrap {
@@ -277,12 +278,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
             this.retryCount = this.retryCount + 1;
 
-            if (this.retryCount >= 4) {
-              next(Error('Max retries attempted'));
-              return;
-            }
+            const retryTime = Math.min(
+              MAX_RESTART_TIMEOUT,
+              RESTART_TIMEOUT * this.retryCount,
+            );
 
-            const retryTime = RESTART_TIMEOUT * this.retryCount;
+            if (this.retryCount > 5) {
+              this.logger.error(
+                `Unable to establish Boltz websocket connection!`,
+              );
+            }
 
             setTimeout(async () => {
               this.logger.warn('Restarting...');
