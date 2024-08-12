@@ -161,7 +161,7 @@ export class TransactionClaimPendingService {
 
     try {
       await handlerFunc(swap, arg, refundAddress.address().toString());
-      await this.swapsRepo.markRefunded(swap.id);
+      await this.swapsRepo.markBoltzRefunded(swap.id);
     } catch (e) {
       this.logger.debug(`Failed to refund submarine swap`, {
         swap,
@@ -202,7 +202,7 @@ export class TransactionClaimPendingService {
       await this.liquidService.getOnchainAddress(descriptor);
     try {
       await handlerFunc(swap, arg, refundAddress.address().toString());
-      await this.swapsRepo.markRefunded(swap.id);
+      await this.swapsRepo.markBoltzRefunded(swap.id);
     } catch (e) {
       this.logger.debug(`Failed to refund chain swap`, {
         swap,

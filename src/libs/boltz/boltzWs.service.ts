@@ -195,7 +195,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                               break;
 
                             case 'transaction.refunded':
-                              await this.swapsRepo.markRefunded(swap.id);
+                              await this.swapsRepo.markBoltzRefunded(swap.id);
                               break;
 
                             case 'swap.expired':

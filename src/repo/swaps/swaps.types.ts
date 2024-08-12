@@ -158,3 +158,8 @@ export type AccountSwapResponseType =
       type: SideShiftSwapType.FIXED;
       payload: SideShiftFixedSwap;
     };
+
+export type SwapDetailsType = {
+  provider: SwapProvider.BOLTZ;
+  refunded: boolean;
+};

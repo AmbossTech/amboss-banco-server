@@ -58,12 +58,15 @@ export class SwapsRepoService {
     });
   }
 
-  async markRefunded(id: string) {
+  async markBoltzRefunded(id: string) {
     return this.prisma.wallet_account_swap.update({
       where: { id },
       data: {
         swap_completed: true,
-        swap_refunded: true,
+        details: {
+          provider: SwapProvider.BOLTZ,
+          refunded: true,
+        },
       },
     });
   }

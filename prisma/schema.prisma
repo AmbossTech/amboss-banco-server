@@ -101,7 +101,8 @@ model wallet_account_swap {
   created_at        DateTime       @default(now()) @db.Timestamp(6)
   updated_at        DateTime       @default(now()) @updatedAt @db.Timestamp(6)
   swap_completed    Boolean        @default(false)
-  swap_refunded     Boolean        @default(false)
+  /// [SwapDetails]
+  details           Json?          @db.JsonB
   /// [AccountSwapRequest]
   request           Json           @db.JsonB
   /// [AccountSwapResponse]
