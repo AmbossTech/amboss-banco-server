@@ -12,6 +12,7 @@ import { Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
+import { PasskeyService } from 'src/libs/passkey/passkey.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 
@@ -46,6 +47,7 @@ export class TwoFactorLoginMutationsResolver {
     if (!session) {
       throw new GraphQLError(`Could not verify`);
     }
+
     const { accountId, accessToken, refreshToken } = session;
 
     const isValid = await this.twoFactorService.validOTP(accountId, input.code);
@@ -64,6 +66,11 @@ export class TwoFactorLoginMutationsResolver {
       refresh_token: refreshToken,
     };
   }
+
+  @ResolveField()
+  passkey() {
+    return {};
+  }
 }
 
 @Resolver(TwoFactorMutations)
@@ -72,13 +79,26 @@ export class TwoFactorMutationsResolver {
   otp() {
     return {};
   }
+
+  @ResolveField()
+  passkey() {
+    return {};
+  }
 }
 
 @Resolver(SimpleTwoFactor)
 export class SimpleTwoFactorResolver {
+  constructor(private passkeyService: PasskeyService) {}
+
   @ResolveField()
   created_at(@Parent() { created_at }: account_2fa) {
     return created_at.toISOString();
+  }
+  @ResolveField()
+  async passkey_name(@Parent() { payload }: account_2fa) {
+    if (payload.type !== 'PASSKEY') return;
+    const info = await this.passkeyService.getPasskeyInfo(payload.aaguid);
+    return info.name;
   }
 }
 

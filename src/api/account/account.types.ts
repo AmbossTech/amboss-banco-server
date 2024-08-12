@@ -129,9 +129,21 @@ export class Login {
 }
 
 @ObjectType()
+export class TwoFactorPasskeyLoginMutations {
+  @Field(() => String)
+  options: string;
+
+  @Field(() => Login)
+  login: Login;
+}
+
+@ObjectType()
 export class TwoFactorLoginMutations {
   @Field(() => Login)
   otp: Login;
+
+  @Field(() => TwoFactorPasskeyLoginMutations)
+  passkey: TwoFactorPasskeyLoginMutations;
 }
 
 @ObjectType()

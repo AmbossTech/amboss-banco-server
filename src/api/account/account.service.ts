@@ -64,7 +64,7 @@ export class AccountService {
 
     const cookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: this.domain.includes('localhost') ? undefined : true,
       sameSite: true,
       domain: this.domain.includes('localhost') ? undefined : this.domain,
     };

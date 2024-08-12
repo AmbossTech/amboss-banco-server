@@ -1,6 +1,12 @@
 import { createHash } from 'crypto';
 import { PaymentOptionCode } from 'src/libs/lnurl/lnurl.types';
 
+export const base64urlToUint8Array = (str: string): Uint8Array =>
+  new Uint8Array(Buffer.from(str, 'base64url'));
+
+export const uint8ArrayToBase64url = (buf: Uint8Array): string =>
+  Buffer.from(buf).toString('base64url');
+
 export const getSHA256Hash = (
   str: string | Buffer, // String will be expected to be in utf-8 encoding
   encoding: 'hex' | 'base64' = 'hex',

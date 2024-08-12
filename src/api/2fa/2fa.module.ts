@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PasskeyModule } from 'src/libs/passkey/passkey.module';
 import { TwoFactorRepoModule } from 'src/repo/2fa/2fa.module';
 import { AccountRepoModule } from 'src/repo/account/account.module';
 
@@ -13,9 +14,18 @@ import {
 } from './2fa.resolver';
 import { TwoFactorService } from './2fa.service';
 import { TwoFactorOTPMutationsResolver } from './otp/otp.resolver';
+import {
+  TwoFactorPasskeyLoginMutationsResolver,
+  TwoFactorPasskeyMutationsResolver,
+} from './passkey/passkey.resolver';
 
 @Module({
-  imports: [AccountModule, TwoFactorRepoModule, AccountRepoModule],
+  imports: [
+    AccountModule,
+    TwoFactorRepoModule,
+    AccountRepoModule,
+    PasskeyModule,
+  ],
   providers: [
     TwoFactorMutationsResolver,
     TwoFactorMainMutationResolver,
@@ -25,6 +35,8 @@ import { TwoFactorOTPMutationsResolver } from './otp/otp.resolver';
     SimpleTwoFactorResolver,
     TwoFactorOTPMutationsResolver,
     TwoFactorLoginMutationsResolver,
+    TwoFactorPasskeyMutationsResolver,
+    TwoFactorPasskeyLoginMutationsResolver,
   ],
 })
 export class TwoFactorModule {}
