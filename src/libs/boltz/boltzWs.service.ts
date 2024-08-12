@@ -278,7 +278,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
             this.retryCount = this.retryCount + 1;
 
-            const retryTime = Math.max(
+            const retryTime = Math.min(
               MAX_RESTART_TIMEOUT,
               RESTART_TIMEOUT * this.retryCount,
             );
