@@ -190,7 +190,7 @@ export class PasskeyLoginService {
   async verifyAuthenticationOptions(
     options: AuthenticationResponseJSON,
   ): Promise<boolean> {
-    const userHandle = options.response.userHandle;
+    const { userHandle } = options.response;
 
     if (!userHandle) {
       throw new GraphQLError('Unknown user for authentication');
@@ -251,7 +251,7 @@ export class PasskeyLoginService {
     session_id: string,
     options: AuthenticationResponseJSON,
   ): Promise<boolean> {
-    const userHandle = options.response.userHandle;
+    const { userHandle } = options.response;
 
     if (!userHandle) {
       throw new GraphQLError('Unknown user for authentication');

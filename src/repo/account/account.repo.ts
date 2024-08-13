@@ -7,32 +7,32 @@ import { ChangePasswordType, NewAccountType } from './account.types';
 export class AccountRepo {
   constructor(private prisma: PrismaService) {}
 
-  findOneById(id: string) {
+  async findOneById(id: string) {
     return this.prisma.account.findUnique({ where: { id } });
   }
 
-  findOneByIdWithWalletIds(id: string) {
+  async findOneByIdWithWalletIds(id: string) {
     return this.prisma.account.findUnique({
       where: { id },
       select: { wallets: { select: { wallet_id: true } } },
     });
   }
 
-  findOneByIdWithTwoFactor(id: string) {
+  async findOneByIdWithTwoFactor(id: string) {
     return this.prisma.account.findUnique({
       where: { id },
       include: { account_2fa: true },
     });
   }
 
-  findOneByIdWithPasskeys(id: string) {
+  async findOneByIdWithPasskeys(id: string) {
     return this.prisma.account.findUnique({
       where: { id },
       include: { account_passkey: true },
     });
   }
 
-  findOne(email: string) {
+  async findOne(email: string) {
     return this.prisma.account.findFirst({
       where: {
         email: {

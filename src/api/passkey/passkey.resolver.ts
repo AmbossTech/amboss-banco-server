@@ -19,6 +19,7 @@ import { AuthService } from 'src/libs/auth/auth.service';
 import { PasskeyService } from 'src/libs/passkey/passkey.service';
 import { PasskeyLoginService } from 'src/libs/passkey/passkeyLogin.service';
 import { PasskeyRepository } from 'src/repo/passkey/passkey.repo';
+import { toWithErrorSync } from 'src/utils/async';
 import { v4 } from 'uuid';
 
 import { AccountService } from '../account/account.service';
@@ -49,11 +50,11 @@ export class PasskeyMutationsResolver {
     @Args('options') options: string,
     @CurrentUser() { user_id }: any,
   ) {
-    let parsedOptions: RegistrationResponseJSON;
+    const [parsedOptions, error] = toWithErrorSync(
+      () => JSON.parse(options) as RegistrationResponseJSON,
+    );
 
-    try {
-      parsedOptions = JSON.parse(options) as RegistrationResponseJSON;
-    } catch (error) {
+    if (error) {
       throw new GraphQLError('Invalid registration response');
     }
 
@@ -76,15 +77,15 @@ export class PasskeyMutationsResolver {
 
   @ResolveField()
   async authenticate(@Args('input') input: PasskeyAuthenticateInput) {
-    let parsedOptions: AuthenticationResponseJSON;
+    const [parsedOptions, error] = toWithErrorSync(
+      () => JSON.parse(input.options) as AuthenticationResponseJSON,
+    );
 
-    try {
-      parsedOptions = JSON.parse(input.options) as AuthenticationResponseJSON;
-    } catch (error) {
+    if (error) {
       throw new GraphQLError('Invalid registration response');
     }
 
-    const userHandle = parsedOptions.response.userHandle;
+    const { userHandle } = parsedOptions.response;
 
     if (!userHandle) {
       throw new GraphQLError('Unknown user for authentication');
@@ -198,15 +199,15 @@ export class PasskeyLoginMutationsResolver {
     @Args('input') input: PasskeyLoginInput,
     @Context() { res }: { res: Response },
   ): Promise<LoginType> {
-    let parsedOptions: AuthenticationResponseJSON;
+    const [parsedOptions, error] = toWithErrorSync(
+      () => JSON.parse(input.options) as AuthenticationResponseJSON,
+    );
 
-    try {
-      parsedOptions = JSON.parse(input.options) as AuthenticationResponseJSON;
-    } catch (error) {
+    if (error) {
       throw new GraphQLError('Invalid registration response');
     }
 
-    const userHandle = parsedOptions.response.userHandle;
+    const { userHandle } = parsedOptions.response;
 
     if (!userHandle) {
       throw new GraphQLError('Unknown user for authentication');

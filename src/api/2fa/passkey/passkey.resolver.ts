@@ -11,6 +11,7 @@ import { CurrentUser } from 'src/auth/auth.decorators';
 import { TwoFactorSession } from 'src/libs/2fa/2fa.types';
 import { PasskeyTwoFactorService } from 'src/libs/passkey/passkeyTwoFactor.service';
 import { RedisService } from 'src/libs/redis/redis.service';
+import { toWithErrorSync } from 'src/utils/async';
 
 import {
   TwoFactorPasskeyAuthInput,
@@ -35,11 +36,11 @@ export class TwoFactorPasskeyMutationsResolver {
     @Args('options') options: string,
     @CurrentUser() { user_id }: any,
   ) {
-    let parsedOptions: RegistrationResponseJSON;
+    const [parsedOptions, error] = toWithErrorSync(
+      () => JSON.parse(options) as RegistrationResponseJSON,
+    );
 
-    try {
-      parsedOptions = JSON.parse(options) as RegistrationResponseJSON;
-    } catch (error) {
+    if (error) {
       throw new GraphQLError('Invalid registration response');
     }
 
@@ -88,11 +89,11 @@ export class TwoFactorPasskeyLoginMutationsResolver {
 
     const { accountId, accessToken, refreshToken } = session;
 
-    let parsedOptions: AuthenticationResponseJSON;
+    const [parsedOptions, error] = toWithErrorSync(
+      () => JSON.parse(input.options) as AuthenticationResponseJSON,
+    );
 
-    try {
-      parsedOptions = JSON.parse(input.options) as AuthenticationResponseJSON;
-    } catch (error) {
+    if (error) {
       throw new GraphQLError('Invalid registration response');
     }
 
