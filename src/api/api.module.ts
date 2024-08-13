@@ -7,6 +7,7 @@ import { AccountModule } from './account/account.module';
 import { ContactModule } from './contact/contact.module';
 import { GeneralModule } from './general/general.module';
 import { LnUrlModule } from './lnurl/lnurl.module';
+import { PasskeyModule } from './passkey/passkey.module';
 import { PayModule } from './pay/pay.module';
 import { EventsModule } from './sse/sse.module';
 import { SwapsModule } from './swaps/swaps.module';
@@ -23,6 +24,7 @@ import { WalletModule } from './wallet/wallet.module';
     PayModule,
     EventsModule,
     TwoFactorModule,
+    PasskeyModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: GqlThrottlerGuard }],
 })

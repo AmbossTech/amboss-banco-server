@@ -25,6 +25,7 @@ import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
+import { PasskeyRepository } from 'src/repo/passkey/passkey.repo';
 import { v4 as uuidv4 } from 'uuid';
 
 import { twoFactorSessionKey } from '../2fa/2fa.utils';
@@ -64,9 +65,35 @@ export class UserSwapInfoResolver {
 @Resolver(User)
 export class UserResolver {
   constructor(
-    private accountRepo: AccountRepo,
     private config: ConfigService,
+    private accountRepo: AccountRepo,
+    private passkeyRepo: PasskeyRepository,
   ) {}
+
+  @ResolveField()
+  async protected_symmetric_key(
+    @Parent() account: account,
+    @CurrentUser() { passkeyId }: any,
+  ) {
+    if (!!passkeyId) {
+      const passkey = await this.passkeyRepo.getPasskeyById(passkeyId);
+      return (
+        passkey?.protected_symmetric_key || account.protected_symmetric_key
+      );
+    }
+
+    return account.protected_symmetric_key;
+  }
+
+  @ResolveField()
+  async using_passkey_id(@CurrentUser() { passkeyId }: any) {
+    if (!!passkeyId) {
+      const passkey = await this.passkeyRepo.getPasskeyById(passkeyId);
+      return !!passkey?.protected_symmetric_key ? passkeyId : null;
+    }
+
+    return null;
+  }
 
   @ResolveField()
   async default_wallet_id(
@@ -207,6 +234,11 @@ export class LoginMutationsResolver {
 
   @ResolveField()
   two_factor() {
+    return {};
+  }
+
+  @ResolveField()
+  passkey() {
     return {};
   }
 }
@@ -368,7 +400,7 @@ export class AccountResolver {
   @UseGuards(RefreshTokenGuard)
   @Mutation(() => RefreshToken)
   async refreshToken(
-    @CurrentUser() { user_id, refresh_token }: any,
+    @CurrentUser() { user_id, refresh_token, passkeyId }: any,
     @Context() { res }: { res: Response },
   ) {
     const account = await this.accountRepo.findOneById(user_id);
@@ -386,8 +418,10 @@ export class AccountResolver {
       throw new GraphQLError('Invalid authentication');
     }
 
-    const { accessToken, refreshToken } =
-      await this.authService.getTokens(user_id);
+    const { accessToken, refreshToken } = await this.authService.getTokens(
+      user_id,
+      passkeyId ? { passkeyId } : undefined,
+    );
 
     const cookieOptions: CookieOptions = {
       httpOnly: true,

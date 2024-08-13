@@ -9,26 +9,22 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async getTokens(userId: string) {
+  async getTokens(userId: string, extraFields?: { [key: string]: string }) {
+    const payload = { sub: userId, ...(extraFields || {}) };
+
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        { sub: userId },
-        {
-          secret: this.configService.getOrThrow<string>(
-            'server.jwt.accessSecret',
-          ),
-          expiresIn: '10m',
-        },
-      ),
-      this.jwtService.signAsync(
-        { sub: userId },
-        {
-          secret: this.configService.getOrThrow<string>(
-            'server.jwt.refreshSecret',
-          ),
-          expiresIn: '7d',
-        },
-      ),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow<string>(
+          'server.jwt.accessSecret',
+        ),
+        expiresIn: '10m',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow<string>(
+          'server.jwt.refreshSecret',
+        ),
+        expiresIn: '7d',
+      }),
     ]);
 
     return {

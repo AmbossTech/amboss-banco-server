@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { two_fa_method } from '@prisma/client';
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -14,8 +13,8 @@ import {
   RegistrationResponseJSON,
 } from '@simplewebauthn/types';
 import { GraphQLError } from 'graphql';
-import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
+import { PasskeyRepository } from 'src/repo/passkey/passkey.repo';
 import {
   base64urlToUint8Array,
   uint8ArrayToBase64url,
@@ -25,14 +24,14 @@ import { ConfigSchemaType } from '../config/validation';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import {
+  getLoginAuthenticationKey,
+  getLoginRegistrationKey,
   getPasskeyId,
-  getTwoFactorAuthenticationKey,
-  getTwoFactorRegistrationKey,
   REGISTRATION_TIMEOUT_IN_MS,
 } from './passkey.utils';
 
 @Injectable()
-export class PasskeyTwoFactorService {
+export class PasskeyLoginService {
   private rpName: string;
   private rpID: string;
   private origin: string;
@@ -41,8 +40,8 @@ export class PasskeyTwoFactorService {
     private redis: RedisService,
     private config: ConfigService,
     private accountRepo: AccountRepo,
-    private twoFactorRepo: TwoFactorRepository,
-    @Logger(PasskeyTwoFactorService.name) private logger: CustomLogger,
+    private passkeyRepo: PasskeyRepository,
+    @Logger(PasskeyLoginService.name) private logger: CustomLogger,
   ) {
     const webauthn =
       this.config.getOrThrow<ConfigSchemaType['webauthn']>('webauthn');
@@ -53,7 +52,7 @@ export class PasskeyTwoFactorService {
   }
 
   async generateRegistrationOptions(account_id: string): Promise<string> {
-    const account = await this.accountRepo.findOneByIdWithTwoFactor(account_id);
+    const account = await this.accountRepo.findOneByIdWithPasskeys(account_id);
 
     if (!account) {
       throw new GraphQLError('Account not found');
@@ -66,41 +65,53 @@ export class PasskeyTwoFactorService {
         userDisplayName: account.email.toLowerCase(),
         userName: account.email.toLowerCase(),
         attestationType: 'direct',
-        excludeCredentials: account.account_2fa.reduce((p, t) => {
-          if (t.payload.type !== 'PASSKEY') return p;
-          return [...p, { id: t.payload.id, transports: t.payload.transports }];
-        }, []),
+        excludeCredentials: account.account_passkey.map((p) => {
+          return { id: p.payload.id, transports: p.payload.transports };
+        }),
         authenticatorSelection: {
-          residentKey: 'discouraged',
+          requireResidentKey: true,
+          residentKey: 'required',
           userVerification: 'required',
         },
         timeout: REGISTRATION_TIMEOUT_IN_MS,
       });
 
-    await this.redis.set(getTwoFactorRegistrationKey(account_id), options, {
+    await this.redis.set(getLoginRegistrationKey(account_id), options, {
       ttl: (options.timeout || REGISTRATION_TIMEOUT_IN_MS) / 1000,
     });
 
     return JSON.stringify(options);
   }
 
-  async generateAuthenticationOptions(account_id: string) {
-    const account = await this.accountRepo.findOneByIdWithTwoFactor(account_id);
+  async generateAuthenticationOptions(account_id: string, passkey_id: string) {
+    const account = await this.accountRepo.findOneByIdWithPasskeys(account_id);
 
     if (!account) {
       throw new GraphQLError('Account not found');
     }
 
+    const filtered = account.account_passkey.filter((p) => p.id === passkey_id);
+
     const options: PublicKeyCredentialRequestOptionsJSON =
       await generateAuthenticationOptions({
         rpID: this.rpID,
-        allowCredentials: account.account_2fa.reduce((p, t) => {
-          if (t.payload.type !== 'PASSKEY') return p;
-          return [...p, { id: t.payload.id, transports: t.payload.transports }];
-        }, []),
+        allowCredentials: filtered.map((p) => {
+          return { id: p.payload.id, transports: p.payload.transports };
+        }),
       });
 
-    await this.redis.set(getTwoFactorAuthenticationKey(account_id), options, {
+    await this.redis.set(getLoginAuthenticationKey(account_id), options, {
+      ttl: (options.timeout || REGISTRATION_TIMEOUT_IN_MS) / 1000,
+    });
+
+    return JSON.stringify(options);
+  }
+
+  async generateLoginAuthenticationOptions(session_id: string) {
+    const options: PublicKeyCredentialRequestOptionsJSON =
+      await generateAuthenticationOptions({ rpID: this.rpID });
+
+    await this.redis.set(getLoginAuthenticationKey(session_id), options, {
       ttl: (options.timeout || REGISTRATION_TIMEOUT_IN_MS) / 1000,
     });
 
@@ -111,7 +122,7 @@ export class PasskeyTwoFactorService {
     account_id: string,
     options: RegistrationResponseJSON,
   ) {
-    const key = getTwoFactorRegistrationKey(account_id);
+    const key = getLoginRegistrationKey(account_id);
 
     const savedOptions =
       await this.redis.get<PublicKeyCredentialCreationOptionsJSON>(key);
@@ -123,6 +134,9 @@ export class PasskeyTwoFactorService {
     }
 
     await this.redis.delete(key);
+
+    const hasPRFCapabilities =
+      (options.clientExtensionResults as any)?.prf?.enabled || false;
 
     try {
       const verification = await verifyRegistrationResponse({
@@ -147,10 +161,10 @@ export class PasskeyTwoFactorService {
         aaguid,
       } = verification.registrationInfo;
 
-      await this.twoFactorRepo.add({
+      await this.passkeyRepo.add({
         id: getPasskeyId(credentialID), // Turn into uuid so that we can query easily
         account_id,
-        method: two_fa_method.PASSKEY,
+        encryption_available: hasPRFCapabilities,
         payload: {
           type: 'PASSKEY',
           id: credentialID,
@@ -174,10 +188,21 @@ export class PasskeyTwoFactorService {
   }
 
   async verifyAuthenticationOptions(
-    account_id: string,
     options: AuthenticationResponseJSON,
   ): Promise<boolean> {
-    const key = getTwoFactorAuthenticationKey(account_id);
+    const { userHandle } = options.response;
+
+    if (!userHandle) {
+      throw new GraphQLError('Unknown user for authentication');
+    }
+
+    const passkey = await this.passkeyRepo.getPasskeyByUserHandle(userHandle);
+
+    if (!passkey) {
+      throw new GraphQLError('Unknown user for authentication');
+    }
+
+    const key = getLoginAuthenticationKey(passkey.account_id);
 
     const savedOptions =
       await this.redis.get<PublicKeyCredentialCreationOptionsJSON>(key);
@@ -189,18 +214,6 @@ export class PasskeyTwoFactorService {
     }
 
     await this.redis.delete(key);
-
-    const passkey = await this.twoFactorRepo.getPasskeyById(
-      getPasskeyId(options.id),
-    );
-
-    if (!passkey) {
-      throw new GraphQLError('Unknown passkey. Please try to login again.');
-    }
-
-    if (passkey.payload.type !== 'PASSKEY') {
-      throw new GraphQLError('Unknown passkey. Please try to login again.');
-    }
 
     const { publicKey, counter, transports } = passkey.payload;
 
@@ -219,7 +232,68 @@ export class PasskeyTwoFactorService {
       });
 
       if (verification.verified) {
-        await this.twoFactorRepo.updatePasskeyCounter(
+        await this.passkeyRepo.updatePasskeyCounter(
+          passkey.id,
+          verification.authenticationInfo.newCounter,
+        );
+      }
+
+      return verification.verified;
+    } catch (error) {
+      this.logger.debug('Error verifying passkey', { error });
+      throw new GraphQLError(
+        'Invalid passkey authentication. Please try to add the passkey again.',
+      );
+    }
+  }
+
+  async verifyLoginAuthenticationOptions(
+    session_id: string,
+    options: AuthenticationResponseJSON,
+  ): Promise<boolean> {
+    const { userHandle } = options.response;
+
+    if (!userHandle) {
+      throw new GraphQLError('Unknown user for authentication');
+    }
+
+    const passkey = await this.passkeyRepo.getPasskeyByUserHandle(userHandle);
+
+    if (!passkey) {
+      throw new GraphQLError('Unknown user for authentication');
+    }
+
+    const key = getLoginAuthenticationKey(session_id);
+
+    const savedOptions =
+      await this.redis.get<PublicKeyCredentialCreationOptionsJSON>(key);
+
+    if (!savedOptions) {
+      throw new GraphQLError(
+        'Unknown passkey authentication info. Please try to login again.',
+      );
+    }
+
+    await this.redis.delete(key);
+
+    const { publicKey, counter, transports } = passkey.payload;
+
+    try {
+      const verification = await verifyAuthenticationResponse({
+        response: options,
+        expectedChallenge: savedOptions.challenge,
+        expectedOrigin: this.origin,
+        expectedRPID: this.rpID,
+        authenticator: {
+          credentialID: passkey.payload.id,
+          credentialPublicKey: base64urlToUint8Array(publicKey),
+          counter,
+          transports,
+        },
+      });
+
+      if (verification.verified) {
+        await this.passkeyRepo.updatePasskeyCounter(
           passkey.id,
           verification.authenticationInfo.newCounter,
         );

@@ -1,4 +1,7 @@
-import { TwoFactorPayloadType } from 'src/libs/2fa/2fa.types';
+import {
+  TwoFactorPayloadPasskeyType,
+  TwoFactorPayloadType,
+} from 'src/libs/2fa/2fa.types';
 import { Secp256k1KeyPairType } from 'src/repo/account/account.types';
 import {
   AccountSwapRequestType,
@@ -20,5 +23,6 @@ declare global {
     type AccountSwapResponse = AccountSwapResponseType;
     type TwoFactorPayload = TwoFactorPayloadType;
     type SwapDetails = SwapDetailsType;
+    type PasskeyPayload = TwoFactorPayloadPasskeyType;
   }
 }

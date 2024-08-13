@@ -7,6 +7,7 @@ import {
 import { account, account_2fa, two_fa_method } from '@prisma/client';
 
 import { SimpleTwoFactor } from '../2fa/2fa.types';
+import { PasskeyLoginMutations } from '../passkey/passkey.types';
 import { CreateWalletInput } from '../wallet/wallet.types';
 
 registerEnumType(two_fa_method, { name: 'TwoFactorMethod' });
@@ -66,6 +67,9 @@ export class User {
 
   @Field()
   protected_symmetric_key: string;
+
+  @Field({ nullable: true })
+  using_passkey_id: string;
 
   @Field(() => String, { nullable: true })
   default_wallet_id: string | null;
@@ -153,6 +157,9 @@ export class LoginMutations {
 
   @Field(() => TwoFactorLoginMutations)
   two_factor: TwoFactorLoginMutations;
+
+  @Field(() => PasskeyLoginMutations)
+  passkey: PasskeyLoginMutations;
 }
 
 @InputType()
