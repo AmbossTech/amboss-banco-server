@@ -16,10 +16,13 @@ import {
   boltzBroadcastTxResponse,
   boltzChainSwapClaimResponse,
   boltzChainSwapResponse,
+  boltzChainTxsResponse,
   boltzError,
   boltzMagicRouteHint,
   boltzPartialSigResponse,
+  boltzRefundClaimResponse,
   boltzReverseSwapResponse,
+  boltzSubmarineLockupTxResponse,
   boltzSubmarineSwapClaimResponse,
   boltzSubmarineSwapResponse,
   swapChainInfoSchema,
@@ -204,6 +207,59 @@ export class BoltzRestApi {
     return boltzSubmarineSwapClaimResponse.parse(body);
   }
 
+  async postSubmarineRefundInfo(id: string, musig: Musig, hex: string) {
+    const pubNonce = Buffer.from(musig.getPublicNonce()).toString('hex');
+    const result = await fetch(`${this.apiUrl}swap/submarine/${id}/refund`, {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        index: 0,
+        pubNonce,
+        transaction: hex,
+      }),
+      method: 'POST',
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error posting submarine claim info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzRefundClaimResponse.parse(body);
+  }
+
+  async postChainRefundInfo(id: string, musig: Musig, hex: string) {
+    const result = await fetch(`${this.apiUrl}swap/chain/${id}/refund`, {
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        index: 0,
+        pubNonce: Buffer.from(musig.getPublicNonce()).toString('hex'),
+        transaction: hex,
+      }),
+      method: 'POST',
+    });
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error posting chain claim info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzRefundClaimResponse.parse(body);
+  }
+
   async getSigReverseSwap(
     swapId: string,
     claimTx: LiquidTransaction | BitcoinTransaction,
@@ -336,5 +392,43 @@ export class BoltzRestApi {
     this.logger.debug(`Broadcasted transaction`, { chain, response });
 
     return response;
+  }
+
+  async getSubmarineLockupTransaction(id: string) {
+    const result = await fetch(
+      `${this.apiUrl}swap/submarine/${id}/transaction`,
+    );
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error getting submarine lockup tx info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzSubmarineLockupTxResponse.parse(body);
+  }
+
+  async getChainTransactions(id: string) {
+    const result = await fetch(`${this.apiUrl}swap/chain/${id}/transactions`);
+
+    const body = await result.json();
+
+    const parsedError = boltzError.passthrough().safeParse(body);
+
+    if (parsedError.success) {
+      this.logger.error('Error getting chain txs info', {
+        parsedError,
+        body,
+      });
+      throw new Error(parsedError.data.error);
+    }
+
+    return boltzChainTxsResponse.parse(body);
   }
 }
