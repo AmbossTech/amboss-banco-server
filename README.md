@@ -28,4 +28,4 @@ You can build this app using `npm run build`. Or use the [`Dockerfile`](./Docker
 
 ## Deployed backend
 
-[https://mibanco.app/api/graphql](https://mibanco.app/api/graphql)
+[https://bancolibre.com/api/graphql](https://bancolibre.com/api/graphql)

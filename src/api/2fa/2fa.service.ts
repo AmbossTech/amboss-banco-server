@@ -11,7 +11,7 @@ import { OTPVerifyAuto, TwoFactorPendingVerify } from './2fa.types';
 import { twoFactorPendingKey } from './2fa.utils';
 
 export const baseTotp = {
-  issuer: 'MiBanco',
+  issuer: 'BancoLibre',
   algorithm: 'SHA1',
   digits: 6,
   period: 30,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { TerminusModule } from '@nestjs/terminus';
 import { ThrottlerModule } from '@nestjs/throttler';
 
@@ -8,6 +9,7 @@ import { HealthController } from './api/health/health.controller';
 import { AuthModule } from './auth/auth.module';
 import configuration from './libs/config/configuration';
 import { CryptoModule } from './libs/crypto/crypto.module';
+import { NotFoundFilter } from './libs/filters/NotFoundFilter';
 import { GraphqlModule } from './libs/graphql/graphql.module';
 import { CustomLoggerModule } from './libs/logging/logger.module';
 import { PrismaModule } from './libs/prisma/prisma.module';
@@ -60,5 +62,11 @@ import { RedisModule } from './libs/redis/redis.module';
     CustomLoggerModule.forRoot(),
   ],
   controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: NotFoundFilter,
+    },
+  ],
 })
 export class AppModule {}

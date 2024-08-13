@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Header,
-  HttpException,
-  HttpStatus,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Header, Param, Query } from '@nestjs/common';
 import { Public } from 'src/auth/auth.decorators';
 import { LnUrlLocalService } from 'src/libs/lnurl/handlers/local.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
@@ -99,7 +91,10 @@ export class WellKnownController {
   @Header('Content-Type', 'application/json')
   async getPubkey(@Param() params: { account: string }): Promise<string> {
     if (!params.account) {
-      throw new HttpException('No account provided', HttpStatus.BAD_REQUEST);
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No account provided',
+      });
     }
 
     const account = params.account.toLowerCase();
@@ -107,7 +102,10 @@ export class WellKnownController {
     const wallet = await this.walletRepo.getWalletByLnAddress(account);
 
     if (!wallet) {
-      throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'Account not found',
+      });
     }
 
     return JSON.stringify({
@@ -120,10 +118,22 @@ export class WellKnownController {
   @Header('Content-Type', 'application/json')
   async getLnurl(@Param() params: { account: string }): Promise<string> {
     if (!params.account) {
-      throw new HttpException('No account provided', HttpStatus.BAD_REQUEST);
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'No account provided',
+      });
     }
 
     const account = params.account.toLowerCase();
+
+    const wallet = await this.walletRepo.getWalletByLnAddress(account);
+
+    if (!wallet) {
+      return JSON.stringify({
+        status: 'ERROR',
+        reason: 'Account not found',
+      });
+    }
 
     const info = await this.localLnUrl.getInfo(account);
 

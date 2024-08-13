@@ -69,6 +69,10 @@ type CreateTwoFactorOTP {
   otp_url: String!
 }
 
+type CreateTwoFactorPasskey {
+  options: String!
+}
+
 type CreateWallet {
   id: String!
 }
@@ -359,6 +363,7 @@ type SimpleTwoFactor {
   enabled: Boolean!
   id: String!
   method: TwoFactorMethod!
+  passkey_name: String
 }
 
 type SimpleWallet {
@@ -421,6 +426,7 @@ type TwoFactorLogin {
 
 type TwoFactorLoginMutations {
   otp(input: TwoFactorOTPLogin!): Login!
+  passkey: TwoFactorPasskeyLoginMutations!
 }
 
 enum TwoFactorMethod {
@@ -430,6 +436,7 @@ enum TwoFactorMethod {
 
 type TwoFactorMutations {
   otp: TwoFactorOTPMutations!
+  passkey: TwoFactorPasskeyMutations!
 }
 
 input TwoFactorOTPLogin {
@@ -444,6 +451,25 @@ type TwoFactorOTPMutations {
 
 input TwoFactorOTPVerifyInput {
   code: String!
+}
+
+input TwoFactorPasskeyAuthInput {
+  session_id: String!
+}
+
+input TwoFactorPasskeyAuthLoginInput {
+  options: String!
+  session_id: String!
+}
+
+type TwoFactorPasskeyLoginMutations {
+  login(input: TwoFactorPasskeyAuthLoginInput!): Login!
+  options(input: TwoFactorPasskeyAuthInput!): String!
+}
+
+type TwoFactorPasskeyMutations {
+  add: CreateTwoFactorPasskey!
+  verify(options: String!): Boolean!
 }
 
 type TwoFactorQueries {

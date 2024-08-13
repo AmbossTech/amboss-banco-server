@@ -11,6 +11,12 @@ export class CreateTwoFactorOTP {
 }
 
 @ObjectType()
+export class CreateTwoFactorPasskey {
+  @Field()
+  options: string;
+}
+
+@ObjectType()
 export class SimpleTwoFactor {
   @Field()
   id: string;
@@ -23,6 +29,9 @@ export class SimpleTwoFactor {
 
   @Field()
   enabled: boolean;
+
+  @Field({ nullable: true })
+  passkey_name: string;
 }
 
 @ObjectType()
@@ -44,9 +53,21 @@ export class TwoFactorOTPMutations {
 }
 
 @ObjectType()
+export class TwoFactorPasskeyMutations {
+  @Field(() => CreateTwoFactorPasskey)
+  add: CreateTwoFactorPasskey;
+
+  @Field()
+  verify: boolean;
+}
+
+@ObjectType()
 export class TwoFactorMutations {
   @Field(() => TwoFactorOTPMutations)
   otp: TwoFactorOTPMutations;
+
+  @Field(() => TwoFactorPasskeyMutations)
+  passkey: TwoFactorPasskeyMutations;
 }
 
 @InputType()
@@ -62,6 +83,21 @@ export class TwoFactorOTPLogin {
 
   @Field()
   code: string;
+}
+
+@InputType()
+export class TwoFactorPasskeyAuthInput {
+  @Field()
+  session_id: string;
+}
+
+@InputType()
+export class TwoFactorPasskeyAuthLoginInput {
+  @Field()
+  session_id: string;
+
+  @Field()
+  options: string;
 }
 
 @InputType()

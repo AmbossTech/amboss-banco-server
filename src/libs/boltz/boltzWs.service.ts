@@ -6,7 +6,11 @@ import { EventsService } from 'src/api/sse/sse.service';
 import { EventTypes } from 'src/api/sse/sse.utils';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
-import { BoltzSwapType, SwapProvider } from 'src/repo/swaps/swaps.types';
+import {
+  BoltzChain,
+  BoltzSwapType,
+  SwapProvider,
+} from 'src/repo/swaps/swaps.types';
 import ws from 'ws';
 
 import { CustomLogger, Logger } from '../logging';
@@ -15,7 +19,8 @@ import { BoltzSubscriptionAutoType } from './boltz.types';
 import { getReceivingAmount } from './boltz.utils';
 import { TransactionClaimPendingService } from './handlers/transactionClaimPending';
 
-const RESTART_TIMEOUT = 1000 * 30;
+const RESTART_TIMEOUT = 1000 * 5;
+const MAX_RESTART_TIMEOUT = 1000 * 30;
 
 @Injectable()
 export class BoltzWsService implements OnApplicationBootstrap {
@@ -168,6 +173,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
                           ) {
                             return;
                           }
+                          const isIncoming =
+                            swap.request.payload.to == BoltzChain['L-BTC'];
 
                           switch (arg.status) {
                             // "invoice.set" means Boltz is waiting for an onchain transaction to be sent
@@ -184,16 +191,25 @@ export class BoltzWsService implements OnApplicationBootstrap {
                               break;
                             }
 
+                            case 'transaction.lockupFailed':
+                              await this.tcpService.handleRefund(swap, arg);
+                              break;
+
+                            case 'transaction.refunded':
+                              await this.swapsRepo.markBoltzRefunded(swap.id);
+                              break;
+
                             case 'swap.expired':
                             case 'invoice.expired':
-                            case 'invoice.failedToPay':
                             case 'transaction.failed':
-                            case 'transaction.refunded':
-                            case 'transaction.lockupFailed':
                               this.logger.debug(
                                 'Swap completed unsuccessfully',
                               );
                               await this.swapsRepo.markCompleted(swap.id);
+                              break;
+
+                            case 'invoice.failedToPay':
+                              await this.tcpService.handleRefund(swap, arg);
                               break;
 
                             case 'invoice.settled':
@@ -208,7 +224,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                             case 'transaction.confirmed':
                               if (
                                 arg.status === 'transaction.mempool' &&
-                                swap.request.type !== BoltzSwapType.SUBMARINE
+                                isIncoming
                               ) {
                                 this.notifyUser(swap);
                               }
@@ -277,12 +293,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
             this.retryCount = this.retryCount + 1;
 
-            if (this.retryCount >= 4) {
-              next(Error('Max retries attempted'));
-              return;
-            }
+            const retryTime = Math.min(
+              MAX_RESTART_TIMEOUT,
+              RESTART_TIMEOUT * this.retryCount,
+            );
 
-            const retryTime = RESTART_TIMEOUT * this.retryCount;
+            if (this.retryCount > 5) {
+              this.logger.error(
+                `Unable to establish Boltz websocket connection!`,
+              );
+            }
 
             setTimeout(async () => {
               this.logger.warn('Restarting...');
