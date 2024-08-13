@@ -177,6 +177,7 @@ input LoginInput {
 
 type LoginMutations {
   initial(input: LoginInput!): Login!
+  passkey: PasskeyLoginMutations!
   two_factor: TwoFactorLoginMutations!
 }
 
@@ -190,6 +191,7 @@ type Mutation {
   contacts: ContactMutations!
   login: LoginMutations!
   logout: Boolean!
+  passkey: PasskeyMutations!
   password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
   refreshToken: RefreshToken!
@@ -202,6 +204,37 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+input PasskeyAuthenticateInput {
+  options: String!
+  protected_symmetric_key: String
+}
+
+type PasskeyLoginInit {
+  options: String!
+  session_id: String!
+}
+
+input PasskeyLoginInput {
+  options: String!
+  session_id: String!
+}
+
+type PasskeyLoginMutations {
+  init: PasskeyLoginInit!
+  login(input: PasskeyLoginInput!): Login!
+}
+
+type PasskeyMutations {
+  add: String!
+  authenticate(input: PasskeyAuthenticateInput!): Boolean!
+  init_authenticate(id: String!): String!
+  verify(options: String!): Boolean!
+}
+
+type PasskeyQueries {
+  find_many: [SimplePasskey!]!
 }
 
 type PasswordMutations {
@@ -277,6 +310,7 @@ enum PaymentOptionNetwork {
 
 type Query {
   hello: String!
+  passkey: PasskeyQueries!
   pay: PayQueries!
   two_factor: TwoFactorQueries!
   user: User!
@@ -352,6 +386,14 @@ input SignUpInput {
   referral_code: String
   secp256k1_key_pair: Secp256k1KeyPairInput!
   wallet: CreateWalletInput
+}
+
+type SimplePasskey {
+  created_at: String!
+  encryption_available: Boolean!
+  encryption_enabled: Boolean!
+  id: String!
+  name: String!
 }
 
 type SimpleSwap {
@@ -484,6 +526,7 @@ type User {
   id: String!
   protected_symmetric_key: String!
   swap_info: UserSwapInfo!
+  using_passkey_id: String
   wallet: UserWalletInfo!
 }
 

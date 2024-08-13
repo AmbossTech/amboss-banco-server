@@ -10,5 +10,11 @@ export const getTwoFactorRegistrationKey = (accountId: string) =>
 export const getTwoFactorAuthenticationKey = (accountId: string) =>
   `webauthn-twofactor-authentication-${accountId}`;
 
+export const getLoginRegistrationKey = (accountId: string) =>
+  `webauthn-login-registration-${accountId}`;
+
+export const getLoginAuthenticationKey = (accountId: string) =>
+  `webauthn-login-authentication-${accountId}`;
+
 export const AAGUID_JSON_URL =
   'https://raw.githubusercontent.com/passkeydeveloper/passkey-authenticator-aaguids/main/combined_aaguid.json';

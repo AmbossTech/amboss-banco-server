@@ -6,6 +6,7 @@ import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
 import { TwoFactorRepoModule } from 'src/repo/2fa/2fa.module';
 import { AccountRepoModule } from 'src/repo/account/account.module';
+import { PasskeyRepoModule } from 'src/repo/passkey/passkey.module';
 
 import {
   AccountResolver,
@@ -27,6 +28,7 @@ import { AccountService } from './account.service';
     AmbossModule,
     RedlockModule,
     TwoFactorRepoModule,
+    PasskeyRepoModule,
   ],
   providers: [
     AccountResolver,

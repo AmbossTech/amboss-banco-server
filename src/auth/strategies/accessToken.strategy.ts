@@ -7,7 +7,7 @@ import { getAuthToken } from 'src/utils/auth';
 
 type JwtPayload = {
   sub: string;
-  username: string;
+  passkeyId?: string;
 };
 
 @Injectable()
@@ -20,6 +20,6 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: JwtPayload) {
-    return { user_id: payload.sub };
+    return { user_id: payload.sub, passkeyId: payload.passkeyId };
   }
 }
