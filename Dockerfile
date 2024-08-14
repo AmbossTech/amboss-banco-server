@@ -13,6 +13,7 @@ ENV DISABLE_OPENCOLLECTIVE=true
 
 COPY package*.json ./
 COPY lwk_wasm-0.7.0.tgz ./
+COPY mail/ ./mail/
 
 # Install app dependencies
 RUN npm ci
