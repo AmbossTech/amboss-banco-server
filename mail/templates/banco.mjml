@@ -1,0 +1,35 @@
+<mjml>
+  <mj-body background-color="black" >
+    <mj-section background-color="black"></mj-section>
+
+    <mj-section background-color="white" border-radius="20px 20px 0 0">
+      <mj-column width="80%">
+        <mj-image src="./assets/logo.png" align="center" width="250px" padding="40px"> </mj-image>
+        <mj-spacer container-background-color='#d3d3d3' height="1px"></mj-spacer>
+      </mj-column>
+    </mj-section>
+
+     <mj-section background-color="white">
+      <mj-column width="80%">
+      <mj-text>
+        <mj-raw>
+          {{{handlebars}}}
+        </mj-raw>
+      </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="white" border-radius="0 0 20px 20px">
+      <mj-column width="80%">
+        <mj-spacer container-background-color='#d3d3d3' height="1px"></mj-spacer>
+        <mj-text color="#d4d4d4" font-size="10px" line-height="1.5" font-family="Roboto, Arial">
+          © 2024 Banco Libre
+        </mj-text>
+        <mj-image width="20px" src="./assets/github.png" align="left"></mj-image>
+        <mj-image width="20px" src="./assets/x.png" align="left"></mj-image>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="black"></mj-section>
+  </mj-body>
+</mjml>

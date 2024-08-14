@@ -21,7 +21,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "upgrade-latest": "npx npm-check -u",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build:template": "mjml mail/templates/banco.mjml -o mail/templates/banco.html",
+    "postinstall": "npm run build:template"
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
@@ -53,12 +55,14 @@
     "ecpair": "^2.1.0",
     "form-data": "^4.0.0",
     "graphql": "^16.9.0",
+    "handlebars": "^4.7.8",
     "ioredis": "^5.4.1",
     "js-yaml": "^4.1.0",
     "liquidjs-lib": "^6.0.2-liquid.35",
     "lodash": "^4.17.21",
     "lwk_wasm": "file:lwk_wasm-0.7.0.tgz",
     "mailgun.js": "^10.2.3",
+    "mjml": "^4.15.3",
     "nostr-tools": "^2.7.0",
     "otpauth": "^9.3.1",
     "passport-jwt": "^4.0.1",

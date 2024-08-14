@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import formData from 'form-data';
+import { readFileSync } from 'fs';
+import Handlebars from 'handlebars';
 import Mailgun, { MailgunMessageData } from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/Interfaces';
+import path from 'path';
 
 import { CustomLogger, Logger } from '../logging';
 import { SendEmailProps } from './mail.types';
@@ -37,14 +40,19 @@ export class MailService {
   async send({ subject, email, variables }: SendEmailProps) {
     if (!this.mailgun) return;
 
+    const htmlTemplate = readFileSync(
+      path.resolve('./mail/templates/banco.html'),
+      'utf8',
+    );
+
+    const template = Handlebars.compile(htmlTemplate);
+    const finalMessage = template(variables);
+
     const data: MailgunMessageData = {
-      from: `Banco <noreply@${this.mailgun.domain}>`,
+      from: `BancoLibre <noreply@${this.mailgun.domain}>`,
       to: [email],
       subject,
-      html: '<h1>Hi %recipient.name%!</h1>',
-      'recipient-variables': JSON.stringify({
-        [email]: variables,
-      }),
+      html: finalMessage,
     };
 
     await this.mailgun.client.messages
