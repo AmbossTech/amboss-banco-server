@@ -13,7 +13,6 @@ ENV DISABLE_OPENCOLLECTIVE=true
 
 COPY package*.json ./
 COPY lwk_wasm-0.7.0.tgz ./
-COPY mail/ ./mail/
 
 # Install app dependencies
 RUN npm ci
@@ -49,7 +48,7 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/dist/ ./dist/
-COPY --from=build /app/mail/ ./mail/
+COPY /app/mail/ ./mail/
 
 EXPOSE 3000
 

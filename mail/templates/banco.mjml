@@ -1,5 +1,5 @@
 <mjml>
-  <mj-body background-color="black" >
+  <mj-body background-color="black">
     <mj-section background-color="black"></mj-section>
 
     <mj-section background-color="white" border-radius="20px 20px 0 0">
@@ -9,13 +9,13 @@
       </mj-column>
     </mj-section>
 
-     <mj-section background-color="white">
+    <mj-section background-color="white">
       <mj-column width="80%">
-      <mj-text>
-        <mj-raw>
-          {{{handlebars}}}
-        </mj-raw>
-      </mj-text>
+        <mj-text>
+          <mj-raw>
+            {{{content}}}
+          </mj-raw>
+        </mj-text>
       </mj-column>
     </mj-section>
 

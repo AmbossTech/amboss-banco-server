@@ -22,8 +22,7 @@
     "prisma:generate": "prisma generate",
     "upgrade-latest": "npx npm-check -u",
     "prepare": "husky install",
-    "build:template": "mjml mail/templates/banco.mjml -o mail/templates/banco.html",
-    "postinstall": "npm run build:template"
+    "build:template": "mjml mail/templates/banco.mjml -o mail/templates/banco.html"
   },
   "dependencies": {
     "@apollo/server": "^4.10.4",
@@ -62,7 +61,6 @@
     "lodash": "^4.17.21",
     "lwk_wasm": "file:lwk_wasm-0.7.0.tgz",
     "mailgun.js": "^10.2.3",
-    "mjml": "^4.15.3",
     "nostr-tools": "^2.7.0",
     "otpauth": "^9.3.1",
     "passport-jwt": "^4.0.1",
@@ -107,6 +105,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.0.11",
     "jest": "^29.5.0",
+    "mjml": "^4.15.3",
     "prettier": "^3.3.2",
     "prisma": "^5.16.1",
     "prisma-json-types-generator": "^3.0.4",
