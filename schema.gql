@@ -397,7 +397,13 @@ type SimplePasskey {
 }
 
 type SimpleSwap {
+  created_at: String!
+  deposit_amount: String
+  deposit_coin: String!
   id: String!
+  provider: SwapProvider!
+  settle_amount: String
+  settle_coin: String!
 }
 
 type SimpleTwoFactor {
@@ -435,6 +441,11 @@ enum SwapNetwork {
   ethereum
   liquid
   tron
+}
+
+enum SwapProvider {
+  BOLTZ
+  SIDESHIFT
 }
 
 type SwapQuote {
