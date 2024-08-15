@@ -1,4 +1,7 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { SwapProvider } from 'src/repo/swaps/swaps.types';
+
+registerEnumType(SwapProvider, { name: 'SwapProvider' });
 
 @ObjectType()
 export class SimpleSwap {
@@ -8,8 +11,8 @@ export class SimpleSwap {
   @Field()
   created_at: string;
 
-  @Field()
-  provider: string;
+  @Field(() => SwapProvider)
+  provider: SwapProvider;
 
   @Field()
   deposit_coin: string;

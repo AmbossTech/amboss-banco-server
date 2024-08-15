@@ -401,7 +401,7 @@ type SimpleSwap {
   deposit_amount: String
   deposit_coin: String!
   id: String!
-  provider: String!
+  provider: SwapProvider!
   settle_amount: String
   settle_coin: String!
 }
@@ -441,6 +441,11 @@ enum SwapNetwork {
   ethereum
   liquid
   tron
+}
+
+enum SwapProvider {
+  BOLTZ
+  SIDESHIFT
 }
 
 type SwapQuote {

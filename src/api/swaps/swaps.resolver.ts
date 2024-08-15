@@ -13,9 +13,7 @@ import {
 @Resolver(SimpleSwap)
 export class SimpleSwapResolver {
   @ResolveField()
-  created_at(@Parent() { created_at, ...rest }: wallet_account_swap) {
-    console.log(rest);
-
+  created_at(@Parent() { created_at }: wallet_account_swap) {
     return created_at.toISOString();
   }
 
