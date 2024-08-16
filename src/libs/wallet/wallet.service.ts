@@ -86,6 +86,7 @@ export class WalletService {
         info.details,
       );
     });
-    return { id: newWallet.id };
+
+    return newWallet;
   }
 }

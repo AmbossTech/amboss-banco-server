@@ -8,7 +8,8 @@ import { IMailgunClient } from 'mailgun.js/Interfaces';
 import path from 'path';
 
 import { CustomLogger, Logger } from '../logging';
-import { SendEmailProps } from './mail.types';
+import { BackupMail } from './mail.template';
+import { SendBackupDetails, SendEmailProps } from './mail.types';
 
 @Injectable()
 export class MailService {
@@ -37,7 +38,25 @@ export class MailService {
     };
   }
 
-  async send({ subject, email, variables }: SendEmailProps) {
+  async sendBackupMail(props: SendBackupDetails) {
+    await this.send({
+      email: props.to,
+      subject: 'Wallet Backup',
+      variables: {
+        content: BackupMail({
+          details: {
+            ['Recover Link']: 'https://bancolibre.com/recover',
+            ['Date']: props.date.toString(),
+            'Encrypted Mnemonic': props.encryptedMnemonic,
+            'Password Hint': props.passwordHint,
+            'Wallet Name': props.walletName,
+          },
+        }),
+      },
+    });
+  }
+
+  private async send({ subject, email, variables }: SendEmailProps) {
     if (!this.mailgun) return;
 
     const htmlTemplate = readFileSync(
