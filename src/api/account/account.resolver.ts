@@ -19,6 +19,7 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { MailService } from 'src/libs/mail/mail.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -26,6 +27,7 @@ import { WalletService } from 'src/libs/wallet/wallet.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { PasskeyRepository } from 'src/repo/passkey/passkey.repo';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { v4 as uuidv4 } from 'uuid';
 
 import { twoFactorSessionKey } from '../2fa/2fa.utils';
@@ -460,6 +462,8 @@ export class PasswordMutationsResolver {
   constructor(
     private cryptoService: CryptoService,
     private accountRepo: AccountRepo,
+    private walletRepo: WalletRepoService,
+    private mailService: MailService,
   ) {}
 
   @ResolveField()
@@ -491,6 +495,17 @@ export class PasswordMutationsResolver {
       master_password_hash: passwordHash,
       protected_symmetric_key: new_protected_symmetric_key,
       password_hint: new_password_hint,
+    });
+
+    const wallets = await this.walletRepo.getAccountWallets(account.id);
+
+    wallets.forEach(async ({ wallet }) => {
+      await this.mailService.sendBackupMailPassChange({
+        to: account.email,
+        date: new Date(),
+        passwordHint: new_password_hint || '',
+        walletName: wallet.name,
+      });
     });
 
     return true;

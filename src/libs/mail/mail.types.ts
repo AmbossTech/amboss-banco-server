@@ -11,3 +11,10 @@ export type SendBackupDetails = {
   encryptedMnemonic: string;
   passwordHint: string;
 };
+
+export type SendBackupChangePassDetails = {
+  to: string;
+  date: Date;
+  walletName: string;
+  passwordHint: string;
+};

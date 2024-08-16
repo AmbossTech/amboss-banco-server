@@ -8,8 +8,12 @@ import { IMailgunClient } from 'mailgun.js/Interfaces';
 import path from 'path';
 
 import { CustomLogger, Logger } from '../logging';
-import { BackupMail } from './mail.template';
-import { SendBackupDetails, SendEmailProps } from './mail.types';
+import { BackupMail, BackupMailPassChange } from './mail.template';
+import {
+  SendBackupChangePassDetails,
+  SendBackupDetails,
+  SendEmailProps,
+} from './mail.types';
 
 @Injectable()
 export class MailService {
@@ -45,10 +49,27 @@ export class MailService {
       variables: {
         content: BackupMail({
           details: {
-            ['Recover Link']: 'https://bancolibre.com/recover',
-            ['Date']: props.date.toString(),
+            'Recover Link': 'https://bancolibre.com/recover',
+            Date: props.date.toString(),
             'Encrypted Mnemonic': props.encryptedMnemonic,
             'Password Hint': props.passwordHint,
+            'Wallet Name': props.walletName,
+          },
+        }),
+      },
+    });
+  }
+
+  async sendBackupMailPassChange(props: SendBackupChangePassDetails) {
+    await this.send({
+      email: props.to,
+      subject: 'Wallet Backup - Password changed',
+      variables: {
+        content: BackupMailPassChange({
+          details: {
+            'Recover Link': 'https://bancolibre.com/recover',
+            Date: props.date.toString(),
+            'New Password Hint': props.passwordHint,
             'Wallet Name': props.walletName,
           },
         }),
