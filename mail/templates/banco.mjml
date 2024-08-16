@@ -1,5 +1,5 @@
 <mjml>
-  <mj-body background-color="black">
+  <mj-body background-color="black" >
     <mj-section background-color="black"></mj-section>
 
     <mj-section background-color="white" border-radius="20px 20px 0 0" padding="8px 16px 0px 16px">
@@ -12,7 +12,7 @@
 
     <mj-section background-color="white" padding="16px">
       <mj-column>
-        <mj-text padding="16px 0">
+        <mj-text padding="16px 0" font-family="Roboto, Arial">
           <mj-raw>
             {{{content}}}
           </mj-raw>
