@@ -1,0 +1,44 @@
+<mjml>
+  <mj-body background-color="black">
+    <mj-section background-color="black"></mj-section>
+
+    <mj-section background-color="white" border-radius="20px 20px 0 0" padding="8px 16px 0px 16px">
+      <mj-column>
+        <mj-image href="https://bancolibre.com/" src="https://bancolibre.com/assets/mail/logo.png" align="center" width="400px" padding="24px"> </mj-image>
+
+        <mj-spacer container-background-color='#F3F3F3' height="1px"></mj-spacer>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="white" padding="16px">
+      <mj-column>
+        <mj-text padding="16px 0">
+          <mj-raw>
+            {{{content}}}
+          </mj-raw>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="white" border-radius="0 0 20px 20px" padding="0px 16px 16px 16px">
+      <mj-column>
+        <mj-spacer container-background-color='#F3F3F3' height="1px"></mj-spacer>
+
+        <mj-text color="#737373" font-size="14px" line-height="1.5" font-family="Roboto, Arial" padding="16px 0px 8px 0px">
+          © 2024 Banco Libre
+        </mj-text>
+
+        <mj-text padding="0px">
+          <a href='https://github.com/AmbossTech/' target='_blank' style="padding-right:4px">
+            <img width="40px" src="https://bancolibre.com/assets/mail/github.png"></img>
+          </a>
+          <a href="https://x.com/ambosstech" target='_blank'>
+            <img width="40px" src="https://bancolibre.com/assets/mail/x.png"></img>
+          </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="black"></mj-section>
+  </mj-body>
+</mjml>

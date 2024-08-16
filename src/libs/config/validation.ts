@@ -63,6 +63,13 @@ export const ConfigSchema = z.object({
     })
     .optional(),
 
+  mailgun: z
+    .object({
+      apiKey: z.string(),
+      domain: z.string(),
+    })
+    .optional(),
+
   webauthn: z.object({
     name: z.string(),
     id: z.string(),
