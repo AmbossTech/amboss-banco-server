@@ -18,7 +18,11 @@ export class SwapsRepoService {
       select: {
         wallet_account: {
           select: {
-            wallet_account_swap: true,
+            wallet_account_swap: {
+              orderBy: {
+                created_at: 'desc',
+              },
+            },
           },
         },
       },
