@@ -6,7 +6,6 @@ import { MailModule } from 'src/libs/mail/mail.module';
 import { RedlockModule } from 'src/libs/redlock/redlock.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
-import { AccountRepoModule } from 'src/repo/account/account.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
 import {
@@ -39,7 +38,6 @@ import {
     SideShiftModule,
     RedlockModule,
     MailModule,
-    AccountRepoModule,
   ],
   providers: [
     MainWalletMutationsResolver,

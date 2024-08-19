@@ -501,9 +501,7 @@ export class PasswordMutationsResolver {
 
     wallets.forEach(async ({ wallet }) => {
       await this.mailService.sendBackupMailPassChange({
-        to: account.email,
-        date: new Date(),
-        passwordHint: new_password_hint || '',
+        to: { email: account.email },
         walletName: wallet.name,
       });
     });

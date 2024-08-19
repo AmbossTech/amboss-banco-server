@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { account } from '@prisma/client';
 import formData from 'form-data';
 import { readFileSync } from 'fs';
 import Handlebars from 'handlebars';
 import Mailgun, { MailgunMessageData } from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/Interfaces';
 import path from 'path';
+import { AccountRepo } from 'src/repo/account/account.repo';
 
 import { CustomLogger, Logger } from '../logging';
 import { BackupMail, BackupMailPassChange } from './mail.template';
 import {
+  MailTo,
   SendBackupChangePassDetails,
   SendBackupDetails,
   SendEmailProps,
@@ -24,6 +27,7 @@ export class MailService {
 
   constructor(
     private configService: ConfigService,
+    private accountRepo: AccountRepo,
     @Logger(MailService.name) private logger: CustomLogger,
   ) {
     const apiKey = this.configService.get<string>(`mailgun.apiKey`);
@@ -43,13 +47,15 @@ export class MailService {
   }
 
   async sendBackupMail(props: SendBackupDetails) {
+    const { email, password_hint } = await this.getRecipient(props.to);
+
     await this.send({
-      email: props.to,
+      email,
       subject: `Wallet Created - ${props.walletName}`,
       variables: {
         content: BackupMail({
-          date: props.date.toUTCString(),
-          passwordHint: props.passwordHint,
+          date: new Date().toUTCString(),
+          passwordHint: password_hint || '',
           walletName: props.walletName,
           encryptedMnemonic: props.encryptedMnemonic,
           recoverLink: 'https://bancolibre.com/recover',
@@ -59,14 +65,16 @@ export class MailService {
   }
 
   async sendBackupMailPassChange(props: SendBackupChangePassDetails) {
+    const { email, password_hint } = await this.getRecipient(props.to);
+
     await this.send({
-      email: props.to,
+      email,
       subject: `Password changed - ${props.walletName}`,
       variables: {
         content: BackupMailPassChange({
           recoverLink: 'https://bancolibre.com/recover',
-          date: props.date.toString(),
-          newPasswordHint: props.passwordHint,
+          date: new Date().toUTCString(),
+          newPasswordHint: password_hint || '',
           walletName: props.walletName,
         }),
       },
@@ -95,5 +103,22 @@ export class MailService {
       .create(this.mailgun.domain, data)
       .then((res) => this.logger.silly('Email sent', { res }))
       .catch((err) => this.logger.error('Error sending email', { err }));
+  }
+
+  private async getRecipient({ email, id }: MailTo): Promise<account> {
+    if (email) {
+      const account = await this.accountRepo.findOne(email);
+
+      if (account) return account;
+    }
+
+    if (id) {
+      const account = await this.accountRepo.findOneById(id);
+
+      if (account) return account;
+    }
+    this.logger.warn(`Could not find account`, { email, id });
+
+    throw new Error(`Cannot get account`);
   }
 }
