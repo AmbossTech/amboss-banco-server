@@ -45,16 +45,14 @@ export class MailService {
   async sendBackupMail(props: SendBackupDetails) {
     await this.send({
       email: props.to,
-      subject: 'Wallet Backup',
+      subject: `Wallet Created - ${props.walletName}`,
       variables: {
         content: BackupMail({
-          details: {
-            'Recover Link': 'https://bancolibre.com/recover',
-            Date: props.date.toString(),
-            'Encrypted Mnemonic': props.encryptedMnemonic,
-            'Password Hint': props.passwordHint,
-            'Wallet Name': props.walletName,
-          },
+          date: props.date.toUTCString(),
+          passwordHint: props.passwordHint,
+          walletName: props.walletName,
+          encryptedMnemonic: props.encryptedMnemonic,
+          recoverLink: 'https://bancolibre.com/recover',
         }),
       },
     });
@@ -63,15 +61,13 @@ export class MailService {
   async sendBackupMailPassChange(props: SendBackupChangePassDetails) {
     await this.send({
       email: props.to,
-      subject: 'Wallet Backup - Password changed',
+      subject: `Password changed - ${props.walletName}`,
       variables: {
         content: BackupMailPassChange({
-          details: {
-            'Recover Link': 'https://bancolibre.com/recover',
-            Date: props.date.toString(),
-            'New Password Hint': props.passwordHint,
-            'Wallet Name': props.walletName,
-          },
+          recoverLink: 'https://bancolibre.com/recover',
+          date: props.date.toString(),
+          newPasswordHint: props.passwordHint,
+          walletName: props.walletName,
         }),
       },
     });

@@ -1,52 +1,35 @@
 type BackupMailProps = {
-  details: {
-    ['Date']: string;
-    ['Wallet Name']: string;
-    ['Encrypted Mnemonic']: string;
-    ['Password Hint']: string;
-    ['Recover Link']: string;
-  };
+  date: string;
+  walletName: string;
+  passwordHint: string;
+  recoverLink: string;
+  encryptedMnemonic: string;
 };
 
 type BackupMailPassChangeProps = {
-  details: {
-    ['Date']: string;
-    ['Wallet Name']: string;
-    ['New Password Hint']: string;
-    ['Recover Link']: string;
-  };
+  date: string;
+  walletName: string;
+  newPasswordHint: string;
+  recoverLink: string;
 };
 
-const generateList = (list: Record<string, string>) => {
-  const htmlList = Object.entries(list).reduce((l, [key, value]) => {
-    return l + `<li style='padding: 4px'> ${key}: ${value} </li>`;
-  }, ``);
+export const BackupMail = (props: BackupMailProps) =>
+  [
+    'Hi,',
+    `You just created a new wallet ('${props.walletName}') on ${props.date}, with a password hint: '${props.passwordHint}'`,
+    `<b>In order to recover your wallet, you need your encrypted mnemonic, which is:</b>`,
+    `<b>${props.encryptedMnemonic}</b>`,
+    `<b>Using your email and password and the encrypted mnemonic you can recover your seed phrase using this link: ${props.recoverLink}</b>.`,
+    `Best,`,
+    `The BancoLibre Team`,
+  ].join('<br /><br />');
 
-  return `<ul> ${htmlList} </ul>`;
-};
-
-export const BackupMail = ({ details }: BackupMailProps) => `
-  Hi,
-  <br /><br />
-  You just created a new wallet, here is the needed info to recover your wallet:
-  <br />
-  ${generateList(details)}
-
-  Best,
-  <br /><br />
-  The BancoLibre Team
-`;
-
-export const BackupMailPassChange = ({
-  details,
-}: BackupMailPassChangeProps) => `
-  Hi,
-  <br /><br />
-  You just created a new wallet, here is the needed info to recover your wallet:
-  <br />
-  ${generateList(details)}
-
-  Best,
-  <br /><br />
-  The BancoLibre Team
-`;
+export const BackupMailPassChange = (props: BackupMailPassChangeProps) =>
+  [
+    'Hi,',
+    `You just changed your password for a wallet ('${props.walletName}') on ${props.date}, with an updated password hint: '${props.newPasswordHint}'`,
+    `<b>In order to recover your wallet, you need your encrypted mnemonic, which is sent in a previous email.</b>`,
+    `<b>Using your email and password and the encrypted mnemonic you can recover your seed phrase using this link: ${props.recoverLink}</b>.`,
+    `Best,`,
+    `The BancoLibre Team`,
+  ].join('<br /><br />');
