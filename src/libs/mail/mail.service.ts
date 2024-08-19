@@ -8,11 +8,12 @@ import { IMailgunClient } from 'mailgun.js/Interfaces';
 import path from 'path';
 
 import { CustomLogger, Logger } from '../logging';
-import { BackupMail, BackupMailPassChange } from './mail.template';
+import { BackupMail, BackupMailPassChange, SignupMail } from './mail.template';
 import {
   SendBackupChangePassDetails,
   SendBackupDetails,
   SendEmailProps,
+  SendSignupDetails,
 } from './mail.types';
 
 @Injectable()
@@ -68,6 +69,21 @@ export class MailService {
           date: props.date.toString(),
           newPasswordHint: props.passwordHint,
           walletName: props.walletName,
+        }),
+      },
+    });
+  }
+
+  async sendSignupMail(props: SendSignupDetails) {
+    await this.send({
+      email: props.to,
+      subject: `Welcome to BancoLibre!`,
+      variables: {
+        content: SignupMail({
+          to: props.to,
+          recoverLink: 'https://bancolibre.com/recover',
+          date: new Date().toUTCString(),
+          passwordHint: props.passwordHint,
         }),
       },
     });

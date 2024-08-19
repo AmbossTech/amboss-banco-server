@@ -18,3 +18,8 @@ export type SendBackupChangePassDetails = {
   walletName: string;
   passwordHint: string;
 };
+
+export type SendSignupDetails = {
+  to: string;
+  passwordHint: string;
+};

@@ -4,6 +4,7 @@ import { CookieOptions, Response } from 'express';
 import { GraphQLError } from 'graphql';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { MailService } from 'src/libs/mail/mail.service';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { NewAccountType } from 'src/repo/account/account.types';
 
@@ -17,6 +18,7 @@ export class AccountService {
     private accountRepo: AccountRepo,
     private cryptoService: CryptoService,
     private config: ConfigService,
+    private mailService: MailService,
     @Logger('AccountService') private logger: CustomLogger,
   ) {
     this.domain = this.config.getOrThrow('server.cookies.domain');
@@ -47,6 +49,11 @@ export class AccountService {
     const newAccount = await this.accountRepo.create(accountInfo);
 
     this.logger.debug('New account created', { accountInfo });
+
+    await this.mailService.sendSignupMail({
+      to: accountInfo.email,
+      passwordHint: accountInfo.password_hint,
+    });
 
     return newAccount;
   }
