@@ -499,10 +499,11 @@ export class PasswordMutationsResolver {
 
     const wallets = await this.walletRepo.getAccountWallets(account.id);
 
-    wallets.forEach(async ({ wallet }) => {
+    wallets.forEach(async ({ wallet, details }) => {
       await this.mailService.sendBackupMailPassChange({
         to: { email: account.email },
         walletName: wallet.name,
+        encryptedMnemonic: details.protected_mnemonic,
       });
     });
 

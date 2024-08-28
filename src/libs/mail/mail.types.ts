@@ -18,4 +18,5 @@ export type SendBackupDetails = {
 export type SendBackupChangePassDetails = {
   to: MailTo;
   walletName: string;
+  encryptedMnemonic: string;
 };

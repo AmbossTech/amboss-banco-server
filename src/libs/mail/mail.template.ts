@@ -15,7 +15,7 @@ type WalletBackup = {
   ['Date Created']: string;
   ['Password Hint']: string;
   ['Recovery Link']: string;
-  ['Encryped Mnemonic']: string;
+  ['Encrypted Mnemonic']: string;
 };
 
 type MailTemplate = {
@@ -25,7 +25,7 @@ type MailTemplate = {
 
 const generateList = (items: Record<string, string>) => {
   const list = Object.entries(items).reduce((p, [key, value]) => {
-    return p + `<li><b>${key}</b>: ${value}`;
+    return p + `<li><b>${key}</b>: ${value}</li>`;
   }, '');
 
   return '<ul>' + list + '</ul>';
@@ -52,15 +52,15 @@ export const BackupMail = (props: BackupMailProps): MailTemplate => {
 export const BackupMailPassChange = (
   props: BackupMailPassChangeProps,
 ): MailTemplate => {
-  const subject = 'BancoLibre Password Changed for';
+  const subject = `BancoLibre Password Changed for ${props.walletName}`;
   const html = [
     'Hi,',
-    `Your wallet password for ${props.walletName} was successfully changed on {date}. We’ve updated your password hint to help you remember it:`,
-    `<b>New Password Hint: ${props.newPasswordHint}</b>`,
+    `Your wallet password for ${props.walletName} was successfully changed on ${props.date}. We’ve updated your password hint to help you remember it:`,
+    `<b>New Password Hint:</b> ${props.newPasswordHint}`,
     `Just a quick reminder—if you ever need to recover your wallet, you’ll need your encrypted mnemonic:`,
-    `<b>Encrypted Mnemonic: ${props.encryptedMnemonic}</b>`,
+    `<b>Encrypted Mnemonic:</b> ${props.encryptedMnemonic}`,
     `With your email, password, and encrypted mnemonic, you can recover your seed phrase using the link below:`,
-    `<b>Recovery Link: ${props.recoverLink}</b>`,
+    `<b>Recovery Link:</b> ${props.recoverLink}`,
     `Keep this email safe, and if you have any questions, we’re here to help.`,
     `Best, <br />The BancoLibre Team`,
   ].join('<br /><br />');

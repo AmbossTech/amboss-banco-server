@@ -18,6 +18,8 @@ import {
   SendEmailProps,
 } from './mail.types';
 
+const RECOVER_LINK = 'https://bancolibre.com/recover';
+
 @Injectable()
 export class MailService {
   private mailgun?: {
@@ -49,17 +51,21 @@ export class MailService {
   async sendBackupMail(props: SendBackupDetails) {
     const { email, password_hint } = await this.getRecipient(props.to);
 
+    const { subject, html } = BackupMail({
+      backup: {
+        ['Date Created']: new Date().toUTCString(),
+        ['Password Hint']: password_hint || '',
+        ['Wallet Name']: props.walletName,
+        ['Encrypted Mnemonic']: props.encryptedMnemonic,
+        ['Recovery Link']: RECOVER_LINK,
+      },
+    });
+
     await this.send({
       email,
-      subject: `Wallet Created - ${props.walletName}`,
+      subject,
       variables: {
-        content: BackupMail({
-          date: new Date().toUTCString(),
-          passwordHint: password_hint || '',
-          walletName: props.walletName,
-          encryptedMnemonic: props.encryptedMnemonic,
-          recoverLink: 'https://bancolibre.com/recover',
-        }),
+        content: html,
       },
     });
   }
@@ -67,16 +73,19 @@ export class MailService {
   async sendBackupMailPassChange(props: SendBackupChangePassDetails) {
     const { email, password_hint } = await this.getRecipient(props.to);
 
+    const { subject, html } = BackupMailPassChange({
+      encryptedMnemonic: props.encryptedMnemonic,
+      recoverLink: RECOVER_LINK,
+      date: new Date().toUTCString(),
+      newPasswordHint: password_hint || '',
+      walletName: props.walletName,
+    });
+
     await this.send({
       email,
-      subject: `Password changed - ${props.walletName}`,
+      subject,
       variables: {
-        content: BackupMailPassChange({
-          recoverLink: 'https://bancolibre.com/recover',
-          date: new Date().toUTCString(),
-          newPasswordHint: password_hint || '',
-          walletName: props.walletName,
-        }),
+        content: html,
       },
     });
   }
