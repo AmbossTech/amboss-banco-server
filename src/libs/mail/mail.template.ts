@@ -35,7 +35,6 @@ export const BackupMail = (props: BackupMailProps): MailTemplate => {
   const subject = `Welcome to BancoLibre.com - Your ${props.backup['Wallet Name']} Backup`;
   const html = [
     'Hi,',
-    `Welcome to BancoLibre.com! We’re excited to have you with us, wherever life takes you.`,
     `Congratulations! You’ve just created a new wallet for your account. You can now send and receive money across borders to anyone, anywhere. With BancoLibre, we’ve made it simple and secure for you and your family to receive money, even if they aren’t familiar with tech or cryptocurrencies.`,
     `In case you ever need to recover your wallet, here’s the information you’ll need, along with your super secret password:`,
     `${generateList(props.backup)}`,
