@@ -92,16 +92,23 @@ export class MailService {
   }
 
   async sendSignupMail(props: SendSignupDetails) {
+    const { email, password_hint } = await this.getRecipient(props.to);
+
+    const { subject, html } = SignupMail({
+      backup: {
+        'Recovery Link': RECOVER_LINK,
+        'Date Created': new Date().toUTCString(),
+        'Password Hint': password_hint || '',
+        'Encrypted Mnemonic': props.encryptedMnemonic,
+        'Wallet Name': props.walletName,
+      },
+    });
+
     await this.send({
-      email: props.to,
-      subject: `Welcome to BancoLibre!`,
+      email,
+      subject,
       variables: {
-        content: SignupMail({
-          to: props.to,
-          recoverLink: 'https://bancolibre.com/recover',
-          date: new Date().toUTCString(),
-          passwordHint: props.passwordHint,
-        }),
+        content: html,
       },
     });
   }
