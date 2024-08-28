@@ -12,7 +12,6 @@ import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
-import { MailService } from 'src/libs/mail/mail.service';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
@@ -20,7 +19,6 @@ import {
   SideShiftNetwork,
 } from 'src/libs/sideshift/sideshift.types';
 import { WalletService } from 'src/libs/wallet/wallet.service';
-import { AccountRepo } from 'src/repo/account/account.repo';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { toWithError } from 'src/utils/async';
 
@@ -43,8 +41,6 @@ export class WalletMutationsResolver {
     private sideShiftService: SideShiftService,
     private cryptoService: CryptoService,
     private redlockService: RedlockService,
-    private mailService: MailService,
-    private accountRepo: AccountRepo,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -154,18 +150,6 @@ export class WalletMutationsResolver {
     }
 
     const wallet = await this.walletService.createWallet(user_id, input);
-    const account = await this.accountRepo.findOneById(user_id);
-    if (!account) {
-      throw new GraphQLError(`Account not found`);
-    }
-
-    await this.mailService.sendBackupMail({
-      to: account.email,
-      date: new Date(),
-      encryptedMnemonic: input.details.protected_mnemonic || '',
-      passwordHint: account.password_hint || '',
-      walletName: wallet.name,
-    });
 
     return { id: wallet.id };
   }

@@ -4,19 +4,21 @@ export type SendEmailProps = {
   variables: { content: string } & Record<string, any>;
 };
 
+export type MailTo = {
+  id?: string;
+  email?: string;
+};
+
 export type SendBackupDetails = {
-  to: string;
-  date: Date;
+  to: MailTo;
   walletName: string;
   encryptedMnemonic: string;
-  passwordHint: string;
 };
 
 export type SendBackupChangePassDetails = {
-  to: string;
-  date: Date;
+  to: MailTo;
   walletName: string;
-  passwordHint: string;
+  encryptedMnemonic: string;
 };
 
 export type SendSignupDetails = {
