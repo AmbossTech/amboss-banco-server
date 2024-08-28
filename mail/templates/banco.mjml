@@ -30,10 +30,10 @@
 
         <mj-text padding="0px">
           <a href='https://github.com/AmbossTech/' target='_blank' style="padding-right:4px">
-            <img width="40px" src="https://bancolibre.com/assets/mail/github.png"></img>
+            <img width="40px" src="https://bancolibre.com/assets/mail/github.png">
           </a>
           <a href="https://x.com/ambosstech" target='_blank'>
-            <img width="40px" src="https://bancolibre.com/assets/mail/x.png"></img>
+            <img width="40px" src="https://bancolibre.com/assets/mail/x.png">
           </a>
         </mj-text>
       </mj-column>
