@@ -19,6 +19,7 @@ export const ConfigSchema = z.object({
     boltz: z.object({
       enableWebsocket: z.boolean(),
     }),
+    recoverUrl: z.string(),
   }),
 
   redis: z.object({

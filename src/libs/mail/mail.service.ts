@@ -19,14 +19,13 @@ import {
   SendSignupDetails,
 } from './mail.types';
 
-const RECOVER_LINK = 'https://bancolibre.com/recover';
-
 @Injectable()
 export class MailService {
   private mailgun?: {
     client: IMailgunClient;
     domain: string;
   };
+  private recoverUrl: string;
 
   constructor(
     private configService: ConfigService,
@@ -35,6 +34,8 @@ export class MailService {
   ) {
     const apiKey = this.configService.get<string>(`mailgun.apiKey`);
     const domain = this.configService.get<string>(`mailgun.domain`);
+    this.recoverUrl =
+      this.configService.getOrThrow<string>(`server.recoverUrl`);
 
     if (!apiKey || !domain) return;
 
@@ -58,7 +59,7 @@ export class MailService {
         ['Password Hint']: password_hint || '',
         ['Wallet Name']: props.walletName,
         ['Encrypted Mnemonic']: props.encryptedMnemonic,
-        ['Recovery Link']: RECOVER_LINK,
+        ['Recovery Link']: this.recoverUrl,
       },
     });
 
@@ -76,7 +77,7 @@ export class MailService {
 
     const { subject, html } = BackupMailPassChange({
       encryptedMnemonic: props.encryptedMnemonic,
-      recoverLink: RECOVER_LINK,
+      recoverLink: this.recoverUrl,
       date: new Date().toUTCString(),
       newPasswordHint: password_hint || '',
       walletName: props.walletName,
@@ -96,7 +97,7 @@ export class MailService {
 
     const { subject, html } = SignupMail({
       backup: {
-        'Recovery Link': RECOVER_LINK,
+        'Recovery Link': this.recoverUrl,
         'Date Created': new Date().toUTCString(),
         'Password Hint': password_hint || '',
         'Encrypted Mnemonic': props.encryptedMnemonic,
