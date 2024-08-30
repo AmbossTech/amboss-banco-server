@@ -87,6 +87,9 @@ export class ContactRepoService {
           include: {
             contact_message: {
               take: 1,
+              orderBy: {
+                created_at: 'desc',
+              },
             },
           },
         },
