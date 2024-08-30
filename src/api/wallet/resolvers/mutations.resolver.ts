@@ -149,9 +149,7 @@ export class WalletMutationsResolver {
       throw new GraphQLError(`Wallet limit reached`);
     }
 
-    const wallet = await this.walletService.createWallet(user_id, input);
-
-    return { id: wallet.id };
+    return this.walletService.createWallet(user_id, input);
   }
 
   @ResolveField()
