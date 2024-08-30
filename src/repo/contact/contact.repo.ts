@@ -80,10 +80,27 @@ export class ContactRepoService {
   }
 
   async getContactsForWallet(wallet_id: string) {
-    return this.prisma.wallet_on_accounts.findUnique({
+    const res = await this.prisma.wallet_on_accounts.findUnique({
       where: { id: wallet_id },
-      include: { contacts: true },
+      include: {
+        contacts: {
+          include: {
+            contact_message: {
+              take: 1,
+            },
+          },
+        },
+      },
     });
+
+    const contacts = res?.contacts;
+    if (!contacts) return [];
+
+    return contacts.sort(
+      (a, b) =>
+        (b.contact_message.at(0)?.created_at.getTime() || 0) -
+        (a.contact_message.at(0)?.created_at.getTime() || 0),
+    );
   }
 
   async getWalletContact(contact_id: string, wallet_id: string) {

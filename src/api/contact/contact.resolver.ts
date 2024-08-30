@@ -139,8 +139,7 @@ export class WalletContactsResolver {
 
   @ResolveField()
   async find_many(@Parent() { wallet_id }: WalletContactsParent) {
-    const walletInfo = await this.contactsRepo.getContactsForWallet(wallet_id);
-    return walletInfo?.contacts || [];
+    return this.contactsRepo.getContactsForWallet(wallet_id);
   }
 
   @ResolveField()
