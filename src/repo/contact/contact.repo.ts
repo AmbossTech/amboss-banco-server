@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLError } from 'graphql';
+import { orderBy } from 'lodash';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 
 @Injectable()
@@ -99,10 +100,10 @@ export class ContactRepoService {
     const contacts = res?.contacts;
     if (!contacts) return [];
 
-    return contacts.sort(
-      (a, b) =>
-        (b.contact_message.at(0)?.created_at.getTime() || 0) -
-        (a.contact_message.at(0)?.created_at.getTime() || 0),
+    return orderBy(
+      contacts,
+      (c) => c.contact_message.at(0)?.created_at.getTime() || 0,
+      'desc',
     );
   }
 
