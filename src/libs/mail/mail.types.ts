@@ -20,3 +20,9 @@ export type SendBackupChangePassDetails = {
   walletName: string;
   encryptedMnemonic: string;
 };
+
+export type SendSignupDetails = {
+  to: MailTo;
+  encryptedMnemonic?: string;
+  walletName?: string;
+};

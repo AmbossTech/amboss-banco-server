@@ -95,6 +95,6 @@ export class WalletService {
       walletName: newWallet.name,
     });
 
-    return { id: newWallet.id };
+    return { id: newWallet.id, name: newWallet.name };
   }
 }

@@ -10,12 +10,16 @@ type BackupMailPassChangeProps = {
   encryptedMnemonic: string;
 };
 
+type SignupMailProps = {
+  backup: WalletBackup;
+};
+
 type WalletBackup = {
-  ['Wallet Name']: string;
+  ['Wallet Name']?: string;
   ['Date Created']: string;
   ['Password Hint']?: string;
   ['Recovery Link']: string;
-  ['Encrypted Mnemonic']: string;
+  ['Encrypted Mnemonic']?: string;
 };
 
 type MailTemplate = {
@@ -32,13 +36,13 @@ const generateList = (items: Record<string, string>) => {
   return '<ul>' + list + '</ul>';
 };
 
-export const BackupMail = (props: BackupMailProps): MailTemplate => {
-  const subject = `Welcome to BancoLibre.com - Your ${props.backup['Wallet Name']} Backup`;
+export const BackupMail = ({ backup }: BackupMailProps): MailTemplate => {
+  const subject = `Welcome to BancoLibre.com - Your ${backup['Wallet Name']} Backup`;
   const html = [
     'Hi,',
     `Congratulations! You’ve just created a new wallet for your account. You can now send and receive money across borders to anyone, anywhere. With BancoLibre, we’ve made it simple and secure for you and your family to receive money, even if they aren’t familiar with tech or cryptocurrencies.`,
     `In case you ever need to recover your wallet, here’s the information you’ll need, along with your super secret password:`,
-    `${generateList(props.backup)}`,
+    `${generateList(backup)}`,
     `Keep this email safe, and if you have any questions, we’re here to help.`,
     `Best, <br />The BancoLibre Team`,
   ].join('<br /><br />');
@@ -72,4 +76,19 @@ export const BackupMailPassChange = (
   ].join('<br /><br />');
 
   return { html, subject };
+};
+
+export const SignupMail = ({ backup }: SignupMailProps): MailTemplate => {
+  const subject = `Welcome to BancoLibre.com - Your ${backup['Wallet Name']} Backup`;
+  const html = [
+    'Hi,',
+    `Welcome to BancoLibre.com! We’re excited to have you with us, wherever life takes you.`,
+    `Congratulations! You’ve just created a new wallet for your account. You can now send and receive money across borders to anyone, anywhere. With BancoLibre, we’ve made it simple and secure for you and your family to receive money, even if they aren’t familiar with tech or crypto.`,
+    `In case you ever need to recover your wallet, here’s the information you’ll need, along with your super secret password:`,
+    `${generateList(backup)}`,
+    `Best,`,
+    `The BancoLibre Team`,
+  ].join('<br /><br />');
+
+  return { subject, html };
 };

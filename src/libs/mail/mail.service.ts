@@ -10,15 +10,14 @@ import path from 'path';
 import { AccountRepo } from 'src/repo/account/account.repo';
 
 import { CustomLogger, Logger } from '../logging';
-import { BackupMail, BackupMailPassChange } from './mail.template';
+import { BackupMail, BackupMailPassChange, SignupMail } from './mail.template';
 import {
   MailTo,
   SendBackupChangePassDetails,
   SendBackupDetails,
   SendEmailProps,
+  SendSignupDetails,
 } from './mail.types';
-
-const RECOVER_LINK = 'https://bancolibre.com/recover';
 
 @Injectable()
 export class MailService {
@@ -26,6 +25,7 @@ export class MailService {
     client: IMailgunClient;
     domain: string;
   };
+  private recoverUrl: string;
 
   constructor(
     private configService: ConfigService,
@@ -34,6 +34,9 @@ export class MailService {
   ) {
     const apiKey = this.configService.get<string>(`mailgun.apiKey`);
     const domain = this.configService.get<string>(`mailgun.domain`);
+    this.recoverUrl = this.configService.getOrThrow<string>(
+      `server.recoveryPageUrl`,
+    );
 
     if (!apiKey || !domain) return;
 
@@ -57,7 +60,7 @@ export class MailService {
         ['Password Hint']: password_hint || '',
         ['Wallet Name']: props.walletName,
         ['Encrypted Mnemonic']: props.encryptedMnemonic,
-        ['Recovery Link']: RECOVER_LINK,
+        ['Recovery Link']: this.recoverUrl,
       },
     });
 
@@ -75,10 +78,32 @@ export class MailService {
 
     const { subject, html } = BackupMailPassChange({
       encryptedMnemonic: props.encryptedMnemonic,
-      recoverLink: RECOVER_LINK,
+      recoverLink: this.recoverUrl,
       date: new Date().toUTCString(),
       newPasswordHint: password_hint || '',
       walletName: props.walletName,
+    });
+
+    await this.send({
+      email,
+      subject,
+      variables: {
+        content: html,
+      },
+    });
+  }
+
+  async sendSignupMail(props: SendSignupDetails) {
+    const { email, password_hint } = await this.getRecipient(props.to);
+
+    const { subject, html } = SignupMail({
+      backup: {
+        'Recovery Link': this.recoverUrl,
+        'Date Created': new Date().toUTCString(),
+        'Password Hint': password_hint || '',
+        'Encrypted Mnemonic': props.encryptedMnemonic,
+        'Wallet Name': props.walletName,
+      },
     });
 
     await this.send({

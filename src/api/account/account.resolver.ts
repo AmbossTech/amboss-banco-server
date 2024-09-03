@@ -258,6 +258,7 @@ export class AccountResolver {
     private walletService: WalletService,
     private ambossService: AmbossService,
     private redlockService: RedlockService,
+    private mailService: MailService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -387,9 +388,21 @@ export class AccountResolver {
       maxAge: 1000 * 60 * 10,
     });
 
+    let walletName: string | undefined;
+
     if (!!input.wallet) {
-      await this.walletService.createWallet(newAccount.id, input.wallet);
+      const { name } = await this.walletService.createWallet(
+        newAccount.id,
+        input.wallet,
+      );
+      walletName = name;
     }
+
+    await this.mailService.sendSignupMail({
+      to: { email: newAccount.email },
+      encryptedMnemonic: input.wallet?.details.protected_mnemonic || undefined,
+      walletName,
+    });
 
     return {
       id: newAccount.id,
