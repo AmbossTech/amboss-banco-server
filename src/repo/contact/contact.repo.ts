@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLError } from 'graphql';
+import { orderBy } from 'lodash';
 import { PrismaService } from 'src/libs/prisma/prisma.service';
 
 @Injectable()
@@ -80,10 +81,30 @@ export class ContactRepoService {
   }
 
   async getContactsForWallet(wallet_id: string) {
-    return this.prisma.wallet_on_accounts.findUnique({
+    const res = await this.prisma.wallet_on_accounts.findUnique({
       where: { id: wallet_id },
-      include: { contacts: true },
+      include: {
+        contacts: {
+          include: {
+            contact_message: {
+              take: 1,
+              orderBy: {
+                created_at: 'desc',
+              },
+            },
+          },
+        },
+      },
     });
+
+    const contacts = res?.contacts;
+    if (!contacts) return [];
+
+    return orderBy(
+      contacts,
+      (c) => c.contact_message.at(0)?.created_at.getTime() || 0,
+      'desc',
+    );
   }
 
   async getWalletContact(contact_id: string, wallet_id: string) {
