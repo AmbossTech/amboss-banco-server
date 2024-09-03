@@ -1,5 +1,28 @@
 export type SendEmailProps = {
   subject: string;
   email: string;
-  variables: { handlebars: string } & Record<string, any>;
+  variables: { content: string } & Record<string, any>;
+};
+
+export type MailTo = {
+  id?: string;
+  email?: string;
+};
+
+export type SendBackupDetails = {
+  to: MailTo;
+  walletName: string;
+  encryptedMnemonic: string;
+};
+
+export type SendBackupChangePassDetails = {
+  to: MailTo;
+  walletName: string;
+  encryptedMnemonic: string;
+};
+
+export type SendSignupDetails = {
+  to: MailTo;
+  encryptedMnemonic?: string;
+  walletName?: string;
 };

@@ -19,6 +19,7 @@ import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import { MailService } from 'src/libs/mail/mail.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { RedlockService } from 'src/libs/redlock/redlock.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -26,6 +27,7 @@ import { WalletService } from 'src/libs/wallet/wallet.service';
 import { TwoFactorRepository } from 'src/repo/2fa/2fa.repo';
 import { AccountRepo } from 'src/repo/account/account.repo';
 import { PasskeyRepository } from 'src/repo/passkey/passkey.repo';
+import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { v4 as uuidv4 } from 'uuid';
 
 import { twoFactorSessionKey } from '../2fa/2fa.utils';
@@ -256,6 +258,7 @@ export class AccountResolver {
     private walletService: WalletService,
     private ambossService: AmbossService,
     private redlockService: RedlockService,
+    private mailService: MailService,
   ) {
     this.domain = config.getOrThrow('server.cookies.domain');
   }
@@ -385,9 +388,21 @@ export class AccountResolver {
       maxAge: 1000 * 60 * 10,
     });
 
+    let walletName: string | undefined;
+
     if (!!input.wallet) {
-      await this.walletService.createWallet(newAccount.id, input.wallet);
+      const { name } = await this.walletService.createWallet(
+        newAccount.id,
+        input.wallet,
+      );
+      walletName = name;
     }
+
+    await this.mailService.sendSignupMail({
+      to: { email: newAccount.email },
+      encryptedMnemonic: input.wallet?.details.protected_mnemonic || undefined,
+      walletName,
+    });
 
     return {
       id: newAccount.id,
@@ -460,6 +475,8 @@ export class PasswordMutationsResolver {
   constructor(
     private cryptoService: CryptoService,
     private accountRepo: AccountRepo,
+    private walletRepo: WalletRepoService,
+    private mailService: MailService,
   ) {}
 
   @ResolveField()
@@ -491,6 +508,16 @@ export class PasswordMutationsResolver {
       master_password_hash: passwordHash,
       protected_symmetric_key: new_protected_symmetric_key,
       password_hint: new_password_hint,
+    });
+
+    const wallets = await this.walletRepo.getAccountWallets(account.id);
+
+    wallets.forEach(async ({ wallet, details }) => {
+      await this.mailService.sendBackupMailPassChange({
+        to: { email: account.email },
+        walletName: wallet.name,
+        encryptedMnemonic: details.protected_mnemonic,
+      });
     });
 
     return true;

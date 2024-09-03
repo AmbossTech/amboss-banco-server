@@ -15,12 +15,14 @@ import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import { generateFruitName } from 'src/utils/names/names';
 
 import { CryptoService } from '../crypto/crypto.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class WalletService {
   constructor(
     private walletRepo: WalletRepoService,
     private cryptoService: CryptoService,
+    private mailService: MailService,
   ) {}
 
   async createWallet(user_id: string, input: CreateWalletInput) {
@@ -86,6 +88,13 @@ export class WalletService {
         info.details,
       );
     });
-    return { id: newWallet.id };
+
+    await this.mailService.sendBackupMail({
+      to: { id: user_id },
+      encryptedMnemonic: input.details.protected_mnemonic || '',
+      walletName: newWallet.name,
+    });
+
+    return { id: newWallet.id, name: newWallet.name };
   }
 }
