@@ -34,8 +34,9 @@ export class MailService {
   ) {
     const apiKey = this.configService.get<string>(`mailgun.apiKey`);
     const domain = this.configService.get<string>(`mailgun.domain`);
-    this.recoverUrl =
-      this.configService.getOrThrow<string>(`server.recoverUrl`);
+    this.recoverUrl = this.configService.getOrThrow<string>(
+      `server.recoveryPageUrl`,
+    );
 
     if (!apiKey || !domain) return;
 
