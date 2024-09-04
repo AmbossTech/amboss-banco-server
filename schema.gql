@@ -308,10 +308,31 @@ enum PaymentOptionNetwork {
   LIQUID
 }
 
+type PriceChart {
+  id: String!
+  points: [PricePoint!]!
+}
+
+input PriceChartInput {
+  days: Float!
+}
+
+type PricePoint {
+  currency: String!
+  date: String!
+  id: String!
+  value: Float!
+}
+
+type PriceQueries {
+  chart(input: PriceChartInput!): PriceChart!
+}
+
 type Query {
   hello: String!
   passkey: PasskeyQueries!
   pay: PayQueries!
+  prices: PriceQueries!
   two_factor: TwoFactorQueries!
   user: User!
   wallets: WalletQueries!
