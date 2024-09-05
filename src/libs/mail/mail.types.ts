@@ -1,7 +1,20 @@
+import { MessageAttachment } from 'mailgun.js';
+
+export type RecoveryFileType = {
+  date: string;
+  email: string;
+  walletName: string;
+  passwordHint: string | null;
+  encryptedMnemonic: string;
+  encryptedSymmetricKey: string;
+  recoverLink: string;
+};
+
 export type SendEmailProps = {
   subject: string;
   email: string;
   variables: { content: string } & Record<string, any>;
+  attachment?: MessageAttachment;
 };
 
 export type MailTo = {
@@ -23,6 +36,4 @@ export type SendBackupChangePassDetails = {
 
 export type SendSignupDetails = {
   to: MailTo;
-  encryptedMnemonic?: string;
-  walletName?: string;
 };

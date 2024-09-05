@@ -388,21 +388,11 @@ export class AccountResolver {
       maxAge: 1000 * 60 * 10,
     });
 
-    let walletName: string | undefined;
-
     if (!!input.wallet) {
-      const { name } = await this.walletService.createWallet(
-        newAccount.id,
-        input.wallet,
-      );
-      walletName = name;
+      await this.walletService.createWallet(newAccount.id, input.wallet);
     }
 
-    await this.mailService.sendSignupMail({
-      to: { email: newAccount.email },
-      encryptedMnemonic: input.wallet?.details.protected_mnemonic || undefined,
-      walletName,
-    });
+    await this.mailService.sendSignupMail({ to: { email: newAccount.email } });
 
     return {
       id: newAccount.id,

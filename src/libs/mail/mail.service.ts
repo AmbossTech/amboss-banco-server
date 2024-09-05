@@ -10,9 +10,15 @@ import path from 'path';
 import { AccountRepo } from 'src/repo/account/account.repo';
 
 import { CustomLogger, Logger } from '../logging';
-import { BackupMail, BackupMailPassChange, SignupMail } from './mail.template';
+import {
+  BackupMail,
+  BackupMailPassChange,
+  getFilename,
+  SignupMail,
+} from './mail.template';
 import {
   MailTo,
+  RecoveryFileType,
   SendBackupChangePassDetails,
   SendBackupDetails,
   SendEmailProps,
@@ -52,37 +58,78 @@ export class MailService {
   }
 
   async sendBackupMail(props: SendBackupDetails) {
-    const { email, password_hint } = await this.getRecipient(props.to);
+    const { email, password_hint, protected_symmetric_key } =
+      await this.getRecipient(props.to);
 
     const { subject, html } = BackupMail({
-      backup: {
-        ['Date Created']: new Date().toUTCString(),
-        ['Password Hint']: password_hint || '',
-        ['Wallet Name']: props.walletName,
-        ['Encrypted Mnemonic']: props.encryptedMnemonic,
-        ['Recovery Link']: this.recoverUrl,
-      },
+      walletName: props.walletName,
+      recoverLink: this.recoverUrl,
     });
+
+    const now = new Date();
+
+    const recoveryObj: RecoveryFileType = {
+      walletName: props.walletName,
+      date: now.toISOString(),
+      email,
+      passwordHint: password_hint || 'None defined.',
+      encryptedSymmetricKey: protected_symmetric_key,
+      encryptedMnemonic: props.encryptedMnemonic,
+      recoverLink: this.recoverUrl,
+    };
 
     await this.send({
       email,
       subject,
       variables: {
         content: html,
+      },
+      attachment: {
+        filename: getFilename(props.walletName, now),
+        data: Buffer.from(JSON.stringify(recoveryObj)),
       },
     });
   }
 
   async sendBackupMailPassChange(props: SendBackupChangePassDetails) {
-    const { email, password_hint } = await this.getRecipient(props.to);
+    const { email, password_hint, protected_symmetric_key } =
+      await this.getRecipient(props.to);
 
     const { subject, html } = BackupMailPassChange({
+      walletName: props.walletName,
+      newPasswordHint: password_hint,
+      recoverLink: this.recoverUrl,
+    });
+
+    const now = new Date();
+
+    const recoveryObj: RecoveryFileType = {
+      walletName: props.walletName,
+      date: now.toISOString(),
+      email,
+      passwordHint: password_hint || 'None defined.',
+      encryptedSymmetricKey: protected_symmetric_key,
       encryptedMnemonic: props.encryptedMnemonic,
       recoverLink: this.recoverUrl,
-      date: new Date().toUTCString(),
-      newPasswordHint: password_hint || '',
-      walletName: props.walletName,
+    };
+
+    await this.send({
+      email,
+      subject,
+      variables: {
+        content: html,
+      },
+      attachment: {
+        filename: getFilename(props.walletName, now),
+        data: Buffer.from(JSON.stringify(recoveryObj)),
+      },
     });
+  }
+
+  async sendSignupMail({ to }: SendSignupDetails) {
+    const { email } = await this.getRecipient(to);
+
+    const { subject, html } = SignupMail();
 
     await this.send({
       email,
@@ -93,29 +140,12 @@ export class MailService {
     });
   }
 
-  async sendSignupMail(props: SendSignupDetails) {
-    const { email, password_hint } = await this.getRecipient(props.to);
-
-    const { subject, html } = SignupMail({
-      backup: {
-        'Recovery Link': this.recoverUrl,
-        'Date Created': new Date().toUTCString(),
-        'Password Hint': password_hint || '',
-        'Encrypted Mnemonic': props.encryptedMnemonic,
-        'Wallet Name': props.walletName,
-      },
-    });
-
-    await this.send({
-      email,
-      subject,
-      variables: {
-        content: html,
-      },
-    });
-  }
-
-  private async send({ subject, email, variables }: SendEmailProps) {
+  private async send({
+    subject,
+    email,
+    variables,
+    attachment,
+  }: SendEmailProps) {
     if (!this.mailgun) return;
 
     const htmlTemplate = readFileSync(
@@ -131,6 +161,7 @@ export class MailService {
       to: [email],
       subject,
       html: finalMessage,
+      attachment,
     };
 
     await this.mailgun.client.messages
