@@ -310,6 +310,7 @@ enum PaymentOptionNetwork {
 
 type PriceChart {
   id: String!
+  interval: String!
   points: [PricePoint!]!
 }
 

@@ -1,12 +1,21 @@
-import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { startOfDay, subDays } from 'date-fns';
+import {
+  Args,
+  Context,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { startOfDay, startOfMinute, subDays } from 'date-fns';
 import { Public } from 'src/auth/auth.decorators';
-import { FiatService } from 'src/libs/fiat/fiat.service';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { v5 as uuidv5 } from 'uuid';
 
+import { getChartInterval } from './price.helpers';
 import {
   PriceChart,
   PriceChartInput,
+  PriceChartParent,
   PriceCurrency,
   PricePoint,
   PricePointParent,
@@ -15,8 +24,6 @@ import {
 
 @Resolver(PricePoint)
 export class PricePointResolver {
-  constructor(private fiatService: FiatService) {}
-
   @ResolveField()
   id(@Parent() { date, currency }: PricePointParent) {
     return uuidv5(`${date.toISOString()}-${currency}`, uuidv5.URL);
@@ -28,20 +35,23 @@ export class PricePointResolver {
   }
 
   @ResolveField()
-  async value(@Parent() { date }: PricePointParent) {
-    return this.fiatService.getChartPrice(date);
+  async value(
+    @Parent() { date }: PricePointParent,
+    @Context() { loaders }: ContextType,
+  ) {
+    return loaders.priceApiLoader.load(date);
   }
 }
 
 @Resolver(PriceChart)
 export class PriceChartResolver {
   @ResolveField()
-  id(@Parent() dates: Date[]) {
+  id(@Parent() { dates }: PriceChartParent) {
     return uuidv5(JSON.stringify(dates), uuidv5.URL);
   }
 
   @ResolveField()
-  points(@Parent() dates: Date[]): PricePointParent[] {
+  points(@Parent() { dates }: PriceChartParent): PricePointParent[] {
     return dates.map(
       (date): PricePointParent => ({
         date,
@@ -49,22 +59,26 @@ export class PriceChartResolver {
       }),
     );
   }
+
+  @ResolveField()
+  interval(@Parent() { interval }: PriceChartParent) {
+    return interval;
+  }
 }
 
 @Resolver(PriceQueries)
 export class PriceQueriesResolver {
   @ResolveField()
-  chart(@Args('input') { days }: PriceChartInput) {
+  chart(@Args('input') { days }: PriceChartInput): PriceChartParent {
     const now = new Date();
-    // Add current date to list
-    const dates = [now];
-    // Add all other dates from 00:00
-    for (let day = days - 1; day > 0; day--) {
-      const date = startOfDay(subDays(new Date(), day));
+    const dates = [startOfMinute(now)];
+
+    for (let day = 0; day < days; day++) {
+      const date = startOfDay(subDays(now, day));
       dates.push(date);
     }
 
-    return dates;
+    return { dates, interval: getChartInterval(days) };
   }
 }
 

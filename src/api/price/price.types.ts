@@ -9,7 +9,12 @@ export enum PriceCurrency {
   USD = 'USD',
 }
 
+export enum PriceInterval {
+  DAILY = 'DAILY',
+}
+
 registerEnumType(PriceCurrency, { name: 'PriceCurrency' });
+registerEnumType(PriceInterval, { name: 'PriceInterval' });
 
 @ObjectType()
 export class PricePoint {
@@ -31,6 +36,9 @@ export class PriceChart {
   @Field()
   id: string;
 
+  @Field()
+  interval: PriceInterval;
+
   @Field(() => [PricePoint])
   points: PricePoint[];
 }
@@ -48,3 +56,5 @@ export class PriceChartInput {
 }
 
 export type PricePointParent = { date: Date; currency: PriceCurrency };
+
+export type PriceChartParent = { dates: Date[]; interval: PriceInterval };
