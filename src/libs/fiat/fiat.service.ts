@@ -37,9 +37,7 @@ export class FiatService {
     const key = `getDayPrice-${getSHA256Hash(sortedDates.toString())}`;
 
     const cached = await this.redis.get<number[][]>(key);
-    if (cached) {
-      return mapDayPricesResult(dates, cached);
-    }
+    if (cached) return mapDayPricesResult(dates, cached);
 
     // +1 to add today
     const daysToQuery = differenceInDays(new Date(), earliestDate) + 1;
@@ -47,7 +45,7 @@ export class FiatService {
     const chartData = await this.coingecko.getChartData(daysToQuery);
     if (!chartData) return [];
 
-    await this.redis.set(key, chartData, { ttl: 60 * 60 });
+    await this.redis.set(key, chartData, { ttl: 60 * 60 * 24 });
 
     return mapDayPricesResult(dates, chartData);
   }

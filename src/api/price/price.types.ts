@@ -57,6 +57,12 @@ export class PriceChartInput {
   from_date: string;
 }
 
-export type PricePointParent = { date: Date; currency: PriceCurrency };
+export type PricePointParent = { date: Date | null; currency: PriceCurrency };
 
-export type PriceHistoricalParent = { dates: Date[]; interval: PriceInterval };
+export type PriceHistoricalParent = {
+  /**
+   * null to fetch current price
+   */
+  dates: (Date | null)[];
+  interval: PriceInterval;
+};

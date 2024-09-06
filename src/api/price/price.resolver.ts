@@ -6,8 +6,9 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { differenceInDays, startOfDay, startOfMinute, subDays } from 'date-fns';
+import { differenceInDays, startOfDay, subDays } from 'date-fns';
 import { Public } from 'src/auth/auth.decorators';
+import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -24,14 +25,18 @@ import {
 
 @Resolver(PricePoint)
 export class PricePointResolver {
+  constructor(private fiatService: FiatService) {}
+
   @ResolveField()
   id(@Parent() { date, currency }: PricePointParent) {
-    return uuidv5(`${date.toISOString()}-${currency}`, uuidv5.URL);
+    const finalDate = date || new Date();
+    return uuidv5(`${finalDate.toISOString()}-${currency}`, uuidv5.URL);
   }
 
   @ResolveField()
   date(@Parent() { date }: PricePointParent) {
-    return date.toISOString();
+    const finalDate = date || new Date();
+    return finalDate.toISOString();
   }
 
   @ResolveField()
@@ -39,6 +44,8 @@ export class PricePointResolver {
     @Parent() { date }: PricePointParent,
     @Context() { loaders }: ContextType,
   ) {
+    if (!date) return this.fiatService.getLatestBtcPrice();
+
     return loaders.priceApiLoader.load(date);
   }
 }
@@ -76,9 +83,9 @@ export class PriceQueriesResolver {
     const daysToQuery = differenceInDays(new Date(), fromDate);
 
     const now = new Date();
-    const dates = [startOfMinute(now)];
+    const dates: PriceHistoricalParent['dates'] = [null];
 
-    for (let day = 0; day <= daysToQuery; day++) {
+    for (let day = 1; day <= daysToQuery; day++) {
       const date = startOfDay(subDays(now, day));
       dates.push(date);
     }
