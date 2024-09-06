@@ -308,14 +308,14 @@ enum PaymentOptionNetwork {
   LIQUID
 }
 
-type PriceChart {
+input PriceChartInput {
+  from_date: String!
+}
+
+type PriceHistorical {
   id: String!
   interval: String!
   points: [PricePoint!]!
-}
-
-input PriceChartInput {
-  days: Float!
 }
 
 type PricePoint {
@@ -326,7 +326,7 @@ type PricePoint {
 }
 
 type PriceQueries {
-  chart(input: PriceChartInput!): PriceChart!
+  historical(input: PriceChartInput!): PriceHistorical!
 }
 
 type Query {

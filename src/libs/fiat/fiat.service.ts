@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { differenceInDays, isAfter, subMinutes } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
 import { RedisService } from '../redis/redis.service';
@@ -33,7 +33,6 @@ export class FiatService {
     const sortedDates = [...dates].sort((a, b) => a.getTime() - b.getTime());
 
     const earliestDate = sortedDates[0];
-    const latestDate = sortedDates.at(-1) || new Date();
 
     const key = `getDayPrice-${getSHA256Hash(sortedDates.toString())}`;
 
@@ -42,20 +41,11 @@ export class FiatService {
       return mapDayPricesResult(dates, cached);
     }
 
-    const currentPrice: number[][] = [];
-
-    if (isAfter(latestDate, subMinutes(new Date(), 1))) {
-      const price = await this.getLatestBtcPrice();
-      if (price) currentPrice.push([latestDate.getTime(), price]);
-    }
-
     // +1 to add today
     const daysToQuery = differenceInDays(new Date(), earliestDate) + 1;
 
     const chartData = await this.coingecko.getChartData(daysToQuery);
     if (!chartData) return [];
-
-    if (currentPrice[0]) chartData.push(currentPrice[0]);
 
     await this.redis.set(key, chartData, { ttl: 60 * 60 });
 

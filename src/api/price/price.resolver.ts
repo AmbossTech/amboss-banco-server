@@ -6,17 +6,17 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { startOfDay, startOfMinute, subDays } from 'date-fns';
+import { differenceInDays, startOfDay, startOfMinute, subDays } from 'date-fns';
 import { Public } from 'src/auth/auth.decorators';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { v5 as uuidv5 } from 'uuid';
 
 import { getChartInterval } from './price.helpers';
 import {
-  PriceChart,
   PriceChartInput,
-  PriceChartParent,
   PriceCurrency,
+  PriceHistorical,
+  PriceHistoricalParent,
   PricePoint,
   PricePointParent,
   PriceQueries,
@@ -43,15 +43,15 @@ export class PricePointResolver {
   }
 }
 
-@Resolver(PriceChart)
-export class PriceChartResolver {
+@Resolver(PriceHistorical)
+export class PriceHistoricalResolver {
   @ResolveField()
-  id(@Parent() { dates }: PriceChartParent) {
+  id(@Parent() { dates }: PriceHistoricalParent) {
     return uuidv5(JSON.stringify(dates), uuidv5.URL);
   }
 
   @ResolveField()
-  points(@Parent() { dates }: PriceChartParent): PricePointParent[] {
+  points(@Parent() { dates }: PriceHistoricalParent): PricePointParent[] {
     return dates.map(
       (date): PricePointParent => ({
         date,
@@ -61,7 +61,7 @@ export class PriceChartResolver {
   }
 
   @ResolveField()
-  interval(@Parent() { interval }: PriceChartParent) {
+  interval(@Parent() { interval }: PriceHistoricalParent) {
     return interval;
   }
 }
@@ -69,16 +69,21 @@ export class PriceChartResolver {
 @Resolver(PriceQueries)
 export class PriceQueriesResolver {
   @ResolveField()
-  chart(@Args('input') { days }: PriceChartInput): PriceChartParent {
+  historical(
+    @Args('input') { from_date }: PriceChartInput,
+  ): PriceHistoricalParent {
+    const fromDate = new Date(from_date);
+    const daysToQuery = differenceInDays(new Date(), fromDate);
+
     const now = new Date();
     const dates = [startOfMinute(now)];
 
-    for (let day = 0; day < days; day++) {
+    for (let day = 0; day <= daysToQuery; day++) {
       const date = startOfDay(subDays(now, day));
       dates.push(date);
     }
 
-    return { dates, interval: getChartInterval(days) };
+    return { dates, interval: getChartInterval(daysToQuery) };
   }
 }
 

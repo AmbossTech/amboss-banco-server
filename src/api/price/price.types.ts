@@ -4,6 +4,7 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
+import { IsDateString } from 'class-validator';
 
 export enum PriceCurrency {
   USD = 'USD',
@@ -32,7 +33,7 @@ export class PricePoint {
 }
 
 @ObjectType()
-export class PriceChart {
+export class PriceHistorical {
   @Field()
   id: string;
 
@@ -46,15 +47,16 @@ export class PriceChart {
 @ObjectType()
 export class PriceQueries {
   @Field()
-  chart: PriceChart;
+  historical: PriceHistorical;
 }
 
 @InputType()
 export class PriceChartInput {
   @Field()
-  days: number;
+  @IsDateString()
+  from_date: string;
 }
 
 export type PricePointParent = { date: Date; currency: PriceCurrency };
 
-export type PriceChartParent = { dates: Date[]; interval: PriceInterval };
+export type PriceHistoricalParent = { dates: Date[]; interval: PriceInterval };

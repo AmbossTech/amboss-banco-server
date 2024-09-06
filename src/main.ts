@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 
@@ -15,6 +16,7 @@ async function bootstrap() {
 
   app.useLogger(await app.resolve(CustomLogger));
   app.use(cookieParser());
+  app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
 
   await app.listen(process.env.PORT || 3000);
   console.log(`Application is running on: ${await app.getUrl()}`);

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import {
-  PriceChartResolver,
+  PriceHistoricalResolver,
   PricePointResolver,
   PriceQueriesResolver,
   PriceResolver,
@@ -11,7 +11,7 @@ import {
   providers: [
     PriceResolver,
     PriceQueriesResolver,
-    PriceChartResolver,
+    PriceHistoricalResolver,
     PricePointResolver,
   ],
 })

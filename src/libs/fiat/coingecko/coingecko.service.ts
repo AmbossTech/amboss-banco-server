@@ -36,12 +36,12 @@ export class CoingeckoApiService {
   async getChartData(days = 7, interval = 'daily') {
     try {
       const result = await this.fetch(
-        `coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=${interval}`,
+        `coins/bitcoin/market_chart?vs_currency=usd&days=${days}&interval=${interval}&precision=0`,
       );
 
-      const parsed = marketChart.parse(result);
+      const { prices } = marketChart.parse(result);
 
-      return parsed.prices.map((prices) => [prices[0], Math.round(prices[1])]);
+      return prices;
     } catch (error) {
       this.logger.error('Error getting btc chart data', { error });
       return undefined;
