@@ -5,13 +5,17 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { Request, Response } from 'express';
 import { getIp } from 'src/utils/ip';
 
+import { DataloaderModule } from '../dataloader/dataloader.module';
+import { DataloaderService } from '../dataloader/dataloader.service';
 import { ContextType } from './context.type';
 
 @Module({
   imports: [
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      imports: [DataloaderModule],
+      inject: [DataloaderService],
       driver: ApolloDriver,
-      useFactory: () => ({
+      useFactory: (dataloaderService: DataloaderService) => ({
         path: 'api/graphql',
         driver: ApolloDriver,
         autoSchemaFile: 'schema.gql',
@@ -30,6 +34,7 @@ import { ContextType } from './context.type';
             req,
             res,
             ip: getIp(req),
+            loaders: dataloaderService.createLoaders(),
           };
         },
       }),
