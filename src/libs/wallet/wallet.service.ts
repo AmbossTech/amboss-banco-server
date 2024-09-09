@@ -89,11 +89,16 @@ export class WalletService {
       );
     });
 
-    await this.mailService.sendBackupMail({
-      to: { id: user_id },
-      encryptedMnemonic: input.details.protected_mnemonic || '',
-      walletName: newWallet.name,
-    });
+    // We only need to send the backup wallet email if the user created a wallet with a mnemonic.
+    // There are cases when a user doesn't need to send a mnemonic.
+    // For example when creating a view-only wallet.
+    if (!!input.details.protected_mnemonic) {
+      await this.mailService.sendBackupMail({
+        to: { id: user_id },
+        encryptedMnemonic: input.details.protected_mnemonic,
+        walletName: newWallet.name,
+      });
+    }
 
     return { id: newWallet.id, name: newWallet.name };
   }
