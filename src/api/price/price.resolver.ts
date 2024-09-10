@@ -10,7 +10,7 @@ import { differenceInDays, startOfDay, subDays } from 'date-fns';
 import { Public } from 'src/auth/auth.decorators';
 import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
-import { v4 as uuiv4, v5 as uuidv5 } from 'uuid';
+import { v5 as uuidv5 } from 'uuid';
 
 import { getChartInterval } from './price.helpers';
 import {
@@ -77,7 +77,7 @@ export class PriceHistoricalResolver {
 export class PriceQueriesResolver {
   @ResolveField()
   id() {
-    return uuiv4();
+    return uuidv5(`PriceQueries`, uuidv5.URL);
   }
 
   @ResolveField()
