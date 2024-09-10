@@ -76,6 +76,11 @@ export class PriceHistoricalResolver {
 @Resolver(PriceQueries)
 export class PriceQueriesResolver {
   @ResolveField()
+  id() {
+    return uuidv5(`PriceQueries`, uuidv5.URL);
+  }
+
+  @ResolveField()
   historical(
     @Args('input') { from_date }: PriceChartInput,
   ): PriceHistoricalParent {

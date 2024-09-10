@@ -25,8 +25,8 @@ export class PricePoint {
   @Field()
   date: string;
 
-  @Field()
-  value: number;
+  @Field({ nullable: true })
+  value?: number;
 
   @Field()
   currency: PriceCurrency;
@@ -46,6 +46,9 @@ export class PriceHistorical {
 
 @ObjectType()
 export class PriceQueries {
+  @Field()
+  id: string;
+
   @Field()
   historical: PriceHistorical;
 }
