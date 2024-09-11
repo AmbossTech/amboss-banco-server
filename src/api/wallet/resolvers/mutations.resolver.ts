@@ -8,6 +8,7 @@ import {
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { BoltzService } from 'src/libs/boltz/boltz.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
@@ -25,6 +26,7 @@ import { toWithError } from 'src/utils/async';
 import { WALLET_LIMIT } from '../wallet.const';
 import {
   BroadcastLiquidTransactionInput,
+  CreateLightingInvoiceInput,
   CreateOnchainAddressInput,
   CreateWalletInput,
   ReceiveSwapInput,
@@ -41,6 +43,7 @@ export class WalletMutationsResolver {
     private sideShiftService: SideShiftService,
     private cryptoService: CryptoService,
     private redlockService: RedlockService,
+    private boltzService: BoltzService,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -196,6 +199,38 @@ export class WalletMutationsResolver {
     const tx_id = await this.liquidService.broadcastPset(input.signed_pset);
 
     return { tx_id };
+  }
+
+  @ResolveField()
+  async create_lightning_invoice(
+    @Args('input') input: CreateLightingInvoiceInput,
+    @CurrentUser() { user_id }: any,
+  ) {
+    const walletAccount = await this.walletRepo.getAccountWalletAccount(
+      user_id,
+      input.wallet_account_id,
+    );
+
+    if (!walletAccount) {
+      throw new GraphQLError('Wallet account not found');
+    }
+
+    const descriptor = this.cryptoService.decryptString(
+      walletAccount.details.local_protected_descriptor,
+    );
+
+    const address = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
+    );
+
+    const swap = await this.boltzService.createReverseSwap(
+      address.address().toString(),
+      input.amount,
+      walletAccount.id,
+    );
+
+    return { payment_request: swap.invoice };
   }
 
   private async refreshWallet(
