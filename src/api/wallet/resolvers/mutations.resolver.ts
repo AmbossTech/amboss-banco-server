@@ -228,6 +228,7 @@ export class WalletMutationsResolver {
       address.address().toString(),
       input.amount,
       walletAccount.id,
+      false,
     );
 
     return { payment_request: swap.invoice };
