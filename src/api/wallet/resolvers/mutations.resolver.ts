@@ -203,16 +203,32 @@ export class WalletMutationsResolver {
 
   @ResolveField()
   async create_lightning_invoice(
-    @Args('input') input: CreateLightingInvoiceInput,
+    @Args('input') { amount, wallet_account_id }: CreateLightingInvoiceInput,
     @CurrentUser() { user_id }: any,
   ) {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
-      input.wallet_account_id,
+      wallet_account_id,
     );
 
     if (!walletAccount) {
       throw new GraphQLError('Wallet account not found');
+    }
+
+    const boltzInfo = await this.boltzService.getReverseSwapInfo();
+
+    const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+
+    if (maximal < amount) {
+      throw new GraphQLError(
+        `Amount ${amount} greater than maximum of ${maximal}`,
+      );
+    }
+
+    if (minimal > amount) {
+      throw new GraphQLError(
+        `Amount ${amount} smaller than minimum of ${minimal}`,
+      );
     }
 
     const descriptor = this.cryptoService.decryptString(
@@ -226,7 +242,7 @@ export class WalletMutationsResolver {
 
     const swap = await this.boltzService.createReverseSwap(
       address.address().toString(),
-      input.amount,
+      amount,
       walletAccount.id,
       false,
     );

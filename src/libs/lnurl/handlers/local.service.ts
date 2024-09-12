@@ -72,7 +72,10 @@ export class LnUrlLocalService {
 
     if (!props.currency) {
       // The amount that comes in through LNURL for Lightning is in millisatoshis
-      return this.getInvoiceResponse(account, Math.ceil(amount / 1000));
+      return this.getInvoiceResponse({
+        lnAddressUser: account,
+        amount_sats: Math.ceil(amount / 1000),
+      });
     }
 
     if (!props.network) {
@@ -339,10 +342,13 @@ export class LnUrlLocalService {
       });
   }
 
-  async getInvoiceResponse(
-    account: string,
-    amount_sats: number,
-  ): Promise<LnUrlResponseSchemaType> {
+  async getInvoiceResponse({
+    lnAddressUser,
+    amount_sats,
+  }: {
+    lnAddressUser: string;
+    amount_sats: number;
+  }): Promise<LnUrlResponseSchemaType> {
     return auto<GetLnUrlInvoiceAutoType>({
       checkAmount: async () => {
         const boltzInfo = await this.boltzService.getReverseSwapInfo();
@@ -368,7 +374,7 @@ export class LnUrlLocalService {
         'checkAmount',
         async ({ checkAmount }) => {
           const accountWallets =
-            await this.walletRepo.getWalletByLnAddress(account);
+            await this.walletRepo.getWalletByLnAddress(lnAddressUser);
 
           const liquidWalletAccounts =
             accountWallets?.wallet.wallet_account.filter(
