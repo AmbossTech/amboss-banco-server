@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
 import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { FiatModule } from 'src/libs/fiat/fiat.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
@@ -38,6 +39,7 @@ import {
     SideShiftModule,
     RedlockModule,
     MailModule,
+    BoltzRestModule,
   ],
   providers: [
     MainWalletMutationsResolver,

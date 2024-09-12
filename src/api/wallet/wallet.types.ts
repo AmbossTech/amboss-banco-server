@@ -47,6 +47,21 @@ export class CreateOnchainAddress {
 }
 
 @ObjectType()
+export class CreateLightingInvoice {
+  @Field()
+  payment_request: string;
+}
+
+@InputType()
+export class CreateLightingInvoiceInput {
+  @Field()
+  amount: number;
+
+  @Field()
+  wallet_account_id: string;
+}
+
+@ObjectType()
 export class ReceiveSwap {
   @Field()
   id: string;
@@ -284,6 +299,9 @@ export class WalletMutations {
 
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
+
+  @Field(() => CreateLightingInvoice)
+  create_lightning_invoice: CreateLightingInvoice;
 
   @Field(() => ReceiveSwap)
   create_onchain_address_swap: ReceiveSwap;

@@ -102,7 +102,10 @@ export class LnUrlIsomorphicService {
     const lnUrlData = await this.isomorphic(
       domain,
       async () => {
-        return this.localLnurl.getInvoiceResponse(user, amount_sats);
+        return this.localLnurl.getInvoiceResponse({
+          lnAddressUser: user,
+          amount_sats,
+        });
       },
       async () => {
         const [info, error] = await toWithError(this.getInfo(money_address));
