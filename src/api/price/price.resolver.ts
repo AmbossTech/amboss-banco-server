@@ -97,6 +97,14 @@ export class PriceQueriesResolver {
 
     return { dates, interval: getChartInterval(daysToQuery) };
   }
+
+  @ResolveField()
+  current(): PricePointParent {
+    return {
+      date: null,
+      currency: PriceCurrency.USD,
+    };
+  }
 }
 
 @Resolver()
