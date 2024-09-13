@@ -51,6 +51,9 @@ export class PriceQueries {
 
   @Field()
   historical: PriceHistorical;
+
+  @Field()
+  current: PricePoint;
 }
 
 @InputType()

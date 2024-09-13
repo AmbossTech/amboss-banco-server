@@ -335,6 +335,7 @@ type PricePoint {
 }
 
 type PriceQueries {
+  current: PricePoint!
   historical(input: PriceChartInput!): PriceHistorical!
   id: String!
 }
