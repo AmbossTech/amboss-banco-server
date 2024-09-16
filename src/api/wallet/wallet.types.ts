@@ -17,6 +17,7 @@ import {
 } from 'src/repo/wallet/wallet.types';
 
 import { Secp256k1KeyPairInput } from '../account/account.types';
+import { Nullable } from '../api.types';
 import { WalletContacts } from '../contact/contact.types';
 import { WalletSwaps } from '../swaps/swaps.types';
 
@@ -59,6 +60,9 @@ export class CreateLightingInvoiceInput {
 
   @Field()
   wallet_account_id: string;
+
+  @Field({ nullable: true })
+  invoice_description: Nullable<string>;
 }
 
 @ObjectType()

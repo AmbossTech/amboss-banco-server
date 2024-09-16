@@ -203,7 +203,12 @@ export class WalletMutationsResolver {
 
   @ResolveField()
   async create_lightning_invoice(
-    @Args('input') { amount, wallet_account_id }: CreateLightingInvoiceInput,
+    @Args('input')
+    {
+      amount,
+      wallet_account_id,
+      invoice_description,
+    }: CreateLightingInvoiceInput,
     @CurrentUser() { user_id }: any,
   ) {
     try {
@@ -246,6 +251,8 @@ export class WalletMutationsResolver {
         amount,
         walletAccount.id,
         false,
+        invoice_description ||
+          `Pay to ${walletAccount.walletOnAccount.money_address_user}`,
       );
 
       return { payment_request: swap.invoice };

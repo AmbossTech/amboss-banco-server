@@ -399,6 +399,7 @@ export class LnUrlLocalService {
             checkAmount,
             walletAcc.id,
             false,
+            `Pay to ${lnAddressUser}`,
           );
         },
       ],

@@ -85,6 +85,7 @@ export class BoltzService {
     amount: number,
     wallet_account_id: string,
     covenant = true,
+    description: string,
   ) {
     const swapInfo = await this.getReverseSwapInfo();
     const { limits } = swapInfo['BTC']['L-BTC'];
@@ -103,6 +104,7 @@ export class BoltzService {
       preimageHash: getSHA256Hash(preimage),
       claimPublicKey: keys.publicKey.toString('hex'),
       referralId: 'AMBOSS',
+      description,
     };
 
     const response = await this.boltzRest.createReverseSwap(request);

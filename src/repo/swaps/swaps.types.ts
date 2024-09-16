@@ -46,6 +46,7 @@ export type BoltzReverseRequestType = {
   referralId: string;
   address: string;
   claimCovenant: boolean;
+  description: string;
 };
 
 export type BoltzChainSwapRequestType = {
