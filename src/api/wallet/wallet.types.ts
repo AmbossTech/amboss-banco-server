@@ -61,7 +61,7 @@ export class CreateLightingInvoiceInput {
   @Field()
   wallet_account_id: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   invoice_description: Nullable<string>;
 }
 
