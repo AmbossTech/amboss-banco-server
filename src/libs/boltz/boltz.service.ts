@@ -80,13 +80,21 @@ export class BoltzService {
     return response;
   }
 
-  async createReverseSwap(
-    address: string,
-    amount: number,
-    wallet_account_id: string,
-    covenant = true,
-    description: string,
-  ) {
+  async createReverseSwap(swapInput: {
+    address: string;
+    amount: number;
+    wallet_account_id: string;
+    covenant?: boolean;
+    description: string;
+  }) {
+    const {
+      address,
+      amount,
+      wallet_account_id,
+      covenant = true,
+      description,
+    } = swapInput;
+
     const swapInfo = await this.getReverseSwapInfo();
     const { limits } = swapInfo['BTC']['L-BTC'];
 

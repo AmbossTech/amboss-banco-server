@@ -394,13 +394,13 @@ export class LnUrlLocalService {
           const address =
             await this.liquidService.getOnchainAddress(descriptor);
 
-          return this.boltzService.createReverseSwap(
-            address.address().toString(),
-            checkAmount,
-            walletAcc.id,
-            false,
-            `Pay to ${lnAddressUser}`,
-          );
+          return this.boltzService.createReverseSwap({
+            address: address.address().toString(),
+            amount: checkAmount,
+            wallet_account_id: walletAcc.id,
+            covenant: false,
+            description: `Pay to ${lnAddressUser}`,
+          });
         },
       ],
 
