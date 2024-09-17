@@ -57,6 +57,7 @@ type CreateLightingInvoice {
 
 input CreateLightingInvoiceInput {
   amount: Float!
+  invoice_description: String
   wallet_account_id: String!
 }
 

@@ -203,7 +203,12 @@ export class WalletMutationsResolver {
 
   @ResolveField()
   async create_lightning_invoice(
-    @Args('input') { amount, wallet_account_id }: CreateLightingInvoiceInput,
+    @Args('input')
+    {
+      amount,
+      wallet_account_id,
+      invoice_description,
+    }: CreateLightingInvoiceInput,
     @CurrentUser() { user_id }: any,
   ) {
     try {
@@ -241,12 +246,17 @@ export class WalletMutationsResolver {
         true,
       );
 
-      const swap = await this.boltzService.createReverseSwap(
-        address.address().toString(),
+      const description =
+        invoice_description ||
+        `Pay to ${walletAccount.walletOnAccount.money_address_user}`;
+
+      const swap = await this.boltzService.createReverseSwap({
+        address: address.address().toString(),
         amount,
-        walletAccount.id,
-        false,
-      );
+        wallet_account_id: walletAccount.id,
+        covenant: false,
+        description,
+      });
 
       return { payment_request: swap.invoice };
     } catch (error) {

@@ -68,7 +68,7 @@ export class WalletRepoService {
 
     if (!walletOnAccount) return null;
 
-    return walletAccount;
+    return { ...walletAccount, walletOnAccount };
   }
 
   async createNewWallet({
