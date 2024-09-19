@@ -85,25 +85,17 @@ export class LnUrlLocalService {
       };
     }
 
-    const currencies = await this.getCurrencies(account);
+    if (props.network === PaymentOptionNetwork.LIQUID) {
+      return this.getChainResponse({
+        account,
+        amount,
+        network: props.network,
+        currency: props.currency,
+      });
+    }
 
-    const supportedLiquidAssets = currencies
-      .filter((c) => c.network === PaymentOptionNetwork.LIQUID)
-      .map((c) => c.code);
-
-    if (supportedLiquidAssets.includes(props.currency as PaymentOptionCode)) {
-      if (props.network === PaymentOptionNetwork.LIQUID) {
-        return this.getChainResponse({
-          account,
-          amount,
-          network: props.network,
-          currency: props.currency,
-        });
-      }
-
-      if (props.network === PaymentOptionNetwork.BITCOIN) {
-        return this.getBitcoinOnchainResponse(account, amount);
-      }
+    if (props.network === PaymentOptionNetwork.BITCOIN) {
+      return this.getBitcoinOnchainResponse(account, amount);
     }
 
     return {
