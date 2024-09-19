@@ -85,7 +85,13 @@ export class LnUrlLocalService {
       };
     }
 
-    if (props.currency === 'BTC') {
+    const currencies = await this.getCurrencies(account);
+
+    const supportedLiquidAssets = currencies
+      .filter((c) => c.network === PaymentOptionNetwork.LIQUID)
+      .map((c) => c.code);
+
+    if (supportedLiquidAssets.includes(props.currency as PaymentOptionCode)) {
       if (props.network === PaymentOptionNetwork.LIQUID) {
         return this.getChainResponse({
           account,
