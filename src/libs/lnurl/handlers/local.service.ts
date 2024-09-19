@@ -85,19 +85,17 @@ export class LnUrlLocalService {
       };
     }
 
-    if (props.currency === 'BTC') {
-      if (props.network === PaymentOptionNetwork.LIQUID) {
-        return this.getChainResponse({
-          account,
-          amount,
-          network: props.network,
-          currency: props.currency,
-        });
-      }
+    if (props.network === PaymentOptionNetwork.LIQUID) {
+      return this.getChainResponse({
+        account,
+        amount,
+        network: props.network,
+        currency: props.currency,
+      });
+    }
 
-      if (props.network === PaymentOptionNetwork.BITCOIN) {
-        return this.getBitcoinOnchainResponse(account, amount);
-      }
+    if (props.network === PaymentOptionNetwork.BITCOIN) {
+      return this.getBitcoinOnchainResponse(account, amount);
     }
 
     return {
