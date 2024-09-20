@@ -140,7 +140,7 @@ export class LnUrlLocalService {
             );
 
           return {
-            callback: `http://${domains[0]}/lnurlp/${account}`,
+            callback: `https://${domains[0]}/lnurlp/${account}`,
             minSendable: getBoltzInfo.BTC['L-BTC'].limits.minimal * 1000,
             maxSendable: getBoltzInfo.BTC['L-BTC'].limits.maximal * 1000,
             metadata: JSON.stringify([
