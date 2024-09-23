@@ -99,6 +99,23 @@ input CreateWalletInput {
   secp256k1_key_pair: Secp256k1KeyPairInput!
 }
 
+type FeeAmount {
+  id: String!
+  satoshis: Float!
+  usd: Float!
+}
+
+type FeeEstimation {
+  id: String!
+  network_fee: FeeAmount!
+  swap_fee_rate: Float!
+}
+
+type FeeInfo {
+  fee_estimations: [FeeEstimation!]!
+  id: String!
+}
+
 type FiatInfo {
   fiat_to_btc: String
   id: String!
@@ -287,6 +304,7 @@ input PayNetworkSwapInput {
 }
 
 type PayQueries {
+  fee_info: FeeInfo!
   lnurl_info(input: LnUrlInfoInput!): LnUrlInfo!
   network_swap_quote(input: SwapQuoteInput!): SwapQuote!
 }

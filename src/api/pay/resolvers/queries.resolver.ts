@@ -8,7 +8,13 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
+import { BoltzService } from 'src/libs/boltz/boltz.service';
+import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import {
+  DEFAULT_LIQUID_FEE_MSAT,
+  TWO_IN_TWO_OUT_TX_SIZE,
+} from 'src/libs/liquid/liquid.service';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -20,6 +26,10 @@ import {
 import { v5 } from 'uuid';
 
 import {
+  FeeAmount,
+  FeeEstimation,
+  FeeEstimationParent,
+  FeeInfo,
   LnUrlInfo,
   LnUrlInfoInput,
   PayQueries,
@@ -33,6 +43,7 @@ export class PayQueriesResolver {
     private sideShiftService: SideShiftService,
     private redisService: RedisService,
     private lnurlService: LnUrlIsomorphicService,
+    private boltzService: BoltzService,
   ) {}
 
   @ResolveField()
@@ -85,6 +96,78 @@ export class PayQueriesResolver {
     }
 
     return info;
+  }
+
+  @ResolveField()
+  async fee_info(): Promise<FeeEstimationParent> {
+    const liquid_fee =
+      (DEFAULT_LIQUID_FEE_MSAT * TWO_IN_TWO_OUT_TX_SIZE) / 1000;
+
+    const {
+      'L-BTC': {
+        BTC: {
+          fees: { percentage },
+        },
+      },
+    } = await this.boltzService.getSubmarineSwapInfo();
+
+    return { liquid_fee, swap_fee_rate: percentage };
+  }
+}
+
+@Resolver(FeeAmount)
+export class FeeAmountResolver {
+  constructor(private fiatService: FiatService) {}
+
+  @ResolveField()
+  id(@Parent() fee: number) {
+    return v5(fee.toString(), v5.URL);
+  }
+
+  @ResolveField()
+  satoshis(@Parent() fee: number) {
+    return fee;
+  }
+
+  @ResolveField()
+  async usd(@Parent() fee: number) {
+    const currentUsdPrice = await this.fiatService.getLatestBtcPrice();
+    if (!currentUsdPrice) {
+      throw new GraphQLError(`Cannot usd fee estimation`);
+    }
+
+    return (currentUsdPrice * fee) / 100_000_000;
+  }
+}
+
+@Resolver(FeeEstimation)
+export class FeeEstimationResolver {
+  @ResolveField()
+  id(@Parent() parent: FeeEstimationParent) {
+    return v5(JSON.stringify(parent), v5.URL);
+  }
+
+  @ResolveField()
+  swap_fee_rate(@Parent() { swap_fee_rate }: FeeEstimationParent) {
+    return swap_fee_rate / 100;
+  }
+
+  @ResolveField()
+  network_fee(@Parent() { liquid_fee }: FeeEstimationParent) {
+    return liquid_fee;
+  }
+}
+
+@Resolver(FeeInfo)
+export class FeeInfoResolver {
+  @ResolveField()
+  id(@Parent() parent: FeeEstimationParent) {
+    return v5(JSON.stringify(parent), v5.URL);
+  }
+
+  @ResolveField()
+  fee_estimations(@Parent() parent: FeeEstimationParent) {
+    return [parent];
   }
 }
 
