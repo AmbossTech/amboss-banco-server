@@ -8,6 +8,7 @@ import {
 import { each } from 'async';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { encodeBip21 } from 'src/libs/bitcoin/bitcoin.utils';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
@@ -20,15 +21,19 @@ import {
   SideShiftNetwork,
 } from 'src/libs/sideshift/sideshift.types';
 import { WalletService } from 'src/libs/wallet/wallet.service';
+import { BoltzChain } from 'src/repo/swaps/swaps.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { toWithError } from 'src/utils/async';
+import { liquidAssetIds } from 'src/utils/crypto/crypto';
 
 import { WALLET_LIMIT } from '../wallet.const';
 import {
   BroadcastLiquidTransactionInput,
   CreateLightingInvoiceInput,
+  CreateOnchainAddress,
   CreateOnchainAddressInput,
   CreateWalletInput,
+  OnchainAddressType,
   ReceiveSwapInput,
   RefreshWalletInput,
   WalletMutations,
@@ -67,7 +72,7 @@ export class WalletMutationsResolver {
   async create_onchain_address(
     @Args('input') input: CreateOnchainAddressInput,
     @CurrentUser() { user_id }: any,
-  ) {
+  ): Promise<CreateOnchainAddress> {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
       input.wallet_account_id,
@@ -81,12 +86,48 @@ export class WalletMutationsResolver {
       walletAccount.details.local_protected_descriptor,
     );
 
-    const address = await this.liquidService.getOnchainAddress(
+    const liquidAddress = await this.liquidService.getOnchainAddress(
       descriptor,
       true,
     );
+    const liquidAddressStr = liquidAddress.address().toString();
 
-    return { address: address.address().toString() };
+    let finalAddress: string;
+    let bip21: string;
+
+    switch (input.network) {
+      case OnchainAddressType.L_BTC:
+        finalAddress = liquidAddressStr;
+        bip21 = encodeBip21({
+          address: finalAddress,
+          assetId: liquidAssetIds.mainnet.bitcoin,
+          symbol: input.network,
+          sats: input.amount,
+        });
+        break;
+
+      case OnchainAddressType.BTC:
+        if (!input.amount) {
+          throw new GraphQLError(
+            `Cannot generate bitcoin address without amount`,
+          );
+        }
+        const swap = await this.boltzService.createChainSwap(
+          liquidAddressStr,
+          input.amount,
+          walletAccount.id,
+          { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
+        );
+        finalAddress = swap.lockupDetails.lockupAddress;
+        bip21 = swap.lockupDetails.bip21;
+        break;
+    }
+
+    return {
+      address: finalAddress,
+      network: input.network,
+      bip21,
+    };
   }
 
   @ResolveField()

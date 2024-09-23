@@ -68,9 +68,13 @@ type CreateLiquidTransaction {
 
 type CreateOnchainAddress {
   address: String!
+  bip21: String
+  network: OnchainAddressType!
 }
 
 input CreateOnchainAddressInput {
+  amount: Int
+  network: OnchainAddressType!
   wallet_account_id: String!
 }
 
@@ -214,6 +218,11 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+enum OnchainAddressType {
+  BTC
+  L_BTC
 }
 
 input PasskeyAuthenticateInput {

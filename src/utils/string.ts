@@ -7,3 +7,9 @@ const urlRegex =
 export const isUUID = (str: string) => uuidRegex.test(str);
 
 export const isUrl = (url: string) => urlRegex.test(url);
+
+export const getQueryDelimiter = (string: string): string => {
+  if (string.includes('?')) return '&';
+
+  return '?';
+};
