@@ -32,7 +32,7 @@ const getBip21Prefix = (symbol: OnchainAddressType): string => {
     case OnchainAddressType.BTC:
       return 'bitcoin';
     case OnchainAddressType.L_BTC:
-      return 'liquidbitcoin';
+      return 'liquidnetwork';
   }
 };
 

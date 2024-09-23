@@ -1,13 +1,30 @@
+import { liquidAssetIds } from 'src/utils/crypto/crypto';
+
 export enum WalletAccountType {
   LIQUID = 'LIQUID',
 }
 
-const LiquidBitcoinAsset = { code: 'BTC', name: 'Bitcoin', symbol: '₿' };
-const LiquidTetherAsset = { code: 'USDT', name: 'Tether', symbol: '$' };
+const LiquidBitcoinAsset = {
+  code: 'BTC',
+  name: 'Bitcoin',
+  symbol: '₿',
+  id: liquidAssetIds.mainnet.bitcoin,
+};
+const LiquidTetherAsset = {
+  code: 'USDT',
+  name: 'Tether',
+  symbol: '$',
+  id: liquidAssetIds.mainnet.tether,
+};
+
+export enum LiquidAssetEnum {
+  BTC = 'BTC',
+  USDT = 'USDT',
+}
 
 export const LiquidWalletAssets = {
-  BTC: LiquidBitcoinAsset,
-  USDT: LiquidTetherAsset,
+  [LiquidAssetEnum.BTC]: LiquidBitcoinAsset,
+  [LiquidAssetEnum.USDT]: LiquidTetherAsset,
 };
 
 export type WalletAccountDetailsType = {

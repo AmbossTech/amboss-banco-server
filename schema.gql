@@ -74,6 +74,7 @@ type CreateOnchainAddress {
 
 input CreateOnchainAddressInput {
   amount: Int
+  asset: LiquidAssetEnum
   network: OnchainAddressType!
   wallet_account_id: String!
 }
@@ -120,6 +121,11 @@ type LiquidAsset {
   balance: String!
   fiat_info: FiatInfo!
   id: String!
+}
+
+enum LiquidAssetEnum {
+  BTC
+  USDT
 }
 
 type LiquidAssetInfo {

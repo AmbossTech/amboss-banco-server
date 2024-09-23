@@ -30,7 +30,7 @@ describe('encodeBip21', () => {
     });
 
     expect(bip21).toBe(
-      `liquidbitcoin:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?amount=0.01`,
+      `liquidnetwork:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?amount=0.01`,
     );
   });
   it('should generate liquid bip21 with asset', () => {
@@ -43,7 +43,7 @@ describe('encodeBip21', () => {
     });
 
     expect(bip21).toBe(
-      `liquidbitcoin:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?amount=0.01&assetid=6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d`,
+      `liquidnetwork:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?amount=0.01&assetid=6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d`,
     );
   });
   it('should generate liquid bip21 with asset without amount', () => {
@@ -55,7 +55,7 @@ describe('encodeBip21', () => {
     });
 
     expect(bip21).toBe(
-      `liquidbitcoin:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?assetid=6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d`,
+      `liquidnetwork:QLFdUboUPJnUzvsXKu83hUtrQ1DuxyggRg?assetid=6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d`,
     );
   });
 });

@@ -23,8 +23,8 @@ import {
 import { WalletService } from 'src/libs/wallet/wallet.service';
 import { BoltzChain } from 'src/repo/swaps/swaps.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
+import { LiquidWalletAssets } from 'src/repo/wallet/wallet.types';
 import { toWithError } from 'src/utils/async';
-import { liquidAssetIds } from 'src/utils/crypto/crypto';
 
 import { WALLET_LIMIT } from '../wallet.const';
 import {
@@ -100,9 +100,9 @@ export class WalletMutationsResolver {
         finalAddress = liquidAddressStr;
         bip21 = encodeBip21({
           address: finalAddress,
-          assetId: liquidAssetIds.mainnet.bitcoin,
           symbol: input.network,
           sats: input.amount,
+          assetId: input.asset ? LiquidWalletAssets[input.asset].id : undefined,
         });
         break;
 

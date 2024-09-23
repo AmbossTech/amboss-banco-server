@@ -12,6 +12,7 @@ import {
   SideShiftNetwork,
 } from 'src/libs/sideshift/sideshift.types';
 import {
+  LiquidAssetEnum,
   WalletAccountDetailsType,
   WalletAccountType,
   WalletType,
@@ -32,6 +33,7 @@ registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
 registerEnumType(SideShiftCoin, { name: 'SwapCoin' });
 registerEnumType(SideShiftNetwork, { name: 'SwapNetwork' });
 registerEnumType(OnchainAddressType, { name: 'OnchainAddressType' });
+registerEnumType(LiquidAssetEnum, { name: 'LiquidAssetEnum' });
 
 @ObjectType()
 export class FiatInfo {
@@ -376,6 +378,9 @@ export class CreateOnchainAddressInput {
 
   @Field(() => Int, { nullable: true })
   amount: Nullable<number>;
+
+  @Field(() => LiquidAssetEnum, { nullable: true })
+  asset: Nullable<LiquidAssetEnum>;
 }
 
 @InputType()
