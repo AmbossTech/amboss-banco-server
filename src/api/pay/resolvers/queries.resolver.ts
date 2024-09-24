@@ -6,9 +6,16 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { startOfDay } from 'date-fns';
 import { GraphQLError } from 'graphql';
 import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
+import { BoltzService } from 'src/libs/boltz/boltz.service';
+import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
+import {
+  DEFAULT_LIQUID_FEE_MSAT,
+  TWO_IN_TWO_OUT_TX_SIZE,
+} from 'src/libs/liquid/liquid.service';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
@@ -20,6 +27,9 @@ import {
 import { v5 } from 'uuid';
 
 import {
+  FeeAmount,
+  FeeEstimation,
+  FeeInfo,
   LnUrlInfo,
   LnUrlInfoInput,
   PayQueries,
@@ -85,6 +95,79 @@ export class PayQueriesResolver {
     }
 
     return info;
+  }
+
+  @ResolveField()
+  async fee_info() {
+    return {};
+  }
+}
+
+@Resolver(FeeAmount)
+export class FeeAmountResolver {
+  constructor(private fiatService: FiatService) {}
+
+  @ResolveField()
+  id(@Parent() fee: number) {
+    return v5(fee.toString(), v5.URL);
+  }
+
+  @ResolveField()
+  satoshis(@Parent() fee: number) {
+    return fee;
+  }
+
+  @ResolveField()
+  async usd(@Parent() fee: number) {
+    const currentUsdPrice = await this.fiatService.getLatestBtcPrice();
+    if (!currentUsdPrice) {
+      throw new GraphQLError(`Cannot get usd fee estimation`);
+    }
+
+    return (currentUsdPrice * fee) / 100_000_000;
+  }
+}
+
+@Resolver(FeeEstimation)
+export class FeeEstimationResolver {
+  constructor(private boltzService: BoltzService) {}
+
+  @ResolveField()
+  id() {
+    const date = startOfDay(new Date());
+    return v5(date.getTime().toString(), v5.URL);
+  }
+
+  @ResolveField()
+  async swap_fee_rate() {
+    const {
+      'L-BTC': {
+        BTC: {
+          fees: { percentage },
+        },
+      },
+    } = await this.boltzService.getSubmarineSwapInfo();
+
+    return percentage / 100;
+  }
+
+  @ResolveField()
+  network_fee() {
+    return (DEFAULT_LIQUID_FEE_MSAT * TWO_IN_TWO_OUT_TX_SIZE) / 1000;
+  }
+}
+
+@Resolver(FeeInfo)
+export class FeeInfoResolver {
+  @ResolveField()
+  id() {
+    const date = startOfDay(new Date());
+    return v5(date.getTime().toString(), v5.URL);
+  }
+
+  @ResolveField()
+  fee_estimations() {
+    return [{}];
   }
 }
 

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
+import { FiatModule } from 'src/libs/fiat/fiat.module';
 import { LiquidModule } from 'src/libs/liquid/liquid.module';
 import { LnurlModule } from 'src/libs/lnurl/lnurl.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
@@ -12,6 +13,9 @@ import {
   PayMutationsResolver,
 } from './resolvers/mutations.resolver';
 import {
+  FeeAmountResolver,
+  FeeEstimationResolver,
+  FeeInfoResolver,
   LnUrlInfoResolver,
   MainPayQueriesResolver,
   PayQueriesResolver,
@@ -25,6 +29,7 @@ import {
     BoltzRestModule,
     LiquidModule,
     SideShiftModule,
+    FiatModule,
   ],
   providers: [
     PayService,
@@ -33,6 +38,9 @@ import {
     MainPayQueriesResolver,
     PayQueriesResolver,
     LnUrlInfoResolver,
+    FeeInfoResolver,
+    FeeEstimationResolver,
+    FeeAmountResolver,
   ],
 })
 export class PayModule {}

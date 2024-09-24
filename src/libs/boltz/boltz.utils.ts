@@ -9,8 +9,6 @@ import { BoltzMagicRouteHintType } from './boltz.types';
 
 const ECPair = ECPairFactory(ecc);
 
-export const DEFAULT_LIQUID_FEE_MSAT = 100;
-
 const MAGIC_ROUTING_HINT = '0846c900051c0000';
 const LBTC_ASSET_HASH =
   '6f0279e9ed041c3d710a9f57d0c02928416460c4b722ae3457a11eec381c526d';
