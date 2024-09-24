@@ -297,8 +297,3 @@ export type PayBitcoinAddressInput = {
     amount: string;
   };
 };
-
-export type FeeEstimationParent = {
-  liquid_fee: number;
-  swap_fee_rate: number;
-};

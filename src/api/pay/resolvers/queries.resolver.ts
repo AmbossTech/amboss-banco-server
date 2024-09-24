@@ -6,6 +6,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { startOfDay } from 'date-fns';
 import { GraphQLError } from 'graphql';
 import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
@@ -28,7 +29,6 @@ import { v5 } from 'uuid';
 import {
   FeeAmount,
   FeeEstimation,
-  FeeEstimationParent,
   FeeInfo,
   LnUrlInfo,
   LnUrlInfoInput,
@@ -43,7 +43,6 @@ export class PayQueriesResolver {
     private sideShiftService: SideShiftService,
     private redisService: RedisService,
     private lnurlService: LnUrlIsomorphicService,
-    private boltzService: BoltzService,
   ) {}
 
   @ResolveField()
@@ -99,19 +98,8 @@ export class PayQueriesResolver {
   }
 
   @ResolveField()
-  async fee_info(): Promise<FeeEstimationParent> {
-    const liquid_fee =
-      (DEFAULT_LIQUID_FEE_MSAT * TWO_IN_TWO_OUT_TX_SIZE) / 1000;
-
-    const {
-      'L-BTC': {
-        BTC: {
-          fees: { percentage },
-        },
-      },
-    } = await this.boltzService.getSubmarineSwapInfo();
-
-    return { liquid_fee, swap_fee_rate: percentage };
+  async fee_info() {
+    return {};
   }
 }
 
@@ -133,7 +121,7 @@ export class FeeAmountResolver {
   async usd(@Parent() fee: number) {
     const currentUsdPrice = await this.fiatService.getLatestBtcPrice();
     if (!currentUsdPrice) {
-      throw new GraphQLError(`Cannot usd fee estimation`);
+      throw new GraphQLError(`Cannot get usd fee estimation`);
     }
 
     return (currentUsdPrice * fee) / 100_000_000;
@@ -142,32 +130,44 @@ export class FeeAmountResolver {
 
 @Resolver(FeeEstimation)
 export class FeeEstimationResolver {
+  constructor(private boltzService: BoltzService) {}
+
   @ResolveField()
-  id(@Parent() parent: FeeEstimationParent) {
-    return v5(JSON.stringify(parent), v5.URL);
+  id() {
+    const date = startOfDay(new Date());
+    return v5(date.getTime().toString(), v5.URL);
   }
 
   @ResolveField()
-  swap_fee_rate(@Parent() { swap_fee_rate }: FeeEstimationParent) {
-    return swap_fee_rate / 100;
+  async swap_fee_rate() {
+    const {
+      'L-BTC': {
+        BTC: {
+          fees: { percentage },
+        },
+      },
+    } = await this.boltzService.getSubmarineSwapInfo();
+
+    return percentage / 100;
   }
 
   @ResolveField()
-  network_fee(@Parent() { liquid_fee }: FeeEstimationParent) {
-    return liquid_fee;
+  network_fee() {
+    return (DEFAULT_LIQUID_FEE_MSAT * TWO_IN_TWO_OUT_TX_SIZE) / 1000;
   }
 }
 
 @Resolver(FeeInfo)
 export class FeeInfoResolver {
   @ResolveField()
-  id(@Parent() parent: FeeEstimationParent) {
-    return v5(JSON.stringify(parent), v5.URL);
+  id() {
+    const date = startOfDay(new Date());
+    return v5(date.getTime().toString(), v5.URL);
   }
 
   @ResolveField()
-  fee_estimations(@Parent() parent: FeeEstimationParent) {
-    return [parent];
+  fee_estimations() {
+    return [{}];
   }
 }
 
