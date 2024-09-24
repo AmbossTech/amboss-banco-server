@@ -8,10 +8,12 @@ import {
 } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
-import { DEFAULT_LIQUID_FEE_MSAT } from 'src/libs/boltz/boltz.utils';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { ContextType } from 'src/libs/graphql/context.type';
-import { LiquidService } from 'src/libs/liquid/liquid.service';
+import {
+  DEFAULT_LIQUID_FEE_MSAT,
+  LiquidService,
+} from 'src/libs/liquid/liquid.service';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';

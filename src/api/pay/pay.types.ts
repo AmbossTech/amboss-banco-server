@@ -87,6 +87,39 @@ export class LnUrlInfo {
 }
 
 @ObjectType()
+export class FeeAmount {
+  @Field()
+  id: string;
+
+  @Field()
+  satoshis: number;
+
+  @Field()
+  usd: number;
+}
+
+@ObjectType()
+export class FeeEstimation {
+  @Field()
+  id: string;
+
+  @Field()
+  swap_fee_rate: number;
+
+  @Field(() => FeeAmount)
+  network_fee: FeeAmount;
+}
+
+@ObjectType()
+export class FeeInfo {
+  @Field()
+  id: string;
+
+  @Field(() => [FeeEstimation])
+  fee_estimations: FeeEstimation[];
+}
+
+@ObjectType()
 export class PayMutations {
   @Field()
   money_address: CreateLiquidTransaction;
@@ -111,6 +144,9 @@ export class PayQueries {
 
   @Field()
   lnurl_info: LnUrlInfo;
+
+  @Field()
+  fee_info: FeeInfo;
 }
 
 @InputType()
@@ -261,5 +297,3 @@ export type PayBitcoinAddressInput = {
     amount: string;
   };
 };
-
-// export type PayOnchainAddressAutoType = {};

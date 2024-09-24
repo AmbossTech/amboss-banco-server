@@ -16,11 +16,17 @@ import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
 import { BoltzRestApi } from '../boltz/boltz.rest';
-import { DEFAULT_LIQUID_FEE_MSAT } from '../boltz/boltz.utils';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
 import { getWalletFromDescriptor } from './lwk.utils';
+
+export const DEFAULT_LIQUID_FEE_MSAT = 100;
+/**
+ * expressed denominated in virtual bytes
+ * example: https://liquid.network/nl/tx/cd1f68dc9a47949c79e06aff35137aa75fef6e191a1e57a5f5fc1ff09fd809d3
+ */
+export const TWO_IN_TWO_OUT_TX_SIZE = 2.59 * 1000;
 
 export const getUpdateKey = (descriptor: string) =>
   `banco-walletdelta-${getSHA256Hash(descriptor)}`;

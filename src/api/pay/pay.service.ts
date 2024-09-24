@@ -8,11 +8,13 @@ import { BoltzService } from 'src/libs/boltz/boltz.service';
 import {
   checkMagicRouteHintInfo,
   decodeBip21Url,
-  DEFAULT_LIQUID_FEE_MSAT,
   findMagicRoutingHint,
 } from 'src/libs/boltz/boltz.utils';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
-import { LiquidService } from 'src/libs/liquid/liquid.service';
+import {
+  DEFAULT_LIQUID_FEE_MSAT,
+  LiquidService,
+} from 'src/libs/liquid/liquid.service';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
 import {
   isLnUrlError,
