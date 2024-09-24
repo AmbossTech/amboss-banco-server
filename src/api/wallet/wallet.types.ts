@@ -99,6 +99,9 @@ export class ReceiveSwap {
 
   @Field()
   max: string;
+
+  @Field(() => String, { nullable: true })
+  bip21: Nullable<string>;
 }
 
 @ObjectType()
@@ -373,9 +376,6 @@ export class CreateOnchainAddressInput {
   @Field(() => String)
   wallet_account_id: string;
 
-  @Field(() => OnchainAddressType)
-  network: OnchainAddressType;
-
   @Field(() => Int, { nullable: true })
   amount: Nullable<number>;
 
@@ -408,6 +408,9 @@ export class ReceiveSwapInput {
 
   @Field(() => SideShiftNetwork)
   deposit_network: SideShiftNetwork;
+
+  @Field(() => Int, { nullable: true })
+  amount: Nullable<number>;
 
   @Field()
   wallet_account_id: string;

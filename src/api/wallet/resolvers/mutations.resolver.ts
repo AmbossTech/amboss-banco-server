@@ -34,6 +34,7 @@ import {
   CreateOnchainAddressInput,
   CreateWalletInput,
   OnchainAddressType,
+  ReceiveSwap,
   ReceiveSwapInput,
   RefreshWalletInput,
   WalletMutations,
@@ -90,42 +91,19 @@ export class WalletMutationsResolver {
       descriptor,
       true,
     );
+
     const liquidAddressStr = liquidAddress.address().toString();
 
-    let finalAddress: string;
-    let bip21: string;
-
-    switch (input.network) {
-      case OnchainAddressType.L_BTC:
-        finalAddress = liquidAddressStr;
-        bip21 = encodeBip21({
-          address: finalAddress,
-          symbol: input.network,
-          sats: input.amount,
-          assetId: input.asset ? LiquidWalletAssets[input.asset].id : undefined,
-        });
-        break;
-
-      case OnchainAddressType.BTC:
-        if (!input.amount) {
-          throw new GraphQLError(
-            `Cannot generate bitcoin address without amount`,
-          );
-        }
-        const swap = await this.boltzService.createChainSwap(
-          liquidAddressStr,
-          input.amount,
-          walletAccount.id,
-          { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
-        );
-        finalAddress = swap.lockupDetails.lockupAddress;
-        bip21 = swap.lockupDetails.bip21;
-        break;
-    }
+    const bip21 = encodeBip21({
+      address: liquidAddressStr,
+      symbol: OnchainAddressType.L_BTC,
+      sats: input.amount,
+      assetId: input.asset ? LiquidWalletAssets[input.asset].id : undefined,
+    });
 
     return {
-      address: finalAddress,
-      network: input.network,
+      address: liquidAddressStr,
+      network: OnchainAddressType.L_BTC,
       bip21,
     };
   }
@@ -135,7 +113,7 @@ export class WalletMutationsResolver {
     @Args('input') input: ReceiveSwapInput,
     @CurrentUser() { user_id }: any,
     @Context() { ip }: ContextType,
-  ) {
+  ): Promise<ReceiveSwap> {
     const walletAccount = await this.walletRepo.getAccountWalletAccount(
       user_id,
       input.wallet_account_id,
@@ -154,33 +132,12 @@ export class WalletMutationsResolver {
       true,
     );
 
-    const [swap, error] = await toWithError(
-      this.sideShiftService.createVariableSwap(
-        {
-          depositCoin: input.deposit_coin,
-          depositNetwork: input.deposit_network,
-          settleCoin: SideShiftCoin.BTC,
-          settleNetwork: SideShiftNetwork.liquid,
-          settleAddress: address.address().toString(),
-        },
-        input.wallet_account_id,
-        ip,
-      ),
-    );
-
-    if (error) {
-      this.logger.error('Error creating address', { swap, error });
-      throw new GraphQLError('Error creating address');
-    }
-
-    return {
-      id: swap.id,
-      coin: swap.depositCoin,
-      min: swap.depositMin,
-      max: swap.depositMax,
-      network: swap.depositNetwork,
-      receive_address: swap.depositAddress,
-    };
+    return this.constructSwap({
+      userInput: input,
+      ip,
+      liquidAddress: address.address().toString(),
+      walletAccountId: walletAccount.id,
+    });
   }
 
   @ResolveField()
@@ -339,6 +296,77 @@ export class WalletMutationsResolver {
 
       return true;
     });
+  }
+
+  private async constructSwap(input: {
+    userInput: ReceiveSwapInput;
+    liquidAddress: string;
+    walletAccountId: string;
+    ip?: string;
+  }): Promise<ReceiveSwap> {
+    const { ip, liquidAddress, userInput, walletAccountId } = input;
+
+    // Make an exception for receiving onchain bitcoin, we can use Boltz
+    if (
+      userInput.deposit_coin == SideShiftCoin.BTC &&
+      userInput.deposit_network == SideShiftNetwork.bitcoin
+    ) {
+      if (!userInput.amount) {
+        throw new GraphQLError(`Cannot recieve without amount`);
+      }
+      const [swap, error] = await toWithError(
+        this.boltzService.createChainSwap(
+          liquidAddress,
+          userInput.amount,
+          walletAccountId,
+          { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
+        ),
+      );
+
+      if (error) {
+        this.logger.error('Error creating address', { swap, error });
+        throw new GraphQLError(error.message);
+      }
+
+      return {
+        id: swap.id,
+        coin: userInput.deposit_coin,
+        min: userInput.amount.toString(),
+        max: userInput.amount.toString(),
+        network: SideShiftNetwork.bitcoin,
+        receive_address: swap.lockupDetails.lockupAddress,
+        bip21: swap.lockupDetails.bip21,
+      };
+    }
+
+    const [swap, error] = await toWithError(
+      this.sideShiftService.createVariableSwap(
+        {
+          depositCoin: userInput.deposit_coin,
+          depositNetwork: userInput.deposit_network,
+          settleCoin: SideShiftCoin.BTC,
+          settleNetwork: SideShiftNetwork.liquid,
+          settleAddress: liquidAddress,
+        },
+        walletAccountId,
+        ip,
+      ),
+    );
+
+    if (error) {
+      this.logger.error('Error creating address', { swap, error });
+      throw new GraphQLError('Error creating address');
+    }
+
+    return {
+      id: swap.id,
+      coin: swap.depositCoin as SideShiftCoin,
+      min: swap.depositMin,
+      max: swap.depositMin,
+      network: swap.depositNetwork as SideShiftNetwork,
+      receive_address: swap.depositAddress,
+      bip21: undefined,
+    };
   }
 }
 

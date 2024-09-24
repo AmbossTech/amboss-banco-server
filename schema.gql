@@ -75,7 +75,6 @@ type CreateOnchainAddress {
 input CreateOnchainAddressInput {
   amount: Int
   asset: LiquidAssetEnum
-  network: OnchainAddressType!
   wallet_account_id: String!
 }
 
@@ -367,6 +366,7 @@ type Query {
 }
 
 type ReceiveSwap {
+  bip21: String
   coin: SwapCoin!
   id: String!
   max: String!
@@ -376,6 +376,7 @@ type ReceiveSwap {
 }
 
 input ReceiveSwapInput {
+  amount: Int
   deposit_coin: SwapCoin!
   deposit_network: SwapNetwork!
   wallet_account_id: String!
