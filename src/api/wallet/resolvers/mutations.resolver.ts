@@ -362,7 +362,7 @@ export class WalletMutationsResolver {
       id: swap.id,
       coin: swap.depositCoin as SideShiftCoin,
       min: swap.depositMin,
-      max: swap.depositMin,
+      max: swap.depositMax,
       network: swap.depositNetwork as SideShiftNetwork,
       receive_address: swap.depositAddress,
       bip21: undefined,
