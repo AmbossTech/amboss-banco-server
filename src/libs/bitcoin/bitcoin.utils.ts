@@ -1,6 +1,5 @@
 import { Nullable } from 'src/api/api.types';
 import { OnchainAddressType } from 'src/api/wallet/wallet.types';
-import { getQueryDelimiter } from 'src/utils/string';
 
 export const SATS_IN_BTC = 100_000_000;
 
@@ -14,17 +13,17 @@ export const encodeBip21 = (input: {
 
   const prefix = getBip21Prefix(symbol);
 
-  let bip21 = `${prefix}:${address}`;
+  const bip21 = new URL(`${prefix}:${address}`);
 
   if (sats) {
-    bip21 += `${getQueryDelimiter(bip21)}amount=${satsToBtc(sats)}`;
+    bip21.searchParams.append('amount', satsToBtc(sats).toString());
   }
 
   if (assetId && symbol == OnchainAddressType.L_BTC) {
-    bip21 += `${getQueryDelimiter(bip21)}assetid=${assetId}`;
+    bip21.searchParams.append('assetid', assetId);
   }
 
-  return bip21;
+  return bip21.toString();
 };
 
 const getBip21Prefix = (symbol: OnchainAddressType): string => {
