@@ -17,6 +17,7 @@ import {
   TWO_IN_TWO_OUT_TX_SIZE,
 } from 'src/libs/liquid/liquid.service';
 import { LnUrlIsomorphicService } from 'src/libs/lnurl/handlers/isomorphic.service';
+import { PaymentOptionNetwork } from 'src/libs/lnurl/lnurl.types';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { SideShiftService } from 'src/libs/sideshift/sideshift.service';
 import {
@@ -155,6 +156,11 @@ export class FeeEstimationResolver {
   network_fee() {
     return (DEFAULT_LIQUID_FEE_MSAT * TWO_IN_TWO_OUT_TX_SIZE) / 1000;
   }
+
+  @ResolveField()
+  type(@Parent() type: PaymentOptionNetwork) {
+    return type;
+  }
 }
 
 @Resolver(FeeInfo)
@@ -166,8 +172,8 @@ export class FeeInfoResolver {
   }
 
   @ResolveField()
-  fee_estimations() {
-    return [{}];
+  fee_estimations(): PaymentOptionNetwork[] {
+    return [PaymentOptionNetwork.LIQUID];
   }
 }
 
