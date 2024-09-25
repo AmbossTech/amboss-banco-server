@@ -6,6 +6,7 @@ import {
 } from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { PaymentRequestObject, RoutingInfo, TagsObject } from 'bolt11';
+import { PaymentOptionNetwork } from 'src/libs/lnurl/lnurl.types';
 import {
   SideShiftCoin,
   SideShiftNetwork,
@@ -108,6 +109,9 @@ export class FeeEstimation {
 
   @Field(() => FeeAmount)
   network_fee: FeeAmount;
+
+  @Field(() => PaymentOptionNetwork)
+  type: PaymentOptionNetwork;
 }
 
 @ObjectType()
