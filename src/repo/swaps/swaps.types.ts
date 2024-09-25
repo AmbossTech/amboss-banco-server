@@ -47,6 +47,7 @@ export type BoltzReverseRequestType = {
   address: string;
   claimCovenant: boolean;
   description: string;
+  addressSignature?: string;
 };
 
 export type BoltzChainSwapRequestType = {
