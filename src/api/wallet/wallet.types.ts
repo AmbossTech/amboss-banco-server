@@ -1,6 +1,7 @@
 import {
   Field,
   InputType,
+  Int,
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
@@ -11,6 +12,7 @@ import {
   SideShiftNetwork,
 } from 'src/libs/sideshift/sideshift.types';
 import {
+  LiquidAssetEnum,
   WalletAccountDetailsType,
   WalletAccountType,
   WalletType,
@@ -21,10 +23,17 @@ import { Nullable } from '../api.types';
 import { WalletContacts } from '../contact/contact.types';
 import { WalletSwaps } from '../swaps/swaps.types';
 
+export enum OnchainAddressType {
+  L_BTC = 'L_BTC',
+  BTC = 'BTC',
+}
+
 registerEnumType(WalletType, { name: 'WalletType' });
 registerEnumType(WalletAccountType, { name: 'WalletAccountType' });
 registerEnumType(SideShiftCoin, { name: 'SwapCoin' });
 registerEnumType(SideShiftNetwork, { name: 'SwapNetwork' });
+registerEnumType(OnchainAddressType, { name: 'OnchainAddressType' });
+registerEnumType(LiquidAssetEnum, { name: 'LiquidAssetEnum' });
 
 @ObjectType()
 export class FiatInfo {
@@ -45,6 +54,12 @@ export class CreateWallet {
 export class CreateOnchainAddress {
   @Field()
   address: string;
+
+  @Field(() => OnchainAddressType)
+  network: OnchainAddressType;
+
+  @Field(() => String, { nullable: true })
+  bip21: Nullable<string>;
 }
 
 @ObjectType()
@@ -84,6 +99,9 @@ export class ReceiveSwap {
 
   @Field()
   max: string;
+
+  @Field(() => String, { nullable: true })
+  bip21: Nullable<string>;
 }
 
 @ObjectType()
@@ -357,6 +375,12 @@ export class CreateWalletInput {
 export class CreateOnchainAddressInput {
   @Field(() => String)
   wallet_account_id: string;
+
+  @Field(() => Int, { nullable: true })
+  amount: Nullable<number>;
+
+  @Field(() => LiquidAssetEnum, { nullable: true })
+  asset: Nullable<LiquidAssetEnum>;
 }
 
 @InputType()
@@ -384,6 +408,9 @@ export class ReceiveSwapInput {
 
   @Field(() => SideShiftNetwork)
   deposit_network: SideShiftNetwork;
+
+  @Field(() => Int, { nullable: true })
+  amount: Nullable<number>;
 
   @Field()
   wallet_account_id: string;

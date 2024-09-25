@@ -68,9 +68,13 @@ type CreateLiquidTransaction {
 
 type CreateOnchainAddress {
   address: String!
+  bip21: String
+  network: OnchainAddressType!
 }
 
 input CreateOnchainAddressInput {
+  amount: Int
+  asset: LiquidAssetEnum
   wallet_account_id: String!
 }
 
@@ -134,6 +138,11 @@ type LiquidAsset {
   balance: String!
   fiat_info: FiatInfo!
   id: String!
+}
+
+enum LiquidAssetEnum {
+  BTC
+  USDT
 }
 
 type LiquidAssetInfo {
@@ -232,6 +241,11 @@ type NewAccount {
   access_token: String!
   id: String!
   refresh_token: String!
+}
+
+enum OnchainAddressType {
+  BTC
+  L_BTC
 }
 
 input PasskeyAuthenticateInput {
@@ -371,6 +385,7 @@ type Query {
 }
 
 type ReceiveSwap {
+  bip21: String
   coin: SwapCoin!
   id: String!
   max: String!
@@ -380,6 +395,7 @@ type ReceiveSwap {
 }
 
 input ReceiveSwapInput {
+  amount: Int
   deposit_coin: SwapCoin!
   deposit_network: SwapNetwork!
   wallet_account_id: String!
