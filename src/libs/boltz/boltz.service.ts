@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { crypto } from 'bitcoinjs-lib';
 import { decode } from 'bolt11';
 import { SwapTreeSerializer } from 'boltz-core';
 import { ECPairFactory } from 'ecpair';
@@ -103,6 +104,9 @@ export class BoltzService {
     const preimage = randomBytes(32);
     const keys = ECPair.makeRandom();
 
+    const addressHash = crypto.sha256(Buffer.from(address));
+    const addressSignature = keys.signSchnorr(addressHash);
+
     const request: BoltzReverseRequestType = {
       address,
       from: BoltzChain.BTC,
@@ -113,6 +117,7 @@ export class BoltzService {
       claimPublicKey: keys.publicKey.toString('hex'),
       referralId: 'AMBOSS',
       description,
+      addressSignature: addressSignature.toString('hex'),
     };
 
     const response = await this.boltzRest.createReverseSwap(request);
