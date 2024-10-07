@@ -622,9 +622,38 @@ export class BoltzPendingBitcoinHandler
       throw 'No swap output found in lockup transaction';
     }
 
-    let claimFee = await this.redisService.get<number>(getClaimFeeKey(swapId));
+    const claimFee = await this.redisService.get<number>(
+      getClaimFeeKey(swapId),
+    );
+
     if (!claimFee) {
-      claimFee = (await this.mempoolService.getRecommendedFees()).halfHourFee;
+      const feeRate = (await this.mempoolService.getRecommendedFees())
+        .halfHourFee;
+
+      // Create a claim transaction to be signed cooperatively via a key path spend
+      const claimTx = targetFee(feeRate, (claimFee) =>
+        constructClaimTransaction(
+          [
+            {
+              ...swapOutput,
+              preimage,
+              keys: claimKeys,
+              cooperative,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              ...(!cooperative && {
+                swapTree: SwapTreeSerializer.deserializeSwapTree(
+                  responsePayload.claimDetails.swapTree,
+                ),
+                internalKey: musig.getAggregatedPublicKey(),
+              }),
+            },
+          ],
+          address.toOutputScript(destinationAddress, this.network),
+          claimFee,
+        ),
+      );
+      return { musig, transaction: claimTx, swapOutput, boltzPublicKey };
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
