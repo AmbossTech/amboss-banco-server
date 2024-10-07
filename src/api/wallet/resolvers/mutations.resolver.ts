@@ -315,12 +315,12 @@ export class WalletMutationsResolver {
         throw new GraphQLError(`Cannot recieve without amount`);
       }
       const [swap, error] = await toWithError(
-        this.boltzService.createChainSwap(
-          liquidAddress,
-          userInput.amount,
-          walletAccountId,
-          { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
-        ),
+        this.boltzService.createChainSwap({
+          address: liquidAddress,
+          amount: userInput.amount,
+          wallet_account_id: walletAccountId,
+          direction: { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
+        }),
       );
 
       if (error) {

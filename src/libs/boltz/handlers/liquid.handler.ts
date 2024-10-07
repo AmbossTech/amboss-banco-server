@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { wallet_account_swap } from '@prisma/client';
 import zkpInit, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import bolt11 from 'bolt11';
@@ -42,8 +43,15 @@ export class BoltzPendingLiquidHandler
 
   constructor(
     private boltzRest: BoltzRestApi,
+    private configService: ConfigService,
     @Logger(BoltzPendingLiquidHandler.name) private logger: CustomLogger,
-  ) {}
+  ) {
+    const network = this.configService.get('server.boltz.network');
+
+    if (network && network == 'regtest') {
+      this.network = networks.regtest;
+    }
+  }
 
   async onModuleInit() {
     this.zkp = await zkpInit();

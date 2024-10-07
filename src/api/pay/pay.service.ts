@@ -395,15 +395,15 @@ export class PayService {
     wallet_account: wallet_account,
     input: PayBitcoinAddressInput,
   ) {
-    const swap = await this.boltzService.createChainSwap(
-      input.recipient.address,
-      +input.recipient.amount,
-      wallet_account.id,
-      {
+    const swap = await this.boltzService.createChainSwap({
+      address: input.recipient.address,
+      amount: +input.recipient.amount,
+      wallet_account_id: wallet_account.id,
+      direction: {
         from: BoltzChain['L-BTC'],
         to: BoltzChain.BTC,
       },
-    );
+    });
 
     const { address, amount, asset } = decodeBip21Url(swap.lockupDetails.bip21);
 
