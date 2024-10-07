@@ -20,8 +20,15 @@ import { getSHA256Hash } from 'src/utils/crypto/crypto';
 import * as ecc from 'tiny-secp256k1';
 
 import { CustomLogger, Logger } from '../logging';
-import { CovenantParams } from './boltz.types';
+import { RedisService } from '../redis/redis.service';
+import {
+  BoltzChainSwapDirection,
+  CovenantParams,
+  SwapSingleChainInfoType,
+} from './boltz.types';
 import { BoltzWsService } from './boltzWs.service';
+
+export const getClaimFeeKey = (swapId: string) => `swap-claim-fee-${swapId}`;
 
 const ECPair = ECPairFactory(ecc);
 
@@ -34,6 +41,7 @@ export class BoltzService {
     private boltzWs: BoltzWsService,
     private swapRepo: SwapsRepoService,
     private configService: ConfigService,
+    private redisService: RedisService,
     @Logger('BoltzService') private logger: CustomLogger,
   ) {
     this.covclaimUrl = this.configService.getOrThrow('urls.covclaim');
@@ -158,26 +166,50 @@ export class BoltzService {
     return response;
   }
 
-  async createChainSwap(
-    address: string,
-    amount: number,
-    wallet_account_id: string,
-    direction: { from: BoltzChain; to: BoltzChain },
-  ) {
-    const { from, to } = direction;
+  private async getUserAmountChain(
+    amountToReceive: number,
+    chainSwapInfo: SwapSingleChainInfoType,
+  ): Promise<{ pairHash: string; userLockAmount: number }> {
+    const pairHash = chainSwapInfo.hash;
+    const serverFee = chainSwapInfo.fees.minerFees.server;
+    const claimFee = chainSwapInfo.fees.minerFees.user.claim;
+
+    const payAmount = amountToReceive + serverFee + claimFee;
+
+    const boltzFee = payAmount * (chainSwapInfo.fees.percentage / 100);
+
+    return { pairHash, userLockAmount: payAmount + Math.ceil(boltzFee) };
+  }
+
+  async createChainSwap(swapInput: {
+    address: string;
+    amount: number;
+    wallet_account_id: string;
+    direction: BoltzChainSwapDirection;
+  }) {
+    const {
+      address,
+      amount,
+      direction: { from, to },
+      wallet_account_id,
+    } = swapInput;
 
     const swapInfo = await this.getChainSwapInfo();
-    let limits;
+    let swapInfoByDirection;
 
     if (from == BoltzChain['L-BTC'] && to == BoltzChain['BTC']) {
-      limits = swapInfo[from][to].limits;
+      swapInfoByDirection = swapInfo[from][to];
     } else if (from == BoltzChain['BTC'] && to == BoltzChain['L-BTC']) {
-      limits = swapInfo[from][to].limits;
+      swapInfoByDirection = swapInfo[from][to];
     } else {
       throw new Error(`You cannot send and receive to the same chain`);
     }
 
-    this.checkLimits(limits, amount);
+    this.checkLimits(swapInfoByDirection.limits, amount);
+    const { pairHash, userLockAmount } = await this.getUserAmountChain(
+      amount,
+      swapInfoByDirection,
+    );
 
     // Create a random preimage for the swap; has to have a length of 32 bytes
     const preimage = randomBytes(32);
@@ -185,7 +217,7 @@ export class BoltzService {
     const refundKeys = ECPairFactory(ecc).makeRandom();
 
     const request: BoltzChainSwapRequestType = {
-      userLockAmount: amount,
+      userLockAmount,
       claimAddress: address,
       from,
       to,
@@ -193,6 +225,7 @@ export class BoltzService {
       claimPublicKey: claimKeys.publicKey.toString('hex'),
       refundPublicKey: refundKeys.publicKey.toString('hex'),
       referralId: 'AMBOSS',
+      pairHash,
     };
 
     const response = await this.boltzRest.createChainSwap(request);
@@ -215,6 +248,12 @@ export class BoltzService {
         payload: response,
       },
     );
+
+    const settingClaimFee = response.claimDetails.amount - amount;
+
+    this.redisService.set(getClaimFeeKey(response.id), settingClaimFee, {
+      ttl: 60 * 60 * 12,
+    });
 
     this.boltzWs.subscribeToSwap([response.id]);
 

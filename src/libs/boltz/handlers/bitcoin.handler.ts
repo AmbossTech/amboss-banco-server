@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { wallet_account_swap } from '@prisma/client';
 import zkpInit, { Secp256k1ZKP } from '@vulpemventures/secp256k1-zkp';
 import {
@@ -21,13 +22,16 @@ import {
 import { TaprootUtils as LiquidTaprootUtils } from 'boltz-core/dist/lib/liquid';
 import { randomBytes } from 'crypto';
 import ECPairFactory, { ECPairInterface } from 'ecpair';
+import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CustomLogger, Logger } from 'src/libs/logging';
 import { MempoolService } from 'src/libs/mempool/mempool.service';
+import { RedisService } from 'src/libs/redis/redis.service';
 import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { toWithError } from 'src/utils/async';
 import * as ecc from 'tiny-secp256k1';
 
 import { BoltzRestApi } from '../boltz.rest';
+import { getClaimFeeKey } from '../boltz.service';
 import { BoltzChainSwapResponseType } from '../boltz.types';
 import { applyBoltzSig, getTweakedKey, setupMusig } from './boltz.helpers';
 import { BoltzPendingTransactionInterface } from './handler.interface';
@@ -41,8 +45,18 @@ export class BoltzPendingBitcoinHandler
   constructor(
     private boltzRest: BoltzRestApi,
     private mempoolService: MempoolService,
+    private redisService: RedisService,
+    private configService: ConfigService,
     @Logger(BoltzPendingBitcoinHandler.name) private logger: CustomLogger,
-  ) {}
+  ) {
+    const network = this.configService.get<
+      ConfigSchemaType['server']['boltz']['network']
+    >('server.boltz.network');
+
+    if (network && network == 'regtest') {
+      this.network = networks.regtest;
+    }
+  }
 
   async onModuleInit() {
     this.zkp = await zkpInit();
@@ -77,6 +91,7 @@ export class BoltzPendingBitcoinHandler
 
     const { musig, transaction, boltzPublicKey, swapOutput } =
       await this.createClaimTransaction({
+        swapId: swap.response.payload.id,
         claimKeys,
         preimage,
         destinationAddress: requestPayload.claimAddress,
@@ -569,6 +584,7 @@ export class BoltzPendingBitcoinHandler
   }
 
   async createClaimTransaction({
+    swapId,
     claimKeys,
     destinationAddress,
     lockupTransactionHex,
@@ -576,6 +592,7 @@ export class BoltzPendingBitcoinHandler
     responsePayload,
     cooperative = true,
   }: {
+    swapId: string;
     responsePayload: BoltzChainSwapResponseType;
     claimKeys: ECPairInterface;
     preimage: Buffer;
@@ -605,30 +622,31 @@ export class BoltzPendingBitcoinHandler
       throw 'No swap output found in lockup transaction';
     }
 
-    const { halfHourFee } = await this.mempoolService.getRecommendedFees();
+    let claimFee = await this.redisService.get<number>(getClaimFeeKey(swapId));
+    if (!claimFee) {
+      claimFee = (await this.mempoolService.getRecommendedFees()).halfHourFee;
+    }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const claimTx = targetFee(halfHourFee, (fee) =>
-      constructClaimTransaction(
-        [
-          {
-            ...swapOutput,
-            preimage,
-            keys: claimKeys,
-            cooperative,
-            type: OutputType.Taproot,
-            txHash: lockupTx.getHash(),
-            ...(!cooperative && {
-              swapTree: SwapTreeSerializer.deserializeSwapTree(
-                responsePayload.claimDetails.swapTree,
-              ),
-              internalKey: musig.getAggregatedPublicKey(),
-            }),
-          },
-        ],
-        address.toOutputScript(destinationAddress, this.network),
-        fee,
-      ),
+    const claimTx = constructClaimTransaction(
+      [
+        {
+          ...swapOutput,
+          preimage,
+          keys: claimKeys,
+          cooperative,
+          type: OutputType.Taproot,
+          txHash: lockupTx.getHash(),
+          ...(!cooperative && {
+            swapTree: SwapTreeSerializer.deserializeSwapTree(
+              responsePayload.claimDetails.swapTree,
+            ),
+            internalKey: musig.getAggregatedPublicKey(),
+          }),
+        },
+      ],
+      address.toOutputScript(destinationAddress, this.network),
+      claimFee,
     );
     return { musig, transaction: claimTx, swapOutput, boltzPublicKey };
   }
