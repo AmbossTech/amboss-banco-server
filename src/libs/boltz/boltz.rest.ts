@@ -26,7 +26,6 @@ import {
   boltzSubmarineSwapClaimResponse,
   boltzSubmarineSwapResponse,
   swapChainInfoSchema,
-  SwapChainInfoType,
   swapReverseInfoSchema,
   SwapReverseInfoType,
   swapSubmarineInfoSchema,
@@ -88,18 +87,11 @@ export class BoltzRestApi {
   }
 
   async getChainSwapInfo() {
-    const key = `BoltzRestApi-getChainSwapInfo`;
-
-    const cached = await this.redis.get<SwapChainInfoType>(key);
-    if (!!cached) return cached;
-
     const result = await fetch(`${this.apiUrl}swap/chain`);
 
     const body = await result.json();
 
     const parsed = swapChainInfoSchema.parse(body);
-
-    await this.redis.set<SwapChainInfoType>(key, parsed, { ttl: 60 * 60 });
 
     return parsed;
   }
