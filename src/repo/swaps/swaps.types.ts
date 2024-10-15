@@ -59,7 +59,6 @@ export type BoltzChainSwapRequestType = {
   claimPublicKey: string;
   refundPublicKey: string;
   referralId: string;
-  pairHash?: string;
 };
 
 export type AccountSwapRequestType =
