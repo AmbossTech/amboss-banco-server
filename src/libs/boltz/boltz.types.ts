@@ -1,5 +1,6 @@
 import { wallet_account_swap } from '@prisma/client';
 import { Types } from 'boltz-core';
+import { BoltzChain } from 'src/repo/swaps/swaps.types';
 import { z } from 'zod';
 
 export const swapReverseInfoSchema = z.object({
@@ -39,48 +40,34 @@ export const swapSubmarineInfoSchema = z.object({
 
 export type SwapSubmarineInfoType = z.infer<typeof swapSubmarineInfoSchema>;
 
-export const swapChainInfoSchema = z.object({
-  BTC: z.object({
-    'L-BTC': z.object({
-      hash: z.string(),
-      rate: z.number(),
-      limits: z.object({
-        maximal: z.number(),
-        minimal: z.number(),
-        maximalZeroConf: z.number(),
-      }),
-      fees: z.object({
-        percentage: z.number(),
-        minerFees: z.object({
-          server: z.number(),
-          user: z.object({
-            claim: z.number(),
-            lockup: z.number(),
-          }),
-        }),
+export const swapChainInfoObject = z.object({
+  hash: z.string(),
+  rate: z.number(),
+  limits: z.object({
+    maximal: z.number(),
+    minimal: z.number(),
+    maximalZeroConf: z.number(),
+  }),
+  fees: z.object({
+    percentage: z.number(),
+    minerFees: z.object({
+      server: z.number(),
+      user: z.object({
+        claim: z.number(),
+        lockup: z.number(),
       }),
     }),
   }),
+});
+
+export type SwapSingleChainInfoType = z.infer<typeof swapChainInfoObject>;
+
+export const swapChainInfoSchema = z.object({
+  BTC: z.object({
+    'L-BTC': swapChainInfoObject,
+  }),
   'L-BTC': z.object({
-    BTC: z.object({
-      hash: z.string(),
-      rate: z.number(),
-      limits: z.object({
-        maximal: z.number(),
-        minimal: z.number(),
-        maximalZeroConf: z.number(),
-      }),
-      fees: z.object({
-        percentage: z.number(),
-        minerFees: z.object({
-          server: z.number(),
-          user: z.object({
-            claim: z.number(),
-            lockup: z.number(),
-          }),
-        }),
-      }),
-    }),
+    BTC: swapChainInfoObject,
   }),
 });
 
@@ -268,3 +255,5 @@ export const boltzChainSwapResponse = z.object({
 });
 
 export type BoltzChainSwapResponseType = z.infer<typeof boltzChainSwapResponse>;
+
+export type BoltzChainSwapDirection = { from: BoltzChain; to: BoltzChain };
