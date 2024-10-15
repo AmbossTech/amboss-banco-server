@@ -475,12 +475,12 @@ export class LnUrlLocalService {
           const address =
             await this.liquidService.getOnchainAddress(descriptor);
 
-          return this.boltzService.createChainSwap({
-            address: address.address().toString(),
-            amount: checkAmount,
-            wallet_account_id: walletAcc.id,
-            direction: { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
-          });
+          return this.boltzService.createChainSwap(
+            address.address().toString(),
+            checkAmount,
+            walletAcc.id,
+            { from: BoltzChain.BTC, to: BoltzChain['L-BTC'] },
+          );
         },
       ],
 
