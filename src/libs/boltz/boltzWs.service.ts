@@ -80,7 +80,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
       this.webSocket.ping();
 
       this.pingTimeoutId = setTimeout(() => {
-        this.logger.error(`Health check timed out.`);
+        this.logger.warn(`Health check timed out.`);
         this.webSocket.terminate();
         cbk();
       }, this.pingTimeout);
@@ -275,7 +275,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                 });
 
                 this.webSocket.on('error', (error) => {
-                  this.logger.error('Error in Boltz websocket', { error });
+                  this.logger.warn('Error in Boltz websocket', { error });
 
                   this.webSocket.terminate();
                   cbk(Error('Connection error'));
@@ -288,7 +288,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
             if (err) {
               this.logger.error('Websocket Handler Error', { err });
             } else {
-              this.logger.error('Websocket Handler Result', { results });
+              this.logger.debug('Websocket Handler Result', { results });
             }
 
             this.retryCount = this.retryCount + 1;
