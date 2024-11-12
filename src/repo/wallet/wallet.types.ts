@@ -6,13 +6,13 @@ export enum WalletAccountType {
 
 const LiquidBitcoinAsset = {
   code: 'BTC',
-  name: 'Bitcoin',
+  name: 'Liquid Bitcoin',
   symbol: '₿',
   id: liquidAssetIds.mainnet.bitcoin,
 };
 const LiquidTetherAsset = {
   code: 'USDT',
-  name: 'Tether',
+  name: 'Tether USD',
   symbol: '$',
   id: liquidAssetIds.mainnet.tether,
 };
