@@ -8,6 +8,7 @@ import {
   getSwapFrom,
   getSwapSettleAmount,
   getSwapTo,
+  isSwapOutgoing,
 } from './swaps.utils';
 
 @Resolver(SimpleSwap)
@@ -34,12 +35,16 @@ export class SimpleSwapResolver {
 
   @ResolveField()
   deposit_amount(@Parent() { request, response }: wallet_account_swap) {
-    return getSwapDepositAmount(request, response);
+    return isSwapOutgoing(request)
+      ? getSwapSettleAmount(request, response)
+      : getSwapDepositAmount(request, response);
   }
 
   @ResolveField()
   settle_amount(@Parent() { request, response }: wallet_account_swap) {
-    return getSwapSettleAmount(request, response);
+    return isSwapOutgoing(request)
+      ? getSwapDepositAmount(request, response)
+      : getSwapSettleAmount(request, response);
   }
 }
 
@@ -54,6 +59,7 @@ export class WalletSwapsResolver {
 
   @ResolveField()
   async find_many(@Parent() { wallet_id }: WalletSwapsParent) {
-    return this.swapRepo.getWalletSwaps(wallet_id);
+    const swaps = await this.swapRepo.getWalletSwaps(wallet_id);
+    return [swaps[0], swaps[1]];
   }
 }
