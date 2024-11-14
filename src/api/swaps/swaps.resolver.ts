@@ -35,14 +35,14 @@ export class SimpleSwapResolver {
 
   @ResolveField()
   deposit_amount(@Parent() { request, response }: wallet_account_swap) {
-    return isSwapOutgoing(request)
+    return isSwapOutgoing(request, response)
       ? getSwapSettleAmount(request, response)
       : getSwapDepositAmount(request, response);
   }
 
   @ResolveField()
   settle_amount(@Parent() { request, response }: wallet_account_swap) {
-    return isSwapOutgoing(request)
+    return isSwapOutgoing(request, response)
       ? getSwapDepositAmount(request, response)
       : getSwapSettleAmount(request, response);
   }
