@@ -1,8 +1,11 @@
 import { decode } from 'bolt11';
+import { SideShiftNetwork } from 'src/libs/sideshift/sideshift.types';
 import {
   AccountSwapRequestType,
   AccountSwapResponseType,
+  BoltzChain,
   BoltzSwapType,
+  SideShiftSwapType,
   SwapProvider,
 } from 'src/repo/swaps/swaps.types';
 
@@ -77,4 +80,31 @@ export const getSwapSettleAmount = (
   if (res.provider === SwapProvider.SIDESHIFT) {
     return res.payload.settleAmount;
   }
+};
+
+export const isSwapOutgoing = (
+  req: AccountSwapRequestType,
+  res: AccountSwapResponseType,
+): boolean => {
+  if (req.provider === SwapProvider.BOLTZ) {
+    switch (req.type) {
+      case BoltzSwapType.CHAIN:
+        return req.payload.from == BoltzChain['L-BTC'];
+      case BoltzSwapType.REVERSE:
+        return req.payload.from == BoltzChain['L-BTC'];
+      case BoltzSwapType.SUBMARINE:
+        return req.payload.from == BoltzChain['L-BTC'];
+    }
+  }
+
+  if (res.provider === SwapProvider.SIDESHIFT) {
+    switch (res.type) {
+      case SideShiftSwapType.VARIABLE:
+        return res.payload.depositNetwork == SideShiftNetwork.liquid;
+      case SideShiftSwapType.FIXED:
+        return res.payload.depositNetwork == SideShiftNetwork.liquid;
+    }
+  }
+
+  return false;
 };
