@@ -164,7 +164,6 @@ export class LnUrlIsomorphicService {
 
     if (isProd) {
       const result = moneyAddressType.safeParse(money_address);
-
       if (!result.success) {
         this.logger.error('Invalid lightning address for parsing', { result });
         return null;
@@ -185,6 +184,8 @@ export class LnUrlIsomorphicService {
         return this.remoteLnurl.getPubkey(money_address);
       },
     );
+
+    if (pubkey === null) return null;
 
     await this.redis.set(key, pubkey, { ttl: 24 * 60 * 60 });
 

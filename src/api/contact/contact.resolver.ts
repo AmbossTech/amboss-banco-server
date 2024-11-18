@@ -108,7 +108,9 @@ export class WalletContactResolver {
   @ResolveField()
   async encryption_pubkey(@Parent() parent: WalletContactParent) {
     if (!parent.money_address) return null;
-    return this.isomorphicLnurl.getPubkey(parent.money_address);
+    const pubkey = await this.isomorphicLnurl.getPubkey(parent.money_address);
+    if (pubkey === null) return null;
+    return pubkey;
   }
 
   @ResolveField()
