@@ -186,6 +186,8 @@ export class LnUrlIsomorphicService {
       },
     );
 
+    if (pubkey === null) return null;
+
     await this.redis.set(key, pubkey, { ttl: 24 * 60 * 60 });
 
     return pubkey;
