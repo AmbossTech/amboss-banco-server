@@ -164,6 +164,7 @@ export class LnUrlIsomorphicService {
 
     if (isProd) {
       const result = moneyAddressType.safeParse(money_address);
+
       if (!result.success) {
         this.logger.error('Invalid lightning address for parsing', { result });
         return null;
